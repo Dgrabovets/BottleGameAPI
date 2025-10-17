@@ -3,9 +3,12 @@ using BottleGameServer.Data;
 using BottleGameServer.Models.DTOs.Requests;
 using BottleGameServer.Models.DTOs.Responses;
 using BottleGameServer.Models.Entities;
+using BottleGameServer.Processing;
+using BottleGameServer.Processing.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BottleGameServer.Controllers
 {
@@ -15,8 +18,21 @@ namespace BottleGameServer.Controllers
     {
         #region Fields
 
+        /// <summary>
+        /// Контекст базы данных
+        /// </summary>
         private readonly ApplicationDbContext _context;
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
         private readonly ILogger<PlayerController> _logger;
+
+        /// <inheritdoc cref="IProcessingService"/>"/>
+        private IProcessingService _processingService;
+
+        /// <inheritdoc cref="ProcessingOptions"/>
+        private readonly ProcessingOptions _options;
 
         const string prefix = "[Balance Controller]";
 
@@ -24,10 +40,19 @@ namespace BottleGameServer.Controllers
 
         #region Constructor
 
-        public BalanceController(ApplicationDbContext context, ILogger<PlayerController> logger)
+        /// <summary>
+        /// Конструктор контроллера баланса
+        /// </summary>
+        /// <param name="context">Контекст базы данных</param>
+        /// <param name="logger">Логгер</param>
+        /// <param name="processingService">Сервис процессинга</param>
+        /// <param name="options">Настройки процессинга</param>
+        public BalanceController(ApplicationDbContext context, ILogger<PlayerController> logger, IProcessingService processingService, IOptions<ProcessingOptions> options)
         {
             _context = context;
             _logger = logger;
+            _processingService = processingService;
+            _options = options.Value;
         }
 
         #endregion Constructor
@@ -132,6 +157,7 @@ namespace BottleGameServer.Controllers
 
                 // Поиск игрока с балансом и баном
                 var player = await _context.Players
+                    .Include(p => p.PlayerOptions)
                     .Include(p => p.Balance)
                     .Include(p => p.Ban)
                     .FirstOrDefaultAsync(p => p.Id == playerId);
@@ -212,12 +238,59 @@ namespace BottleGameServer.Controllers
                 // Сохраняем все изменения в базе данных
                 await _context.SaveChangesAsync();
 
+                CreatePaymentResponse depositResponse = null!;
+
+                if (request.IsDeposit)
+                {
+                    try
+                    {
+                        _logger.LogInformation("{Prefix} Создание запроса для платежа игрока {PlayerId}, сумма {Amount}", prefix, playerId, request.Amount);
+
+                        var createPaymentRequest = new CreatePaymentRequest(merchant_id: _options.MerchantId,
+                                                                            secret: _options.SecretKey,
+                                                                            order_id: transaction.Id.ToString(),
+                                                                            customer: player.Name,
+                                                                            amount: request.Amount * 100,
+                                                                            currency: player.PlayerOptions.Currency.ToString(),
+                                                                            method: player.PlayerOptions.PaymentMethod.ToString());
+
+                        var paymentResponse = await _processingService.CreatePaymentAsync(createPaymentRequest);
+
+                        if (!paymentResponse.IsSuccess || paymentResponse.Payment is null)
+                        {
+                            transaction.TransactionStatusId = 3;
+                            transaction.IsProcessingSuccess = false;
+                            _logger.LogError("{Prefix} Ошибка при создании платежа для игрока {PlayerId}: {ErrorMessage}", prefix, playerId, paymentResponse.ErrorMessage);
+                            return StatusCode(500, "Ошибка при создании платежа: " + paymentResponse.ErrorMessage);
+                        }
+
+                        depositResponse = paymentResponse.Payment!;
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.TransactionStatusId = 3;
+                        transaction.IsProcessingSuccess = false;
+                        _logger.LogError(ex, "{Prefix} Ошибка при создании платежа для игрока {PlayerId}", prefix, playerId);
+                        return StatusCode(500, "Ошибка при создании платежа");
+                    }
+                    finally
+                    {
+                        // Сохраняем все изменения в базе данных
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
                 _logger.LogInformation(
                     "{Prefix} Транзакция создана для игрока {PlayerId}. Тип: {Status}, Сумма: {Bet}",
                     prefix,
                     playerId,
                     request.IsDeposit ? "Пополнение" : "Вывод",
                     request.Amount);
+
+                if (depositResponse is not null)
+                {
+                    return Ok(new { PaymentLink = depositResponse.link, ExpiredDate = DateTimeOffset.FromUnixTimeSeconds(depositResponse.expired).LocalDateTime});
+                }
 
                 return Ok();
             }
@@ -268,13 +341,40 @@ namespace BottleGameServer.Controllers
                 // Поиск транзакции с игроком и балансом
                 var transaction = await _context.MoneyTransactions
                     .Include(t => t.Player)
-                    .ThenInclude(p => p.Balance)
+                        .ThenInclude(p => p.PlayerOptions)
+                    .Include(t => t.Player)
+                        .ThenInclude(p => p.Balance)
                     .FirstOrDefaultAsync(t => t.Id == transactionId);
 
                 if (transaction is null)
                 {
                     _logger.LogWarning("{Prefix} Транзакция с ID {TransactionId} не найдена", prefix, transactionId);
                     return NotFound($"Транзакция с ID {transactionId} не найдена");
+                }
+
+                if (transaction.Player is null)
+                {
+                    _logger.LogWarning("{Prefix} Игрок транзакции {transaction} не найден", prefix, transaction.Id);
+                    return NotFound($"Игрок транзакции {transaction.Id} не найден");
+                }
+
+                if (transaction.Player!.Balance is null)
+                {
+                    _logger.LogWarning("{Prefix} Не найден баланс игрока транзакции {transaction}", prefix, transaction.Id);
+                    return NotFound($"Баланс игрока транзакции {transaction.Id} не найден");
+                }
+
+                if (transaction.Player.PlayerOptions is null)
+                {
+                    _logger.LogWarning("{Prefix} Настройки игрока транзакции {transaction} не найдены", prefix, transaction.Id);
+                    return NotFound($"Настройки игрока транзакции {transaction.Id} не найдены");
+                }
+
+                // Проверка типа транзакции: только вывод
+                if (transaction.TransactionTypeId != withdrawalTypeId)
+                {
+                    _logger.LogWarning("{Prefix} Тип транзакции {TransactionId} не поддерживается для ручного одобрения/отклонения: {TransactionType}", prefix, transactionId, transaction.TransactionTypeId);
+                    return BadRequest("Возможно изменять статус только у транзакций с типом \"Вывод\"");
                 }
 
                 // Проверка что транзакция еще не обработана
@@ -290,13 +390,6 @@ namespace BottleGameServer.Controllers
                 {
                     _logger.LogWarning("{Prefix} Транзакция {TransactionId} уже имеет статус {StatusId}", prefix, transactionId, request.TransactionStatusId);
                     return BadRequest("Транзакция уже имеет указанный статус");
-                }
-
-                // Проверка типа транзакции: только депозит или вывод
-                if (transaction.TransactionTypeId != depositTypeId && transaction.TransactionTypeId != withdrawalTypeId)
-                {
-                    _logger.LogWarning("{Prefix} Тип транзакции {TransactionId} не поддерживается для ручного одобрения/отклонения: {TransactionType}", prefix, transactionId, transaction.TransactionTypeId);
-                    return BadRequest("Возможно изменять статус только у транзакций с типом \"Пополнение\" или \"Вывод\"");
                 }
 
                 // Получаем игровые параметры (для вывода)
@@ -330,7 +423,7 @@ namespace BottleGameServer.Controllers
                     }
                 }
 
-                // Получаем баланс приложения (для пополнения и вывода)
+                // Получаем баланс приложения
                 var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
                 if (appBalance is null)
                 {
@@ -338,46 +431,14 @@ namespace BottleGameServer.Controllers
                     return BadRequest("Не найдены данные баланса приложения");
                 }
 
-                // --- Основная логика изменения баланса и статистики ---
-                if (transaction.TransactionTypeId == depositTypeId)
-                {
-                    // Пополнение
-                    if (request.TransactionStatusId == approvedStatusId)
-                    {
-                        // Одобрено: увеличиваем баланс игрока и приложения, сбрасываем счетчик раундов
-                        transaction.Player.Balance.Amount += transaction.Amount;
-                        appBalance.Amount += transaction.Amount;
-
-                        roundsPlayedStat.MoneyTransaction = transaction;
-                        roundsPlayedStat.DepositTransactionId = transaction.Id;
-                        roundsPlayedStat.PlayedRoundsCount = 0;
-
-                        // Реферальная система (бонус за пополнение)
-                        var invitation = await _context.InvitedPlayers
-                            .Include(ip => ip.PlayerInvited)
-                            .ThenInclude(p => p.Balance)
-                            .FirstOrDefaultAsync(ip => ip.PlayerIdInvited == transaction.PlayerId);
-
-                        if (invitation is not null && (invitation.PlayerInvited.Ban is null || !invitation.PlayerInvited.Ban.IsActive))
-                        {
-                            var referrer = invitation.PlayerInvited;
-                            var bonusAmount = (int)Math.Round(transaction.Amount * 0.3m, MidpointRounding.AwayFromZero);
-
-                            referrer.Balance.Amount += bonusAmount;
-
-                            _logger.LogInformation("{Prefix} Начислено {BonusAmount} игроку {ReferrerId} за пополнение приглашенным игроком {PlayerId}",
-                                prefix, bonusAmount, referrer.Id, transaction.PlayerId);
-                        }
-                    }
-                    // Отклонено: ничего не делаем с балансом
-                }
-                else if (transaction.TransactionTypeId == withdrawalTypeId)
+                if (transaction.TransactionTypeId == withdrawalTypeId)
                 {
                     // Вывод
                     if (request.TransactionStatusId == rejectedStatusId)
                     {
                         // Отклонено: возвращаем деньги игроку
                         transaction.Player.Balance.Amount += transaction.Amount;
+                        transaction.TransactionStatusId = request.TransactionStatusId;
                     }
                     else if (request.TransactionStatusId == approvedStatusId)
                     {
@@ -387,12 +448,49 @@ namespace BottleGameServer.Controllers
                             _logger.LogWarning("{Prefix} Одобрение транзакции невозможно - сумма к выводу превышает нижний порог баланса приложения!", prefix);
                             return BadRequest("Одобрение транзакции невозможно - сумма к выводу превышает нижний порог баланса приложения!");
                         }
-                        appBalance.Amount -= transaction.Amount;
+
+                        try
+                        {
+                            _logger.LogInformation("{Prefix} Создание payout-запроса для игрока {PlayerId}, сумма {Amount}", prefix, transaction.PlayerId, transaction.Amount);
+
+                            var createPayoutRequest = new CreatePayoutRequest(
+                                merchant_id: _options.MerchantId,
+                                secret: _options.SecretKey,
+                                order_id: transaction.Id.ToString(),
+                                balance: CurrencyType.RUB.ToString(),
+                                method: transaction.Player.PlayerOptions.PayoutMethod.ToString(),
+                                wallet: transaction.Player.PlayerOptions.Wallet,
+                                amount: transaction.Amount * 100,
+                                comment: transaction.Player.Name,
+                                fee_merchant: false
+                            );
+
+                            var payoutResponse = await _processingService.CreatePayoutAsync(createPayoutRequest);
+
+                            if (!payoutResponse.IsSuccess || payoutResponse.Payout is null)
+                            {
+                                transaction.TransactionStatusId = 3;
+                                transaction.IsProcessingSuccess = false;
+                                _logger.LogError("{Prefix} Ошибка при создании выплаты для игрока {PlayerId}: {ErrorMessage}", prefix, transaction.PlayerId, payoutResponse.ErrorMessage);
+                                return StatusCode(500, "Ошибка при создании выплаты: " + payoutResponse.ErrorMessage);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.TransactionStatusId = 3;
+                            transaction.IsProcessingSuccess = false;
+                            _logger.LogError(ex, "{Prefix} Ошибка при создании выплаты для игрока {PlayerId}", prefix, transaction.PlayerId);
+                            return StatusCode(500, "Ошибка при создании выплаты");
+                        }
+                        finally
+                        {
+                            // Сохраняем все изменения в базе данных
+                            await _context.SaveChangesAsync();
+                        }
                     }
                 }
 
-                // Обновляем статус и время обработки транзакции
-                transaction.TransactionStatusId = request.TransactionStatusId;
+                // Обновляем время обработки транзакции
                 transaction.ProcessedAt = DateTime.UtcNow;
 
                 // Сохраняем изменения в базе данных

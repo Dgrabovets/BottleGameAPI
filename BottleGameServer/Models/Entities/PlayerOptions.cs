@@ -25,5 +25,34 @@ namespace BottleGameServer.Models.Entities
         [Range(0, 1)]
         [Required]
         public float WinChance { get; set; }
+
+        /// <summary>
+        /// Предпочитаемая валюта игрока (RUB, USD, KZT)
+        /// </summary>
+        [Column("Currency")]
+        [Required]
+        public CurrencyType Currency { get; set; }
+
+        /// <summary>
+        /// Кошелёк или номер карты игрока для вывода средств
+        /// </summary>
+        [Column("Wallet")]
+        [Required]
+        [MaxLength(50)]
+        public string Wallet { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Предпочитаемый метод выплаты игрока
+        /// </summary>
+        [Column("PayoutMethod")]
+        [Required]
+        public PayoutMethodType PayoutMethod { get; set; }
+
+        /// <summary>
+        /// Предпочитаемый метод платежа игрока
+        /// </summary>
+        [Column("PaymentMethod")]
+        [Required]
+        public PaymentMethodType PaymentMethod { get; set; }
     }
 }

@@ -1,6 +1,9 @@
+using System.Reflection;
 using System.Text;
 using BottleGameServer.Authorization;
 using BottleGameServer.Data;
+using BottleGameServer.Processing;
+using BottleGameServer.Processing.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -53,6 +56,10 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ITelegramAuthService, TelegramAuthService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 
+builder.Services.Configure<ProcessingOptions>(
+    builder.Configuration.GetSection("Processing"));
+builder.Services.AddHttpClient<IProcessingService, ProcessingService>();
+
 // MVC + Контроллеры
 builder.Services.AddControllers();
 
@@ -61,6 +68,27 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Bottle Game API", Version = "v1" });
+
+    // Безопасное включение XML-комментариев
+    try
+    {
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+        if (File.Exists(xmlPath))
+        {
+            c.IncludeXmlComments(xmlPath);
+        }
+        else
+        {
+            // Логируем предупреждение, но не падаем
+            Console.WriteLine($"XML documentation file not found: {xmlPath}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error loading XML documentation: {ex.Message}");
+    }
 
     // Настройка Swagger для JWT
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -102,6 +130,8 @@ builder.Services.AddCors(options =>
                 "http://adminbottle.ru",
                 "https://api.adminbottle.ru",
                 "http://api.adminbottle.ru",
+                "https://api.adminbottle.ru:5001",
+                "http://api.adminbottle.ru:5000",
                 "https://admin.adminbottle.ru",
                 "http://admin.adminbottle.ru",
                 "https://luckybottlex.com",
@@ -113,7 +143,12 @@ builder.Services.AddCors(options =>
                 "http://localhost:3000",
                 "https://localhost:3000",
                 "http://localhost:5001",
-                "https://localhost:5001")
+                "https://localhost:5001",
+                "https://nicepay.io/public/api",
+                "https://nicepay.io/public",
+                "https://nicepay.io",
+                "https://121.127.46.166",
+                "http://121.127.46.166")
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials();
@@ -127,7 +162,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Bottle Game API V1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Bottle Game API v1");
     });
 }
 

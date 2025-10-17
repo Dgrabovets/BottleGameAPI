@@ -174,7 +174,7 @@ namespace BottleGameServer.Controllers
                     var balance = new Balance
                     {
                         Player = player,
-                        PlayerId = player.Id, // Используем автоинкрементный Id
+                        PlayerId = player.Id,
                         Amount = 0
                     };
 
@@ -182,7 +182,10 @@ namespace BottleGameServer.Controllers
                     {
                         Player = player,
                         PlayerId = player.Id,
-                        WinChance = gameParams!.BaseWinChance
+                        WinChance = gameParams!.BaseWinChance,
+                        Currency = CurrencyType.RUB,
+                        Wallet = string.Empty,
+                        PayoutMethod = PayoutMethodType.bankcard_rub
                     };
 
                     _context.PlayersOptions.Add(options);

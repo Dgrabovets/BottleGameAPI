@@ -62,5 +62,11 @@ namespace BottleGameServer.Models.Entities
         /// </summary>
         [Column("ProcessedAt")]
         public DateTime ProcessedAt { get; set; }
+
+        /// <summary>
+        /// Признак успешной обработки процессинга
+        /// </summary>
+        [Column("IsProcessingSuccess")]
+        public bool? IsProcessingSuccess { get; set; }
     }
 }

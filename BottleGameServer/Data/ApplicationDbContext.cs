@@ -21,6 +21,7 @@ namespace BottleGameServer.Data
         public DbSet<PlayerOptions> PlayersOptions { get; set; } = null!;
         public DbSet<AppBalance> AppBalance { get; set; } = null!;
         public DbSet<PlayerPlayedRoundsStatisticForWithdrawal> PlayersPlayedRoundsStatisticForWithdrawals { get; set; } = null!;
+        public DbSet<NicePayWebhookLog> NicePayWebhookLogs { get; set; } = null!;
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
@@ -119,9 +120,20 @@ namespace BottleGameServer.Data
             modelBuilder.Entity<PlayerOptions>(entity =>
             {
                 entity.ToTable("PlayersOptions");
-                entity.HasKey(b => b.PlayerId);
-                entity.Property(b => b.PlayerId).HasColumnName("PlayerId").IsRequired();
-                entity.Property(b => b.WinChance).HasColumnName("WinChance").IsRequired();
+                entity.HasKey(e => e.PlayerId);
+                entity.Property(e => e.WinChance).HasColumnName("WinChance").IsRequired();
+                entity.Property(e => e.Wallet).HasColumnName("Wallet");
+                entity.Property(e => e.Currency)
+                      .HasColumnName("Currency")
+                      .HasConversion<string>();
+                entity.Property(e => e.PayoutMethod)
+                      .HasColumnName("PayoutMethod")
+                      .HasConversion<string>()
+                      .IsRequired();
+                entity.Property(e => e.PaymentMethod)
+                      .HasColumnName("PaymentMethod")
+                      .HasConversion<string>()
+                      .IsRequired();
 
                 // Связь 1-to-1 с Player
                 entity.HasOne(b => b.Player)
@@ -220,10 +232,12 @@ namespace BottleGameServer.Data
                 entity.ToTable("MoneyTransactions");
                 entity.HasKey(t => t.Id);
                 entity.Property(t => t.PlayerId).HasColumnName("PlayerId");
-                entity.Property(t => t.Amount).HasColumnName("Amout").IsRequired();
+                entity.Property(t => t.Amount).HasColumnName("Amount").IsRequired();
+                entity.Property(t => t.TransactionStatusId).HasColumnName("StatusId").IsRequired();
                 entity.Property(t => t.TransactionTypeId).HasColumnName("TransactionTypeId").IsRequired();
                 entity.Property(t => t.CreatedAt).HasColumnName("CreatedAt").IsRequired();
                 entity.Property(t => t.ProcessedAt).HasColumnName("ProcessedAt");
+                entity.Property(t => t.IsProcessingSuccess).HasColumnName("IsProcessingSuccess");
 
                 entity.HasOne(t => t.Player)
                       .WithMany(p => p.MoneyTransactions)
@@ -271,6 +285,37 @@ namespace BottleGameServer.Data
                     .HasForeignKey(e => e.DepositTransactionId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .IsRequired(false);
+            });
+
+            // Настройка сущности NicePayWebhookLog для PostgreSQL
+            modelBuilder.Entity<NicePayWebhookLog>(entity =>
+            {
+                entity.ToTable("NicePayWebhookLogs");
+                entity.HasKey(l => l.Id);
+
+                entity.Property(l => l.Id).HasColumnName("Id").ValueGeneratedOnAdd();
+                entity.Property(l => l.RawRequest).HasColumnName("RawRequest").IsRequired();
+                entity.Property(l => l.HttpMethod).HasColumnName("HttpMethod").HasMaxLength(10).IsRequired();
+                entity.Property(l => l.ContentType).HasColumnName("ContentType").HasMaxLength(100);
+                entity.Property(l => l.IpAddress).HasColumnName("IpAddress").HasMaxLength(45);
+                entity.Property(l => l.UserAgent).HasColumnName("UserAgent").HasMaxLength(500);
+                entity.Property(l => l.IsSignatureValid).HasColumnName("IsSignatureValid").IsRequired();
+                entity.Property(l => l.ProcessingStatus).HasColumnName("ProcessingStatus").HasMaxLength(50).IsRequired();
+                entity.Property(l => l.ErrorMessage).HasColumnName("ErrorMessage");
+                entity.Property(l => l.TransactionId).HasColumnName("TransactionId");
+                entity.Property(l => l.WebhookType).HasColumnName("WebhookType").HasMaxLength(20);
+                entity.Property(l => l.Result).HasColumnName("Result").HasMaxLength(50);
+                entity.Property(l => l.OrderId).HasColumnName("OrderId").HasMaxLength(100);
+                entity.Property(l => l.ReceivedAt).HasColumnName("ReceivedAt").IsRequired();
+                entity.Property(l => l.ProcessedAt).HasColumnName("ProcessedAt");
+
+                // Индексы
+                entity.HasIndex(l => l.ReceivedAt).HasDatabaseName("IX_NicePayWebhookLogs_ReceivedAt");
+                entity.HasIndex(l => l.ProcessingStatus).HasDatabaseName("IX_NicePayWebhookLogs_ProcessingStatus");
+                entity.HasIndex(l => l.TransactionId).HasDatabaseName("IX_NicePayWebhookLogs_TransactionId");
+                entity.HasIndex(l => l.OrderId).HasDatabaseName("IX_NicePayWebhookLogs_OrderId");
+                entity.HasIndex(l => l.Result).HasDatabaseName("IX_NicePayWebhookLogs_Result");
+                entity.HasIndex(l => l.IsSignatureValid).HasDatabaseName("IX_NicePayWebhookLogs_IsSignatureValid");
             });
         }
     }

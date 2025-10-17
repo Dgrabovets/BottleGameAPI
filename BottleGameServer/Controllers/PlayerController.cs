@@ -1,4 +1,6 @@
-﻿using System.Security.Claims;
+﻿using System.ComponentModel;
+using System.Reflection;
+using System.Security.Claims;
 using BottleGameServer.Data;
 using BottleGameServer.Models.DTOs.Requests;
 using BottleGameServer.Models.DTOs.Responses;
@@ -432,7 +434,11 @@ namespace BottleGameServer.Controllers
                     BannedAt = player.Ban is not null && player.Ban.IsActive ? player.Ban.BannedAt : null,
                     Options = new PlayerOptionsDTO
                     {
-                        WinChance = player.PlayerOptions.WinChance
+                        WinChance = player.PlayerOptions.WinChance,
+                        Currency = player.PlayerOptions.Currency.ToString(),
+                        Wallet = player.PlayerOptions.Wallet,
+                        PayoutMethod = player.PlayerOptions.PayoutMethod.ToString(),
+                        PaymentMethod = player.PlayerOptions.PaymentMethod.ToString()
                     },
                     PlayersInvited = players!.Where(p => playersIdsInvited.Contains(p.Id)).Select(p => new PlayerDTO
                     {
@@ -461,6 +467,7 @@ namespace BottleGameServer.Controllers
         /// Забанить пользователя
         /// </summary>
         /// <param name="playerId">ID игрока</param>
+        /// <param name="request">Модель запроса на изменение игрока</param>
         /// <response code="200">Пользователь успешно изменен</response>
         /// <response code="400">Неккоретные данные запроса</response>
         /// <response code="404">Игрок не найден</response>
@@ -494,10 +501,61 @@ namespace BottleGameServer.Controllers
                 // Изменение игрока
                 if (request.AvatarUrl is not null)
                     player.AvatarUrl = request.AvatarUrl!;
+
                 if (request.Name is not null)
                     player.Name = request.Name!;
+
                 if (request.WinChance is not null)
                     player.PlayerOptions.WinChance = request.WinChance.Value;
+
+                if (request.Currency is not null && request.PaymentMethod is not null)
+                {
+                    // Проверка, что валюта допустима
+                    if (!Enum.TryParse<CurrencyType>(request.Currency, true, out var currency) ||
+                        !Enum.IsDefined(typeof(CurrencyType), currency))
+                    {
+                        _logger.LogWarning("{Prefix} Попытка установить недопустимую валюту: {Currency}", prefix, request.Currency);
+                        return BadRequest($"Валюта '{request.Currency}' не поддерживается. Доступные: {string.Join(", ", Enum.GetNames(typeof(CurrencyType)))}");
+                    }
+
+                    // Проверка, что метод пополнения допустим
+                    if (!Enum.TryParse<PaymentMethodType>(request.PaymentMethod, true, out var method) ||
+                        !Enum.IsDefined(typeof(PaymentMethodType), method))
+                    {
+                        _logger.LogWarning("{Prefix} Попытка установить недопустимую валюту: {PaymentMethod}", prefix, request.PaymentMethod);
+                        return BadRequest($"Метод оплаты '{request.PaymentMethod}' не поддерживается. Доступные: {string.Join(", ", Enum.GetNames(typeof(PaymentMethodType)))}");
+                    }
+
+                    if (GetCategoryAttributeValue(method) != currency.ToString())
+                    {
+                        _logger.LogWarning("{Prefix} Попытка установить метод оплаты {PaymentMethod}, не соответсвующий выбранной валюте: {Currency}", prefix, request.PaymentMethod, request.PaymentMethod);
+                        return BadRequest($"{prefix} Попытка установить метод оплаты {request.PaymentMethod}, не соответсвующий выбранной валюте: {request.Currency}");
+                    }
+
+                    player.PlayerOptions.Currency = currency;
+                    player.PlayerOptions.PaymentMethod = method;
+                }
+                else
+                {
+                    return BadRequest($"Поля: {nameof(request.Currency)} и {nameof(request.PaymentMethod)} не могут изменятся отдельно друг от друга");
+                }
+
+                if (request.Wallet is not null && request.PayoutMethod is not null)
+                {
+                    // Проверка, что метод выплаты допустим
+                    if (!Enum.TryParse<PayoutMethodType>(request.PayoutMethod, true, out var payoutMethod) ||
+                        !Enum.IsDefined(typeof(PayoutMethodType), payoutMethod))
+                    {
+                        _logger.LogWarning("{Prefix} Попытка установить недопустимый метод выплаты: {PayoutMethod}", prefix, request.PayoutMethod);
+                        return BadRequest($"Метод выплаты '{request.PayoutMethod}' не поддерживается. Доступные: {string.Join(", ", Enum.GetNames(typeof(PayoutMethodType)))}");
+                    }
+                    player.PlayerOptions.Wallet = request.Wallet!;
+                    player.PlayerOptions.PayoutMethod = payoutMethod;
+                }
+                else
+                {
+                    return BadRequest($"Поля: {nameof(request.Wallet)} и {nameof(request.PayoutMethod)} не могут изменятся отдельно друг от друга");
+                }
 
                 // Сохранение изменений
                 await _context.SaveChangesAsync();
@@ -885,5 +943,19 @@ namespace BottleGameServer.Controllers
         }
 
         #endregion ActionMethods
+
+        #region Methods
+
+        /// <summary>
+        /// Получает значение атрибута категории свойства
+        /// </summary>
+        public static string GetCategoryAttributeValue(Enum enumValue)
+        {
+            var field = enumValue.GetType().GetField(enumValue.ToString());
+            var attribute = field?.GetCustomAttribute<CategoryAttribute>();
+            return attribute?.Category!;
+        }
+
+        #endregion Methods
     }
 }

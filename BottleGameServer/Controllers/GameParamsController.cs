@@ -113,6 +113,72 @@ namespace BottleGameServer.Controllers
             }
         }
 
+        /// <summary>
+        /// Получить все доступные методы выплат
+        /// </summary>
+        /// <response code="200">Список всех методов выплат</response>
+        /// <response code="500">Внутренняя ошибка сервера</response>
+        [Authorize(Roles = "Player,Admin")]
+        [HttpGet("get-all-payout-methods")]
+        [ProducesResponseType(typeof(IEnumerable<string>), 200)]
+        [ProducesResponseType(500)]
+        public ActionResult<IEnumerable<string>> GetAllPayoutMethods()
+        {
+            try
+            {
+                var methods = Enum.GetNames(typeof(PayoutMethodType));
+                return Ok(methods);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Внутренняя ошибка сервера");
+            }
+        }
+
+        /// <summary>
+        /// Получить все доступные методы пополнения
+        /// </summary>
+        /// <response code="200">Список всех методов пополнения</response>
+        /// <response code="500">Внутренняя ошибка сервера</response>
+        [Authorize(Roles = "Player,Admin")]
+        [HttpGet("get-all-payment-methods")]
+        [ProducesResponseType(typeof(IEnumerable<string>), 200)]
+        [ProducesResponseType(500)]
+        public ActionResult<IEnumerable<string>> GetAllPaymentMethods()
+        {
+            try
+            {
+                var methods = Enum.GetNames(typeof(PaymentMethodType));
+                return Ok(methods);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Внутренняя ошибка сервера");
+            }
+        }
+
+        /// <summary>
+        /// Получить все доступные валюты
+        /// </summary>
+        /// <response code="200">Список всех валют</response>
+        /// <response code="500">Внутренняя ошибка сервера</response>
+        [Authorize(Roles = "Player,Admin")]
+        [HttpGet("get-all-currencies")]
+        [ProducesResponseType(typeof(IEnumerable<string>), 200)]
+        [ProducesResponseType(500)]
+        public ActionResult<IEnumerable<string>> GetAllCurrencies()
+        {
+            try
+            {
+                var currencies = Enum.GetNames(typeof(CurrencyType));
+                return Ok(currencies);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Внутренняя ошибка сервера");
+            }
+        }
+
         #endregion ActionMethods
     }
 }
