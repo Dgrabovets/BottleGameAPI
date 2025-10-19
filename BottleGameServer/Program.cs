@@ -117,41 +117,90 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Настройка CORS
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowSpecificOrigins", policy =>
+//    {
+//        policy.WithOrigins(
+//                "https://138.124.115.47",
+//                "http://138.124.115.47",
+//                "https://138.124.115.47:5001",
+//                "http://138.124.115.47:5001",
+//                "https://upione.github.io",
+//                "http://upione.github.io",
+//                "https://adminbottle.ru",
+//                "http://adminbottle.ru",
+//                "https://api.adminbottle.ru",
+//                "http://api.adminbottle.ru",
+//                "https://api.adminbottle.ru:5001",
+//                "http://api.adminbottle.ru:5000",
+//                "https://admin.adminbottle.ru", // добавлено
+//                "http://admin.adminbottle.ru",  // добавлено
+//                "https://luckybottlex.com",
+//                "http://luckybottlex.com",
+//                "https://admin.luckybottlex.com",
+//                "http://admin.luckybottlex.com",
+//                "https://api.admin.luckybottlex.com",
+//                "http://api.admin.luckybottlex.com",
+//                "http://localhost:3000",
+//                "https://localhost:3000",
+//                "http://localhost:5001",
+//                "https://localhost:5001",
+//                "https://nicepay.io",
+//                "http://nicepay.io",
+//                "https://121.127.46.166",
+//                "http://121.127.46.166")
+//            .AllowAnyHeader()
+//            .AllowAnyMethod()
+//            .AllowCredentials();
+//    });
+//});
+
+// Настройка CORS
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowSpecificOrigins", policy =>
+//    {
+//        policy.SetIsOriginAllowed(origin =>
+//        {
+//            // Разрешаем все локальные адреса
+//            if (origin.StartsWith("http://localhost") ||
+//                origin.StartsWith("https://localhost") ||
+//                origin.StartsWith("http://127.0.0.1") ||
+//                origin.StartsWith("https://127.0.0.1"))
+//                return true;
+
+//            // Разрешаем ваши домены и IP-адреса
+//            var allowedDomains = new[]
+//            {
+//                "138.124.115.47",
+//                "upione.github.io",
+//                "adminbottle.ru",
+//                "api.adminbottle.ru",
+//                "admin.adminbottle.ru",
+//                "luckybottlex.com",
+//                "admin.luckybottlex.com",
+//                "api.admin.luckybottlex.com",
+//                "nicepay.io",
+//                "121.127.46.166"
+//            };
+
+//            return allowedDomains.Any(domain => origin.Contains(domain));
+//        })
+//        .AllowAnyHeader()
+//        .AllowAnyMethod()
+//        .AllowCredentials();
+//    });
+//});
+
+// Настройка CORS - разрешить все
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigins", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins(
-                "https://upione.github.io/Test",
-                "http://upione.github.io/Test",
-                "https://upione.github.io",
-                "http://upione.github.io",
-                "https://adminbottle.ru",
-                "http://adminbottle.ru",
-                "https://api.adminbottle.ru",
-                "http://api.adminbottle.ru",
-                "https://api.adminbottle.ru:5001",
-                "http://api.adminbottle.ru:5000",
-                "https://admin.adminbottle.ru",
-                "http://admin.adminbottle.ru",
-                "https://luckybottlex.com",
-                "http://luckybottlex.com",
-                "https://admin.luckybottlex.com",
-                "http://admin.luckybottlex.com",
-                "https://api.admin.luckybottlex.com",
-                "http://api.admin.luckybottlex.com",
-                "http://localhost:3000",
-                "https://localhost:3000",
-                "http://localhost:5001",
-                "https://localhost:5001",
-                "https://nicepay.io/public/api",
-                "https://nicepay.io/public",
-                "https://nicepay.io",
-                "https://121.127.46.166",
-                "http://121.127.46.166")
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
@@ -170,7 +219,8 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseCors("AllowSpecificOrigins");
+//app.UseCors("AllowSpecificOrigins");
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
