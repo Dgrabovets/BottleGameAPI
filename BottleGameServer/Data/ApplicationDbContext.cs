@@ -31,11 +31,18 @@ namespace BottleGameServer.Data
             modelBuilder.Entity<Player>(entity =>
             {
                 entity.ToTable("Players");
-                entity.HasKey(p => p.Id);   
+                entity.HasKey(p => p.Id);
                 entity.Property(p => p.Id).HasColumnName("Id").ValueGeneratedOnAdd();
                 entity.Property(p => p.TelegramId).HasColumnName("TelegramId").IsRequired();
-                entity.Property(p => p.Name).HasColumnName("Name").HasMaxLength(255).IsRequired();
-                entity.Property(p => p.AvatarUrl).HasColumnName("AvatarUrl").IsRequired();
+                entity.Property(p => p.Name)
+                    .HasColumnName("Name")
+                    .HasColumnType("varchar")
+                    .HasMaxLength(255)
+                    .IsRequired();
+                entity.Property(p => p.AvatarUrl)
+                    .HasColumnName("AvatarUrl")
+                    .HasColumnType("varchar")
+                    .IsRequired();
                 entity.Property(p => p.RegisteredInAppAt).HasColumnName("RegisteredInAppAt").IsRequired();
             });
 
@@ -45,12 +52,14 @@ namespace BottleGameServer.Data
                 entity.ToTable("ReferalLinks");
                 entity.HasKey(b => b.PlayerId);
                 entity.Property(b => b.PlayerId).HasColumnName("PlayerId").IsRequired();
-                entity.Property(b => b.Link).HasColumnName("Link").IsRequired();
-
+                entity.Property(b => b.Link)
+                    .HasColumnName("Link")
+                    .HasColumnType("varchar")
+                    .IsRequired();
                 entity.HasOne(b => b.Player)
-                      .WithOne(p => p.ReferalLink)
-                      .HasForeignKey<ReferalLink>(b => b.PlayerId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                    .WithOne(p => p.ReferalLink)
+                    .HasForeignKey<ReferalLink>(b => b.PlayerId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Настройка сущности InvitedPlayer
@@ -60,14 +69,14 @@ namespace BottleGameServer.Data
                 entity.HasKey(ip => new { ip.PlayerIdInvited, ip.PlayerIdInvitedBy });
 
                 entity.HasOne(ip => ip.PlayerInvited)
-                      .WithMany(p => p.InvitedByMe)
-                      .HasForeignKey(ip => ip.PlayerIdInvitedBy)
-                      .OnDelete(DeleteBehavior.Restrict);
-
+                    .WithMany(p => p.InvitedByMe)
+                    .HasForeignKey(ip => ip.PlayerIdInvitedBy)
+                    .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(ip => ip.PlayerInvitedBy)
-                      .WithOne(p => p.InvitedMe)
-                      .HasForeignKey<InvitedPlayer>(ip => ip.PlayerIdInvited)
-                      .OnDelete(DeleteBehavior.Restrict);
+
+                    .WithOne(p => p.InvitedMe)
+                    .HasForeignKey<InvitedPlayer>(ip => ip.PlayerIdInvited)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // Настройка сущности Ban
@@ -76,21 +85,25 @@ namespace BottleGameServer.Data
                 entity.ToTable("Bans");
                 entity.HasKey(b => b.PlayerId);
                 entity.Property(b => b.PlayerId).HasColumnName("PlayerId").IsRequired();
-                entity.Property(b => b.BanReason).HasColumnName("BanReason").IsRequired();
+
+                entity.Property(b => b.BanReason)
+                    .HasColumnName("BanReason")
+                    .HasColumnType("varchar")
+                    .IsRequired();
+
                 entity.Property(b => b.BannedAt).HasColumnName("BannedAt").IsRequired();
+
                 entity.Property(b => b.IsActive).HasColumnName("IsActive").IsRequired();
 
-                // Добавляем Concurrency Token (версию)
                 entity.Property(b => b.Version)
-                      .HasColumnName("Version")
-                      .IsRowVersion()
-                      .IsConcurrencyToken();
+                    .HasColumnName("Version")
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
 
-                // Связь 1-to-1 с Player
                 entity.HasOne(b => b.Player)
-                      .WithOne(p => p.Ban)
-                      .HasForeignKey<Ban>(b => b.PlayerId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                    .WithOne(p => p.Ban)
+                    .HasForeignKey<Ban>(b => b.PlayerId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Настройка сущности BanHistoryEntity
@@ -99,21 +112,25 @@ namespace BottleGameServer.Data
                 entity.ToTable("BansHistory");
                 entity.HasKey(b => b.Id);
                 entity.Property(b => b.PlayerId).HasColumnName("PlayerId").IsRequired();
-                entity.Property(b => b.BanReason).HasColumnName("BanReason").IsRequired();
+
+                entity.Property(b => b.BanReason)
+                    .HasColumnName("BanReason")
+                    .HasColumnType("varchar")
+                    .IsRequired();
+
                 entity.Property(b => b.BannedAt).HasColumnName("BannedAt").IsRequired();
+
                 entity.Property(b => b.UnbannedAt).HasColumnName("UnbannedAt");
 
-                // Добавляем Concurrency Token
                 entity.Property(b => b.Version)
-                      .HasColumnName("Version")
-                      .IsRowVersion()
-                      .IsConcurrencyToken();
+                    .HasColumnName("Version")
+                    .IsRowVersion()
+                    .IsConcurrencyToken();
 
-                // Связь Many-to-One с Player
                 entity.HasOne(b => b.Player)
-                      .WithMany(p => p.BansHistory)
-                      .HasForeignKey(b => b.PlayerId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                    .WithMany(p => p.BansHistory)
+                    .HasForeignKey(b => b.PlayerId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Настройка сущности PlayerOptions
@@ -122,24 +139,30 @@ namespace BottleGameServer.Data
                 entity.ToTable("PlayersOptions");
                 entity.HasKey(e => e.PlayerId);
                 entity.Property(e => e.WinChance).HasColumnName("WinChance").IsRequired();
-                entity.Property(e => e.Wallet).HasColumnName("Wallet");
-                entity.Property(e => e.Currency)
-                      .HasColumnName("Currency")
-                      .HasConversion<string>();
-                entity.Property(e => e.PayoutMethod)
-                      .HasColumnName("PayoutMethod")
-                      .HasConversion<string>()
-                      .IsRequired();
-                entity.Property(e => e.PaymentMethod)
-                      .HasColumnName("PaymentMethod")
-                      .HasConversion<string>()
-                      .IsRequired();
 
-                // Связь 1-to-1 с Player
+                entity.Property(e => e.Wallet).HasColumnName("Wallet");
+
+                entity.Property(e => e.Currency)
+                    .HasColumnName("Currency")
+                    .HasConversion<string>()
+                    .HasColumnType("varchar");
+
+                entity.Property(e => e.PayoutMethod)
+                    .HasColumnName("PayoutMethod")
+                    .HasConversion<string>()
+                    .HasColumnType("varchar")
+                    .IsRequired();
+
+                entity.Property(e => e.PaymentMethod)
+                    .HasColumnName("PaymentMethod")
+                    .HasConversion<string>()
+                    .HasColumnType("varchar")
+                    .IsRequired();
+
                 entity.HasOne(b => b.Player)
-                      .WithOne(p => p.PlayerOptions)
-                      .HasForeignKey<PlayerOptions>(b => b.PlayerId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                    .WithOne(p => p.PlayerOptions)
+                    .HasForeignKey<PlayerOptions>(b => b.PlayerId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Настройка сущности GameParams (однострочная таблица)
@@ -155,12 +178,27 @@ namespace BottleGameServer.Data
                 entity.ToTable("AdminCreds");
                 entity.HasKey(a => a.Id);
 
-                // Настройка полей
-                entity.Property(a => a.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(a => a.Login).HasColumnName("Login").IsRequired().HasMaxLength(50);
-                entity.Property(a => a.PasswordHash).HasColumnName("PasswordHash").IsRequired();
-                entity.Property(a => a.Salt).HasColumnName("Salt");
-                entity.Property(a => a.CreatedAt).HasColumnName("CreatedAt");
+                entity.Property(a => a.Id)
+                    .HasColumnName("Id")
+                    .ValueGeneratedOnAdd();
+
+                entity.Property(a => a.Login)
+                    .HasColumnName("Login")
+                    .HasColumnType("varchar")  // Явное указание типа
+                    .HasMaxLength(50)
+                    .IsRequired();
+
+                entity.Property(a => a.PasswordHash)
+                    .HasColumnName("PasswordHash")
+                    .HasColumnType("varchar")  // Явное указание типа
+                    .IsRequired();
+
+                entity.Property(a => a.Salt)
+                    .HasColumnName("Salt")
+                    .HasColumnType("varchar");  // Явное указание типа
+
+                entity.Property(a => a.CreatedAt)
+                    .HasColumnName("CreatedAt");
             });
 
             // Настройка сущности GameRound
@@ -215,7 +253,10 @@ namespace BottleGameServer.Data
             {
                 entity.ToTable("TransactionTypes");
                 entity.HasKey(t => t.Id);
-                entity.Property(t => t.Name).HasColumnName("Name").IsRequired();
+                entity.Property(t => t.Name)
+                    .HasColumnName("Name")
+                    .HasColumnType("varchar")
+                    .IsRequired();
             });
 
             // Настройка сущности TransactionStatus
@@ -223,7 +264,10 @@ namespace BottleGameServer.Data
             {
                 entity.ToTable("TransactionStatuses");
                 entity.HasKey(t => t.Id);
-                entity.Property(t => t.Name).HasColumnName("Name").IsRequired();
+                entity.Property(t => t.Name)
+                    .HasColumnName("Name")
+                    .HasColumnType("varchar")
+                    .IsRequired();
             });
 
             // Настройка сущности MoneyTransaction
@@ -294,28 +338,20 @@ namespace BottleGameServer.Data
                 entity.HasKey(l => l.Id);
 
                 entity.Property(l => l.Id).HasColumnName("Id").ValueGeneratedOnAdd();
-                entity.Property(l => l.RawRequest).HasColumnName("RawRequest").IsRequired();
-                entity.Property(l => l.HttpMethod).HasColumnName("HttpMethod").HasMaxLength(10).IsRequired();
-                entity.Property(l => l.ContentType).HasColumnName("ContentType").HasMaxLength(100);
-                entity.Property(l => l.IpAddress).HasColumnName("IpAddress").HasMaxLength(45);
-                entity.Property(l => l.UserAgent).HasColumnName("UserAgent").HasMaxLength(500);
+                entity.Property(l => l.RawRequest).HasColumnName("RawRequest").HasColumnType("varchar").IsRequired();
+                entity.Property(l => l.HttpMethod).HasColumnName("HttpMethod").HasColumnType("varchar").HasMaxLength(10).IsRequired();
+                entity.Property(l => l.ContentType).HasColumnName("ContentType").HasColumnType("varchar").HasMaxLength(100);
+                entity.Property(l => l.IpAddress).HasColumnName("IpAddress").HasColumnType("varchar").HasMaxLength(45);
+                entity.Property(l => l.UserAgent).HasColumnName("UserAgent").HasColumnType("varchar").HasMaxLength(500);
                 entity.Property(l => l.IsSignatureValid).HasColumnName("IsSignatureValid").IsRequired();
-                entity.Property(l => l.ProcessingStatus).HasColumnName("ProcessingStatus").HasMaxLength(50).IsRequired();
-                entity.Property(l => l.ErrorMessage).HasColumnName("ErrorMessage");
+                entity.Property(l => l.ProcessingStatus).HasColumnName("ProcessingStatus").HasColumnType("varchar").HasMaxLength(50).IsRequired();
+                entity.Property(l => l.ErrorMessage).HasColumnName("ErrorMessage").HasColumnType("varchar");
                 entity.Property(l => l.TransactionId).HasColumnName("TransactionId");
-                entity.Property(l => l.WebhookType).HasColumnName("WebhookType").HasMaxLength(20);
-                entity.Property(l => l.Result).HasColumnName("Result").HasMaxLength(50);
-                entity.Property(l => l.OrderId).HasColumnName("OrderId").HasMaxLength(100);
+                entity.Property(l => l.WebhookType).HasColumnName("WebhookType").HasColumnType("varchar").HasMaxLength(20);
+                entity.Property(l => l.Result).HasColumnName("Result").HasColumnType("varchar").HasMaxLength(50);
+                entity.Property(l => l.OrderId).HasColumnName("OrderId").HasColumnType("varchar").HasMaxLength(100);
                 entity.Property(l => l.ReceivedAt).HasColumnName("ReceivedAt").IsRequired();
                 entity.Property(l => l.ProcessedAt).HasColumnName("ProcessedAt");
-
-                // Индексы
-                entity.HasIndex(l => l.ReceivedAt).HasDatabaseName("IX_NicePayWebhookLogs_ReceivedAt");
-                entity.HasIndex(l => l.ProcessingStatus).HasDatabaseName("IX_NicePayWebhookLogs_ProcessingStatus");
-                entity.HasIndex(l => l.TransactionId).HasDatabaseName("IX_NicePayWebhookLogs_TransactionId");
-                entity.HasIndex(l => l.OrderId).HasDatabaseName("IX_NicePayWebhookLogs_OrderId");
-                entity.HasIndex(l => l.Result).HasDatabaseName("IX_NicePayWebhookLogs_Result");
-                entity.HasIndex(l => l.IsSignatureValid).HasDatabaseName("IX_NicePayWebhookLogs_IsSignatureValid");
             });
         }
     }

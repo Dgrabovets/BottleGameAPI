@@ -219,7 +219,7 @@ namespace BottleGameServer.Controllers
                 if (!players.Any() || !balances.Any())
                 {
                     _logger.LogWarning("{Prefix} Нужные данные не найдены, скорее всего нарушена целостность данных", prefix);
-                    return BadRequest("Нужные данные не найдены, скорее всего нарушена целостность данных");
+                    return new GetAdminStatisticsResponse();
                 }
 
                 var transactions = await _context.MoneyTransactions.AsNoTracking().ToListAsync();

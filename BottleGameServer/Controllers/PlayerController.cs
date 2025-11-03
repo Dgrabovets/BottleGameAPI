@@ -464,7 +464,7 @@ namespace BottleGameServer.Controllers
         }
 
         /// <summary>
-        /// Забанить пользователя
+        /// Изменить пользователя
         /// </summary>
         /// <param name="playerId">ID игрока</param>
         /// <param name="request">Модель запроса на изменение игрока</param>
@@ -472,7 +472,7 @@ namespace BottleGameServer.Controllers
         /// <response code="400">Неккоретные данные запроса</response>
         /// <response code="404">Игрок не найден</response>
         /// <response code="500">Внутренняя ошибка сервера</response>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Player")]
         [HttpPost("edit-player/{playerId:int}")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
