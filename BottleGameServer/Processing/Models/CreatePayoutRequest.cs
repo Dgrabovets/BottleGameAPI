@@ -20,7 +20,7 @@ namespace BottleGameServer.Processing.Models
         string method,
         string wallet,
         int amount,
-        string comment,
+        string? comment,
         bool fee_merchant
     );
 }

@@ -483,14 +483,17 @@ namespace BottleGameServer.Controllers
             try
             {
                 // Проверка входных данных
-                if (!ModelState.IsValid || (request.AvatarUrl is null && request.Name is null && request.WinChance is null))
+                if (!ModelState.IsValid)
                 {
                     _logger.LogWarning("{Prefix} Некорректные данные запроса для изменения игрока {PlayerId}", prefix, playerId);
                     return BadRequest(ModelState);
                 }
 
                 // Проверка существования игрока
-                var player = await _context.Players.Include(p => p.PlayerOptions).FirstOrDefaultAsync(p => p.Id == playerId);
+                var player = await _context.Players
+                                        .Include(p => p.PlayerOptions)
+                                        .Include(p => p.Balance)
+                                        .FirstOrDefaultAsync(p => p.Id == playerId);
 
                 if (player is null)
                 {
@@ -535,7 +538,7 @@ namespace BottleGameServer.Controllers
                     player.PlayerOptions.Currency = currency;
                     player.PlayerOptions.PaymentMethod = method;
                 }
-                else
+                else if ((request.Currency is null && request.PaymentMethod is not null) || (request.Currency is not null && request.PaymentMethod is null))
                 {
                     return BadRequest($"Поля: {nameof(request.Currency)} и {nameof(request.PaymentMethod)} не могут изменятся отдельно друг от друга");
                 }
@@ -552,9 +555,16 @@ namespace BottleGameServer.Controllers
                     player.PlayerOptions.Wallet = request.Wallet!;
                     player.PlayerOptions.PayoutMethod = payoutMethod;
                 }
-                else
+                else if ((request.Wallet is null && request.PayoutMethod is not null) || (request.Wallet is not null && request.PayoutMethod is null))
                 {
                     return BadRequest($"Поля: {nameof(request.Wallet)} и {nameof(request.PayoutMethod)} не могут изменятся отдельно друг от друга");
+                }
+
+                // УБРАТЬ
+                if (User.IsInRole("Admin"))
+                {
+                    if (request.Balance is not null)
+                        player.Balance.Amount = request.Balance.Value;
                 }
 
                 // Сохранение изменений

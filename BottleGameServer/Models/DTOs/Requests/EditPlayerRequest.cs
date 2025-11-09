@@ -28,16 +28,21 @@
         /// <summary>
         /// Кошелёк или номер карты игрока для вывода средств
         /// </summary>
-        public string Wallet { get; set; } = string.Empty;
+        public string? Wallet { get; set; } = string.Empty;
 
         /// <summary>
         /// Предпочитаемый метод выплаты игрока
         /// </summary>
-        public string PayoutMethod { get; set; } = string.Empty;
+        public string? PayoutMethod { get; set; } = string.Empty;
 
         /// <summary>
         /// Предпочитаемый метод платежа игрока
         /// </summary>
-        public string PaymentMethod { get; set; } = string.Empty;
+        public string? PaymentMethod { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Новый баланс игрока (добавлен для удобного тестирование)
+        /// </summary>
+        public int? Balance { get; set; }
     }
 }

@@ -457,11 +457,11 @@ namespace BottleGameServer.Controllers
                                 merchant_id: _options.MerchantId,
                                 secret: _options.SecretKey,
                                 order_id: transaction.Id.ToString(),
-                                balance: CurrencyType.RUB.ToString(),
+                                balance: CurrencyType.USDT.ToString(),
                                 method: transaction.Player.PlayerOptions.PayoutMethod.ToString(),
                                 wallet: transaction.Player.PlayerOptions.Wallet,
-                                amount: transaction.Amount * 100,
-                                comment: transaction.Player.Name,
+                                amount: transaction.Amount * 80 * 100,
+                                comment: null,
                                 fee_merchant: false
                             );
 
@@ -469,6 +469,7 @@ namespace BottleGameServer.Controllers
 
                             if (!payoutResponse.IsSuccess || payoutResponse.Payout is null)
                             {
+                                transaction.Player.Balance.Amount += transaction.Amount;
                                 transaction.TransactionStatusId = 3;
                                 transaction.IsProcessingSuccess = false;
                                 _logger.LogError("{Prefix} Ошибка при создании выплаты для игрока {PlayerId}: {ErrorMessage}", prefix, transaction.PlayerId, payoutResponse.ErrorMessage);
@@ -477,6 +478,7 @@ namespace BottleGameServer.Controllers
                         }
                         catch (Exception ex)
                         {
+                            transaction.Player.Balance.Amount += transaction.Amount;
                             transaction.TransactionStatusId = 3;
                             transaction.IsProcessingSuccess = false;
                             _logger.LogError(ex, "{Prefix} Ошибка при создании выплаты для игрока {PlayerId}", prefix, transaction.PlayerId);
@@ -484,6 +486,7 @@ namespace BottleGameServer.Controllers
                         }
                         finally
                         {
+                            transaction.ProcessedAt = DateTime.UtcNow;
                             // Сохраняем все изменения в базе данных
                             await _context.SaveChangesAsync();
                         }
@@ -520,7 +523,7 @@ namespace BottleGameServer.Controllers
         /// <response code="404">Игрок не найден</response>
         /// <response code="403">Игрок в бане</response>
         /// <response code="500">Внутренняя ошибка сервера</response>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Player")]
         [HttpGet("get-player-transactions/{playerId:int}")]
         [ProducesResponseType(typeof(GetPlayerTransactionsResponse), 200)]
         [ProducesResponseType(400)]
@@ -538,6 +541,19 @@ namespace BottleGameServer.Controllers
                 {
                     _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", prefix, playerId);
                     return NotFound($"Игрок с ID {playerId} не найден");
+                }
+
+                // Проверка, что игрок может совершать операцию только со своим аккаунтом
+                if (User.IsInRole("Player") && playerId.ToString() != User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value)
+                {
+                    return Unauthorized();
+                }
+
+                // Если игрок забанен — возвращаем 403
+                if (User.IsInRole("Player") && player.Ban is not null && player.Ban.IsActive)
+                {
+                    _logger.LogWarning("{Prefix} Пользователь забанен", prefix);
+                    return Forbid("Пользователь в бане");
                 }
 
                 // Получение транзакций

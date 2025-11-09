@@ -94,10 +94,11 @@ namespace BottleGameServer.Processing
                 }
                 else
                 {
+                    var errorResponse = JsonSerializer.Deserialize<ApiResponseWrapper<ErrorResponseData>>(content);
                     return new CreatePayoutResult
                     {
                         IsSuccess = false,
-                        ErrorMessage = "Unknown error"
+                        ErrorMessage = errorResponse?.data?.message ?? "Unknown error"
                     };
                 }
             }

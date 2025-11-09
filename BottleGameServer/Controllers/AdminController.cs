@@ -229,7 +229,7 @@ namespace BottleGameServer.Controllers
                 var response = new GetAdminStatisticsResponse
                 {
                     UsersTotal = players.Count,
-                    DepositsTotal = transactions.Where(t => t.TransactionTypeId == 1).Sum(t => t.Amount),
+                    DepositsTotal = transactions.Where(t => t.TransactionTypeId == 1 && t.TransactionStatusId == 2).Sum(t => t.Amount),
                     BalancesTotal = balances.Sum(b => b.Amount),
                     PendingWithdrawalsTotal = transactions.Where(t => t.TransactionTypeId == 2 && t.TransactionStatusId == 1).Sum(t => t.Amount)
                 };
