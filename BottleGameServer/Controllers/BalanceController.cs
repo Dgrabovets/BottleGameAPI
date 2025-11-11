@@ -460,7 +460,7 @@ namespace BottleGameServer.Controllers
                                 balance: CurrencyType.USDT.ToString(),
                                 method: transaction.Player.PlayerOptions.PayoutMethod.ToString(),
                                 wallet: transaction.Player.PlayerOptions.Wallet,
-                                amount: transaction.Amount * 80 * 100,
+                                amount: transaction.Amount / 80 * 100,
                                 comment: null,
                                 fee_merchant: false
                             );

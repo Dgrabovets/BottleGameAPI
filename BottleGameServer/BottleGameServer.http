@@ -1,6 +1,0 @@
-@BottleGameServer_HostAddress = http://localhost:5144
-
-GET {{BottleGameServer_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

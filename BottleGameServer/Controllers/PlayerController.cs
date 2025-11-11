@@ -502,16 +502,16 @@ namespace BottleGameServer.Controllers
                 }
 
                 // Изменение игрока
-                if (request.AvatarUrl is not null)
+                if (!string.IsNullOrWhiteSpace(request.AvatarUrl))
                     player.AvatarUrl = request.AvatarUrl!;
 
-                if (request.Name is not null)
+                if (!string.IsNullOrWhiteSpace(request.Name))
                     player.Name = request.Name!;
 
                 if (request.WinChance is not null)
                     player.PlayerOptions.WinChance = request.WinChance.Value;
 
-                if (request.Currency is not null && request.PaymentMethod is not null)
+                if (!string.IsNullOrWhiteSpace(request.Currency) && !string.IsNullOrWhiteSpace(request.PaymentMethod))
                 {
                     // Проверка, что валюта допустима
                     if (!Enum.TryParse<CurrencyType>(request.Currency, true, out var currency) ||
@@ -538,12 +538,13 @@ namespace BottleGameServer.Controllers
                     player.PlayerOptions.Currency = currency;
                     player.PlayerOptions.PaymentMethod = method;
                 }
-                else if ((request.Currency is null && request.PaymentMethod is not null) || (request.Currency is not null && request.PaymentMethod is null))
+                else if ((string.IsNullOrWhiteSpace(request.Currency) && !string.IsNullOrWhiteSpace(request.PaymentMethod)) 
+                        || (!string.IsNullOrWhiteSpace(request.Currency) && string.IsNullOrWhiteSpace(request.PaymentMethod)))
                 {
                     return BadRequest($"Поля: {nameof(request.Currency)} и {nameof(request.PaymentMethod)} не могут изменятся отдельно друг от друга");
                 }
 
-                if (request.Wallet is not null && request.PayoutMethod is not null)
+                if (!string.IsNullOrWhiteSpace(request.Wallet) && !string.IsNullOrWhiteSpace(request.PayoutMethod))
                 {
                     // Проверка, что метод выплаты допустим
                     if (!Enum.TryParse<PayoutMethodType>(request.PayoutMethod, true, out var payoutMethod) ||
@@ -555,7 +556,8 @@ namespace BottleGameServer.Controllers
                     player.PlayerOptions.Wallet = request.Wallet!;
                     player.PlayerOptions.PayoutMethod = payoutMethod;
                 }
-                else if ((request.Wallet is null && request.PayoutMethod is not null) || (request.Wallet is not null && request.PayoutMethod is null))
+                else if ((string.IsNullOrWhiteSpace(request.Wallet) && !string.IsNullOrWhiteSpace(request.PayoutMethod)) 
+                        || (!string.IsNullOrWhiteSpace(request.Wallet) && !string.IsNullOrWhiteSpace(request.PayoutMethod)))
                 {
                     return BadRequest($"Поля: {nameof(request.Wallet)} и {nameof(request.PayoutMethod)} не могут изменятся отдельно друг от друга");
                 }

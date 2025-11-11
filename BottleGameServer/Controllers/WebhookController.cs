@@ -166,7 +166,7 @@ namespace BottleGameServer.Controllers
             catch (Exception ex)
             {
                 webhookLog.ProcessingStatus = "Error";
-                webhookLog.ErrorMessage = ex.Message;
+                webhookLog.ErrorMessage = ex.ToString();
                 webhookLog.ProcessedAt = DateTime.UtcNow;
                 await SaveWebhookLogAsync(webhookLog);
 
@@ -357,6 +357,7 @@ namespace BottleGameServer.Controllers
         {
             var transaction = await _context.MoneyTransactions
                 .Include(t => t.Player)
+                    .ThenInclude(b => b.Balance)
                 .FirstOrDefaultAsync(t => t.Id == transactionId);
 
             if (transaction is null)
@@ -478,6 +479,7 @@ namespace BottleGameServer.Controllers
         {
             var transaction = await _context.MoneyTransactions
                 .Include(t => t.Player)
+                    .ThenInclude(b => b.Balance)
                 .FirstOrDefaultAsync(t => t.Id == transactionId);
 
             if (transaction is null)
