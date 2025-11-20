@@ -566,7 +566,20 @@ namespace BottleGameServer.Controllers
                 if (User.IsInRole("Admin"))
                 {
                     if (request.Balance is not null)
+                    {
                         player.Balance.Amount = request.Balance.Value;
+
+                        var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
+                        if (appBalance is null)
+                        {
+                            _logger.LogWarning("{Prefix} Не найдены данные баланса приложения", prefix);
+                            return BadRequest("Не найдены данные баланса приложения");
+                        }
+
+                        appBalance.Amount += request.Balance.Value;
+                        appBalance.BalanceAmountUpdatedAt = DateTime.UtcNow;
+                        appBalance.BalanceAmountAdminIdUpdatedBy = 1;
+                    }
                 }
 
                 // Сохранение изменений

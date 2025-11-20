@@ -523,7 +523,7 @@ namespace BottleGameServer.Controllers
         /// <response code="404">Игрок не найден</response>
         /// <response code="403">Игрок в бане</response>
         /// <response code="500">Внутренняя ошибка сервера</response>
-        [Authorize(Roles = "Admin, Player")]
+        [Authorize(Roles = "Admin,Player")]
         [HttpGet("get-player-transactions/{playerId:int}")]
         [ProducesResponseType(typeof(GetPlayerTransactionsResponse), 200)]
         [ProducesResponseType(400)]
