@@ -29,5 +29,10 @@
         /// Метод оплаты (строка)
         /// </summary>
         public string PaymentMethod { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Тип платёжных реквизитов (например, "card", "phone", "sbp")
+        /// </summary>
+        public string PaymentDetailType { get; set; } = string.Empty;
     }
 }

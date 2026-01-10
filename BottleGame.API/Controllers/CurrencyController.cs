@@ -159,6 +159,39 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
+        /// Получает доступные типы платёжных реквизитов для указанного шлюза.
+        /// </summary>
+        /// <param name="gatewayCode">Код платёжного шлюза.</param>
+        /// <returns>Список доступных типов реквизитов.</returns>
+        /// <response code="200">Список типов реквизитов (например, "card", "phone", "sbp").</response>
+        [HttpGet("gateways/{gatewayCode}/detail-types")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(DetailTypesResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetDetailTypesForGateway(string gatewayCode)
+        {
+            _logger.LogDebug("{Prefix} Запрос типов реквизитов для шлюза {Gateway}", Prefix, gatewayCode);
+            var detailTypes = await _currencyService.GetDetailTypesForGatewayAsync(gatewayCode);
+            return Ok(new DetailTypesResponse(gatewayCode, detailTypes.ToList()));
+        }
+
+        /// <summary>
+        /// Проверяет, поддерживает ли шлюз указанный тип платёжных реквизитов.
+        /// </summary>
+        /// <param name="gatewayCode">Код платёжного шлюза.</param>
+        /// <param name="detailType">Тип реквизитов для проверки.</param>
+        /// <returns>Результат проверки.</returns>
+        /// <response code="200">Результат проверки типа реквизитов.</response>
+        [HttpGet("gateways/{gatewayCode}/validate-detail-type")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(DetailTypeValidationResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> ValidateDetailTypeForGateway(string gatewayCode, [FromQuery] string detailType)
+        {
+            _logger.LogDebug("{Prefix} Валидация типа реквизитов '{DetailType}' для шлюза {Gateway}", Prefix, detailType, gatewayCode);
+            var isValid = await _currencyService.IsDetailTypeValidForGatewayAsync(gatewayCode, detailType);
+            return Ok(new DetailTypeValidationResponse(gatewayCode, detailType, isValid));
+        }
+
+        /// <summary>
         /// Очищает кэш справочников валют и шлюзов.
         /// </summary>
         /// <returns>Результат операции.</returns>

@@ -84,6 +84,23 @@ namespace BottleGame.Application.Interfaces
         Task<bool> IsAmountValidForGatewayAsync(string gatewayCode, decimal amount, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Получает доступные типы платёжных реквизитов для указанного шлюза.
+        /// </summary>
+        /// <param name="gatewayCode">Код платёжного шлюза.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>Список доступных типов реквизитов или пустой список.</returns>
+        Task<IEnumerable<string>> GetDetailTypesForGatewayAsync(string gatewayCode, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Проверяет, поддерживает ли шлюз указанный тип платёжных реквизитов.
+        /// </summary>
+        /// <param name="gatewayCode">Код платёжного шлюза.</param>
+        /// <param name="detailType">Тип реквизитов для проверки (например, "card", "phone", "sbp").</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns>True, если тип реквизитов поддерживается.</returns>
+        Task<bool> IsDetailTypeValidForGatewayAsync(string gatewayCode, string detailType, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Очищает все кэши справочников.
         /// </summary>
         void ClearCache();

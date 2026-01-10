@@ -57,6 +57,15 @@ namespace BottleGame.Domain.Entities
         [MaxLength(50)]
         public string PaymentMethod { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Тип платёжных реквизитов (например, "card", "phone", "sbp").
+        /// Доступные значения зависят от выбранного PaymentMethod.
+        /// </summary>
+        [Required]
+        [Column("PaymentDetailType")]
+        [MaxLength(50)]
+        public string PaymentDetailType { get; set; } = "card";
+
         #region Navigation Properties
 
         /// <summary>

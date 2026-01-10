@@ -37,6 +37,12 @@ namespace BottleGame.Application.Validators
                 .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Код метода оплаты должен содержать только латинские буквы, цифры и подчёркивания")
                 .When(x => !string.IsNullOrWhiteSpace(x.PaymentMethod));
 
+            // Базовая валидация формата типа платёжных реквизитов
+            RuleFor(x => x.PaymentDetailType)
+                .MaximumLength(50).WithMessage("Тип реквизитов не должен превышать 50 символов")
+                .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Тип реквизитов должен содержать только латинские буквы, цифры и подчёркивания")
+                .When(x => !string.IsNullOrWhiteSpace(x.PaymentDetailType));
+
             // Базовая валидация формата метода выплаты
             RuleFor(x => x.PayoutMethod)
                 .MaximumLength(50).WithMessage("Код метода выплаты не должен превышать 50 символов")

@@ -144,10 +144,11 @@ namespace BottleGame.Infrastructure.Services
                 Options = new PlayerOptionsDTO
                 {
                     WinChance = player.PlayerOptions.WinChance,
-                    Currency = player.PlayerOptions.Currency.ToString(),
+                    Currency = player.PlayerOptions.Currency ?? string.Empty,
                     Wallet = player.PlayerOptions.Wallet,
-                    PayoutMethod = player.PlayerOptions.PayoutMethod.ToString(),
-                    PaymentMethod = player.PlayerOptions.PaymentMethod.ToString()
+                    PayoutMethod = player.PlayerOptions.PayoutMethod,
+                    PaymentMethod = player.PlayerOptions.PaymentMethod,
+                    PaymentDetailType = player.PlayerOptions.PaymentDetailType
                 },
                 PlayersInvited = invitedPlayers.Select(MapToPlayerDTO)
             };
@@ -438,10 +439,10 @@ namespace BottleGame.Infrastructure.Services
             if (!string.IsNullOrWhiteSpace(request.Name))
                 player.Name = request.Name;
 
-            if (request.WinChance is not null)
-                player.PlayerOptions.WinChance = request.WinChance.Value;
+            if (request.WinChance != default)
+                player.PlayerOptions.WinChance = request.WinChance!.Value;
 
-            // Валидация и изменение валюты и метода оплаты (через API процессинга)
+            // Валидация и изменение валюты, метода оплаты и типа реквизитов (через API процессинга)
             if (!string.IsNullOrWhiteSpace(request.Currency) && !string.IsNullOrWhiteSpace(request.PaymentMethod))
             {
                 // Проверяем валюту через API процессинга
@@ -456,21 +457,51 @@ namespace BottleGame.Infrastructure.Services
 
                 // Проверяем платёжный шлюз для указанной валюты
                 var paymentGateways = await _currencyService.GetPaymentGatewaysForCurrencyAsync(request.Currency);
-                var isValidGateway = paymentGateways.Any(g => g.Code.Equals(request.PaymentMethod, StringComparison.OrdinalIgnoreCase));
-                if (!isValidGateway)
+                var selectedGateway = paymentGateways.FirstOrDefault(g => g.Code.Equals(request.PaymentMethod, StringComparison.OrdinalIgnoreCase));
+                if (selectedGateway is null)
                 {
                     var gatewayCodes = string.Join(", ", paymentGateways.Select(g => g.Code));
                     _logger.LogWarning("{Prefix} Попытка установить недопустимый метод оплаты: {PaymentMethod}", Prefix, request.PaymentMethod);
                     return Result.Failure($"Метод оплаты '{request.PaymentMethod}' не поддерживается для валюты '{request.Currency}'. Доступные: {gatewayCodes}");
                 }
 
+                // Определяем тип реквизитов (из запроса или по умолчанию)
+                var detailType = !string.IsNullOrWhiteSpace(request.PaymentDetailType)
+                    ? request.PaymentDetailType.ToLowerInvariant()
+                    : (selectedGateway.DetailTypes.Count > 0 ? selectedGateway.DetailTypes[0] : "card");
+
+                // Проверяем, что тип реквизитов поддерживается выбранным шлюзом
+                if (selectedGateway.DetailTypes.Count > 0 &&
+                    !selectedGateway.DetailTypes.Any(dt => dt.Equals(detailType, StringComparison.OrdinalIgnoreCase)))
+                {
+                    var availableTypes = string.Join(", ", selectedGateway.DetailTypes);
+                    _logger.LogWarning("{Prefix} Попытка установить недопустимый тип реквизитов: {DetailType}", Prefix, detailType);
+                    return Result.Failure($"Тип реквизитов '{detailType}' не поддерживается методом оплаты '{request.PaymentMethod}'. Доступные: {availableTypes}");
+                }
+
                 player.PlayerOptions.Currency = request.Currency.ToLowerInvariant();
                 player.PlayerOptions.PaymentMethod = request.PaymentMethod.ToLowerInvariant();
+                player.PlayerOptions.PaymentDetailType = detailType;
             }
             else if ((!string.IsNullOrWhiteSpace(request.Currency) && string.IsNullOrWhiteSpace(request.PaymentMethod)) ||
                      (string.IsNullOrWhiteSpace(request.Currency) && !string.IsNullOrWhiteSpace(request.PaymentMethod)))
             {
                 return Result.Failure("Поля Currency и PaymentMethod не могут изменяться отдельно друг от друга");
+            }
+            else if (!string.IsNullOrWhiteSpace(request.PaymentDetailType))
+            {
+                // Обновление только PaymentDetailType (без изменения метода оплаты)
+                var currentPaymentMethod = player.PlayerOptions.PaymentMethod;
+                var isValidDetailType = await _currencyService.IsDetailTypeValidForGatewayAsync(currentPaymentMethod, request.PaymentDetailType);
+                if (!isValidDetailType)
+                {
+                    var availableTypes = await _currencyService.GetDetailTypesForGatewayAsync(currentPaymentMethod);
+                    var typesStr = availableTypes.Any() ? string.Join(", ", availableTypes) : "любой";
+                    _logger.LogWarning("{Prefix} Попытка установить недопустимый тип реквизитов: {DetailType}", Prefix, request.PaymentDetailType);
+                    return Result.Failure($"Тип реквизитов '{request.PaymentDetailType}' не поддерживается методом оплаты '{currentPaymentMethod}'. Доступные: {typesStr}");
+                }
+
+                player.PlayerOptions.PaymentDetailType = request.PaymentDetailType.ToLowerInvariant();
             }
 
             // Валидация и изменение кошелька и метода выплаты

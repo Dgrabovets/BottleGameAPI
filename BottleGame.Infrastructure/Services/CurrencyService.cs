@@ -117,7 +117,7 @@ namespace BottleGame.Infrastructure.Services
             var gateways = await GetPaymentGatewaysAsync(cancellationToken: cancellationToken);
 
             return gateways.Where(g =>
-                g.SupportsPayments &&
+                //g.SupportsPayments &&
                 g.Currency.Equals(currencyCode, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -127,7 +127,7 @@ namespace BottleGame.Infrastructure.Services
             var gateways = await GetPaymentGatewaysAsync(cancellationToken: cancellationToken);
 
             return gateways.Where(g =>
-                g.SupportsPayouts &&
+                //g.SupportsPayouts &&
                 g.Currency.Equals(currencyCode, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -221,6 +221,44 @@ namespace BottleGame.Infrastructure.Services
             {
                 _logger.LogWarning("{Prefix} Сумма {Amount} вне допустимого диапазона для шлюза {Gateway} (мин: {Min}, макс: {Max})",
                     Prefix, amount, gatewayCode, gateway.MinAmount, gateway.MaxAmount);
+            }
+
+            return isValid;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<string>> GetDetailTypesForGatewayAsync(string gatewayCode, CancellationToken cancellationToken = default)
+        {
+            var gateways = await GetPaymentGatewaysAsync(cancellationToken: cancellationToken);
+            var gateway = gateways.FirstOrDefault(g => g.Code.Equals(gatewayCode, StringComparison.OrdinalIgnoreCase));
+
+            if (gateway is null)
+            {
+                _logger.LogWarning("{Prefix} Шлюз {Gateway} не найден", Prefix, gatewayCode);
+                return Enumerable.Empty<string>();
+            }
+
+            return gateway.DetailTypes;
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> IsDetailTypeValidForGatewayAsync(string gatewayCode, string detailType, CancellationToken cancellationToken = default)
+        {
+            var detailTypes = await GetDetailTypesForGatewayAsync(gatewayCode, cancellationToken);
+
+            if (!detailTypes.Any())
+            {
+                // Если шлюз не имеет ограничений по типам реквизитов, считаем любой тип допустимым
+                _logger.LogDebug("{Prefix} Шлюз {Gateway} не имеет ограничений по типам реквизитов", Prefix, gatewayCode);
+                return true;
+            }
+
+            var isValid = detailTypes.Any(dt => dt.Equals(detailType, StringComparison.OrdinalIgnoreCase));
+
+            if (!isValid)
+            {
+                _logger.LogWarning("{Prefix} Тип реквизитов '{DetailType}' не поддерживается шлюзом {Gateway}. Доступные: {Available}",
+                    Prefix, detailType, gatewayCode, string.Join(", ", detailTypes));
             }
 
             return isValid;

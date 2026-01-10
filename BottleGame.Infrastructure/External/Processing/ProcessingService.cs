@@ -122,7 +122,8 @@ namespace BottleGame.Infrastructure.External.Processing
                             g.SupportsPayments,
                             g.SupportsPayouts,
                             g.MinAmount,
-                            g.MaxAmount));
+                            g.MaxAmount,
+                            g.DetailTypes));
                     }
                 }
 

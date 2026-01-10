@@ -84,6 +84,11 @@ namespace BottleGame.Application.DTOs.Processing
         public decimal? MaxAmount { get; set; }
 
         /// <summary>
+        /// Типы платёжных реквизитов, доступные для этого шлюза (например, "card", "phone", "account_number").
+        /// </summary>
+        public List<string> DetailTypes { get; set; } = [];
+
+        /// <summary>
         /// Инициализирует новый экземпляр <see cref="PaymentGatewayInfo"/>.
         /// </summary>
         public PaymentGatewayInfo()
@@ -100,7 +105,8 @@ namespace BottleGame.Application.DTOs.Processing
         /// <param name="supportsPayouts">Поддерживает ли выплаты.</param>
         /// <param name="minAmount">Минимальная сумма.</param>
         /// <param name="maxAmount">Максимальная сумма.</param>
-        public PaymentGatewayInfo(string code, string name, string currency, bool supportsPayments, bool supportsPayouts, decimal? minAmount, decimal? maxAmount)
+        /// <param name="detailTypes">Типы платёжных реквизитов.</param>
+        public PaymentGatewayInfo(string code, string name, string currency, bool supportsPayments, bool supportsPayouts, decimal? minAmount, decimal? maxAmount, List<string>? detailTypes = null)
         {
             Code = code;
             Name = name;
@@ -109,6 +115,7 @@ namespace BottleGame.Application.DTOs.Processing
             SupportsPayouts = supportsPayouts;
             MinAmount = minAmount;
             MaxAmount = maxAmount;
+            DetailTypes = detailTypes ?? [];
         }
     }
 

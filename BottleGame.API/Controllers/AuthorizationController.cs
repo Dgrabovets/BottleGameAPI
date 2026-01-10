@@ -135,14 +135,24 @@ namespace BottleGame.API.Controllers
                     return BadRequest("Некорректные данные инициализации Telegram");
                 }
 
+                var playerData = Parse(initData);
+
+                bool isReferalLinkIsNotExisting = await _context.ReferralLinks.FirstOrDefaultAsync(p => p.PlayerId == playerData.InvitingPlayerId) is null;
+
+                if (isReferalLinkIsNotExisting)
+                {
+                    var query = HttpUtility.ParseQueryString(initData);
+
+                    query.Remove("start_param");
+                    initData = query.ToString()!;
+                }
+
                 // Проверка подлинности данных Telegram
                 if (!_telegramAuthService.ValidateInitData(initData))
                 {
                     _logger.LogWarning("{Prefix} Неподтверждённые данные Telegram", prefix);
                     return Unauthorized("Неверные данные авторизации Telegram");
                 }
-
-                var playerData = Parse(initData);
 
                 // Поиск или создание игрока в БД
                 var player = await _context.Players.Include(p => p.Ban).FirstOrDefaultAsync(p => p.TelegramId == playerData.TelegramId);
@@ -192,8 +202,8 @@ namespace BottleGame.API.Controllers
                         WinChance = gameParams!.BaseWinChance,
                         Currency = "rub",
                         Wallet = string.Empty,
-                        PayoutMethod = "bankcard_rub",
-                        PaymentMethod = "sbp_rub"
+                        PayoutMethod = "sberbank",
+                        PaymentMethod = "sberbank"
                     };
 
                     _context.PlayersOptions.Add(options);

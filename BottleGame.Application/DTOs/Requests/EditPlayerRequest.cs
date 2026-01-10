@@ -31,6 +31,12 @@
         public string? PaymentMethod { get; set; }
 
         /// <summary>
+        /// Тип платёжных реквизитов (например, "card", "phone", "sbp").
+        /// Должен соответствовать одному из доступных типов для выбранного PaymentMethod.
+        /// </summary>
+        public string? PaymentDetailType { get; set; }
+
+        /// <summary>
         /// Метод выплаты
         /// </summary>
         public string? PayoutMethod { get; set; }

@@ -121,6 +121,12 @@ namespace BottleGame.Infrastructure.External.Processing
         /// </summary>
         [JsonPropertyName("max_amount")]
         public decimal? MaxAmount { get; set; }
+
+        /// <summary>
+        /// Типы платёжных реквизитов, доступные для этого шлюза (например, "card", "phone", "account_number").
+        /// </summary>
+        [JsonPropertyName("detail_types")]
+        public List<string>? DetailTypes { get; set; }
     }
 
     /// <summary>

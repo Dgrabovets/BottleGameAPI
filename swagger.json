@@ -1504,6 +1504,96 @@
         }
       }
     },
+    "/api/currencies/gateways/{gatewayCode}/detail-types": {
+      "get": {
+        "tags": [
+          "Currency"
+        ],
+        "summary": "Получает доступные типы платёжных реквизитов для указанного шлюза.",
+        "parameters": [
+          {
+            "name": "gatewayCode",
+            "in": "path",
+            "description": "Код платёжного шлюза.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список типов реквизитов (например, \"card\", \"phone\", \"sbp\").",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailTypesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailTypesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailTypesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/currencies/gateways/{gatewayCode}/validate-detail-type": {
+      "get": {
+        "tags": [
+          "Currency"
+        ],
+        "summary": "Проверяет, поддерживает ли шлюз указанный тип платёжных реквизитов.",
+        "parameters": [
+          {
+            "name": "gatewayCode",
+            "in": "path",
+            "description": "Код платёжного шлюза.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "detailType",
+            "in": "query",
+            "description": "Тип реквизитов для проверки.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Результат проверки типа реквизитов.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailTypeValidationResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailTypeValidationResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailTypeValidationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/currencies/cache/clear": {
       "post": {
         "tags": [
@@ -1656,132 +1746,6 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Внутренняя ошибка сервера"
-          }
-        }
-      }
-    },
-    "/api/GameParams/get-all-payout-methods": {
-      "get": {
-        "tags": [
-          "GameParams"
-        ],
-        "summary": "Получить все доступные методы выплат",
-        "responses": {
-          "200": {
-            "description": "Список всех методов выплат",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Внутренняя ошибка сервера"
-          }
-        }
-      }
-    },
-    "/api/GameParams/get-all-payment-methods": {
-      "get": {
-        "tags": [
-          "GameParams"
-        ],
-        "summary": "Получить все доступные методы пополнения",
-        "responses": {
-          "200": {
-            "description": "Список всех методов пополнения",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Внутренняя ошибка сервера"
-          }
-        }
-      }
-    },
-    "/api/GameParams/get-all-currencies": {
-      "get": {
-        "tags": [
-          "GameParams"
-        ],
-        "summary": "Получить все доступные валюты",
-        "responses": {
-          "200": {
-            "description": "Список всех валют",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
                 }
               }
             }
@@ -3220,6 +3184,47 @@
         "additionalProperties": false,
         "description": "Информация о валюте из процессинга."
       },
+      "DetailTypeValidationResponse": {
+        "type": "object",
+        "properties": {
+          "gatewayCode": {
+            "type": "string",
+            "description": "Код платёжного шлюза.",
+            "nullable": true
+          },
+          "detailType": {
+            "type": "string",
+            "description": "Проверяемый тип платёжных реквизитов.",
+            "nullable": true
+          },
+          "isValid": {
+            "type": "boolean",
+            "description": "Поддерживается ли тип реквизитов данным шлюзом."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ о валидации типа платёжных реквизитов для шлюза."
+      },
+      "DetailTypesResponse": {
+        "type": "object",
+        "properties": {
+          "gatewayCode": {
+            "type": "string",
+            "description": "Код платёжного шлюза.",
+            "nullable": true
+          },
+          "detailTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Список доступных типов платёжных реквизитов (например, \"card\", \"phone\", \"sbp\").",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Ответ со списком доступных типов платёжных реквизитов для шлюза."
+      },
       "EditPlayerRequest": {
         "type": "object",
         "properties": {
@@ -3247,6 +3252,11 @@
           "paymentMethod": {
             "type": "string",
             "description": "Метод оплаты",
+            "nullable": true
+          },
+          "paymentDetailType": {
+            "type": "string",
+            "description": "Тип платёжных реквизитов (например, \"card\", \"phone\", \"sbp\").\r\nДолжен соответствовать одному из доступных типов для выбранного PaymentMethod.",
             "nullable": true
           },
           "payoutMethod": {
@@ -3756,6 +3766,14 @@
             "description": "Максимальная сумма.",
             "format": "double",
             "nullable": true
+          },
+          "detailTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Типы платёжных реквизитов, доступные для этого шлюза (например, \"card\", \"phone\", \"account_number\").",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -3902,6 +3920,11 @@
           "paymentMethod": {
             "type": "string",
             "description": "Метод оплаты (строка)",
+            "nullable": true
+          },
+          "paymentDetailType": {
+            "type": "string",
+            "description": "Тип платёжных реквизитов (например, \"card\", \"phone\", \"sbp\")",
             "nullable": true
           }
         },
