@@ -15,13 +15,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BottleGame.UnitTests", "Bot
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BottleGame.IntegrationTests", "BottleGame.IntegrationTests\BottleGame.IntegrationTests.csproj", "{8CFEB463-D284-4EC7-ACAE-FCB978A1EAEE}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F06DECF5-997D-4A58-A9F2-5FF48A766E8E}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{851DE1B4-575C-42D0-A5CC-E317BB1C74CB}"
-	ProjectSection(SolutionItems) = preProject
-		deploy.yml = deploy.yml
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -108,7 +101,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{851DE1B4-575C-42D0-A5CC-E317BB1C74CB} = {F06DECF5-997D-4A58-A9F2-5FF48A766E8E}
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {12630FB1-5CE1-4971-9226-EB27A06F6A3B}
 	EndGlobalSection
 EndGlobal
