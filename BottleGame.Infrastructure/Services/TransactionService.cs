@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Processing;
 using BottleGame.Domain.Constants;
@@ -160,11 +160,11 @@ namespace BottleGame.Infrastructure.Services
                 return Result<object?>.Failure("Не найдены данные статистики сыгранных раундов игрока");
             }
 
-            //if (!request.IsDeposit && roundsPlayedStat.PlayedRoundsCount < gameParams.MinRoundsCountForWithdrawal)
-            //{
-            //    _logger.LogWarning("{Prefix} Недостаточно сыгранных раундов для вывода у игрока {PlayerId}", Prefix, playerId);
-            //    return Result<object?>.Failure($"Для вывода необходимо сыграть минимум {gameParams.MinRoundsCountForWithdrawal} раундов. Сейчас сыграно: {roundsPlayedStat.PlayedRoundsCount}");
-            //}
+            if (!request.IsDeposit && roundsPlayedStat.PlayedRoundsCount < gameParams.MinRoundsCountForWithdrawal)
+            {
+                _logger.LogWarning("{Prefix} Недостаточно сыгранных раундов для вывода у игрока {PlayerId}", Prefix, playerId);
+                return Result<object?>.Failure($"Для вывода необходимо сыграть минимум {gameParams.MinRoundsCountForWithdrawal} раундов. Сейчас сыграно: {roundsPlayedStat.PlayedRoundsCount}");
+            }
 
             var transactionType = await _context.TransactionTypes.FirstOrDefaultAsync(t => t.Id == (request.IsDeposit ? TransactionTypes.Deposit : TransactionTypes.Withdrawal));
             var transactionStatus = await _context.TransactionStatuses.FirstOrDefaultAsync(s => s.Id == TransactionStatuses.Pending);
@@ -202,8 +202,8 @@ namespace BottleGame.Infrastructure.Services
                         _options.MerchantId,
                         transaction.Id.ToString(),
                         request.Amount,
-                        player.PlayerOptions.PaymentMethod,
-                        player.PlayerOptions.PaymentDetailType,
+                        player.PlayerOptions.PaymentMethod.ToString(),
+                        "card",
                         player.TelegramId.ToString());
 
                     var orderResponse = await _processingService.CreateOrderAsync(createOrderRequest);
@@ -222,8 +222,8 @@ namespace BottleGame.Infrastructure.Services
                     // Сохраняем данные процессинга
                     transaction.ProcessingOrderId = orderResponse.OrderId;
                     transaction.PaymentUrl = orderResponse.PaymentUrl;
-                    transaction.PaymentGateway = player.PlayerOptions.PaymentMethod;
-                    transaction.Currency = player.PlayerOptions.Currency ?? "rub";
+                    transaction.PaymentGateway = player.PlayerOptions.PaymentMethod.ToString();
+                    transaction.Currency = player.PlayerOptions.Currency?.ToString() ?? "rub";
                     await _context.SaveChangesAsync();
 
                     responseData = new
@@ -347,9 +347,9 @@ namespace BottleGame.Infrastructure.Services
                         _options.MerchantId,
                         transaction.Id.ToString(),
                         transaction.Amount,
-                        transaction.Player.PlayerOptions.PayoutMethod,
+                        transaction.Player.PlayerOptions.PayoutMethod.ToString(),
                         transaction.Player.PlayerOptions.Wallet!,
-                        transaction.Player.PlayerOptions.Currency ?? "rub",
+                        transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub",
                         30);
 
                     var payoutResponse = await _processingService.CreatePoolPayoutAsync(createPoolPayoutRequest);
@@ -369,8 +369,8 @@ namespace BottleGame.Infrastructure.Services
 
                     // Сохраняем данные процессинга
                     transaction.ProcessingOrderId = payoutResponse.PayoutId;
-                    transaction.PaymentGateway = transaction.Player.PlayerOptions.PayoutMethod;
-                    transaction.Currency = transaction.Player.PlayerOptions.Currency ?? "rub";
+                    transaction.PaymentGateway = transaction.Player.PlayerOptions.PayoutMethod.ToString();
+                    transaction.Currency = transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub";
                     transaction.TransactionStatusId = approvedStatusId;
                 }
                 catch (Exception ex)

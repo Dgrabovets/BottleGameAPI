@@ -1,4 +1,4 @@
-using BottleGame.Application.DTOs.Processing;
+﻿using BottleGame.Application.DTOs.Processing;
 using BottleGame.Application.DTOs.Responses;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
@@ -13,6 +13,7 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Предоставляет доступ к данным процессинговой системы:
     /// валюты, платёжные шлюзы, курсы обмена.
+    /// Для локальных enum'ов (CurrencyType, PaymentMethodType) используйте GameParamsController.
     /// </remarks>
     /// <remarks>
     /// Инициализирует новый экземпляр <see cref="CurrencyController"/>.
@@ -42,6 +43,21 @@ namespace BottleGame.API.Controllers
         private const string Prefix = "[Currency]";
 
         #endregion Fields
+
+        #region Constructor
+
+        /// <summary>
+        /// Инициализирует новый экземпляр <see cref="CurrencyController"/>.
+        /// </summary>
+        /// <param name="currencyService">Сервис валют.</param>
+        /// <param name="logger">Логгер.</param>
+        public CurrencyController(ICurrencyService currencyService, ILogger<CurrencyController> logger)
+        {
+            _currencyService = currencyService;
+            _logger = logger;
+        }
+
+        #endregion Constructor
 
         #region Endpoints
 

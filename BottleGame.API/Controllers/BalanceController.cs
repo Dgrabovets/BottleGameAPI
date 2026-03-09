@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using BottleGame.Domain.Constants;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
@@ -31,6 +31,19 @@ namespace BottleGame.API.Controllers
         private readonly ITransactionService _transactionService = transactionService;
 
         #endregion Fields
+
+        #region Constructor
+
+        /// <summary>
+        /// Инициализирует новый экземпляр <see cref="BalanceController"/>.
+        /// </summary>
+        /// <param name="transactionService">Сервис для работы с транзакциями.</param>
+        public BalanceController(ITransactionService transactionService)
+        {
+            _transactionService = transactionService;
+        }
+
+        #endregion Constructor
 
         #region Balance Methods
 

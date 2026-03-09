@@ -1,6 +1,8 @@
-using BottleGame.Infrastructure.Data;
+﻿using BottleGame.Infrastructure.Data;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BottleGame.Application.Interfaces;
@@ -47,6 +49,23 @@ namespace BottleGame.API.Controllers
         private const string Prefix = "[GameParams Controller]";
 
         #endregion Fields
+
+        #region Constructor
+
+        /// <summary>
+        /// Инициализирует новый экземпляр <see cref="GameParamsController"/>
+        /// </summary>
+        /// <param name="context">Контекст базы данных</param>
+        /// <param name="logger">Логгер</param>
+        /// <param name="cacheService">Сервис кэширования</param>
+        public GameParamsController(ApplicationDbContext context, ILogger<GameParamsController> logger, ICacheService cacheService)
+        {
+            _context = context;
+            _logger = logger;
+            _cacheService = cacheService;
+        }
+
+        #endregion Constructor
 
         #region ActionMethods
 
@@ -131,6 +150,72 @@ namespace BottleGame.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "{Prefix} Ошибка при обновлении параметров игры", Prefix);
+                return StatusCode(500, "Внутренняя ошибка сервера");
+            }
+        }
+
+        /// <summary>
+        /// Получить все доступные методы выплат
+        /// </summary>
+        /// <response code="200">Список всех методов выплат</response>
+        /// <response code="500">Внутренняя ошибка сервера</response>
+        [Authorize(Roles = "Player,Admin")]
+        [HttpGet("get-all-payout-methods")]
+        [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult<IEnumerable<string>> GetAllPayoutMethods()
+        {
+            try
+            {
+                var methods = Enum.GetNames(typeof(PayoutMethodType));
+                return Ok(methods);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Внутренняя ошибка сервера");
+            }
+        }
+
+        /// <summary>
+        /// Получить все доступные методы пополнения
+        /// </summary>
+        /// <response code="200">Список всех методов пополнения</response>
+        /// <response code="500">Внутренняя ошибка сервера</response>
+        [Authorize(Roles = "Player,Admin")]
+        [HttpGet("get-all-payment-methods")]
+        [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult<IEnumerable<string>> GetAllPaymentMethods()
+        {
+            try
+            {
+                var methods = Enum.GetNames(typeof(PaymentMethodType));
+                return Ok(methods);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Внутренняя ошибка сервера");
+            }
+        }
+
+        /// <summary>
+        /// Получить все доступные валюты
+        /// </summary>
+        /// <response code="200">Список всех валют</response>
+        /// <response code="500">Внутренняя ошибка сервера</response>
+        [Authorize(Roles = "Player,Admin")]
+        [HttpGet("get-all-currencies")]
+        [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult<IEnumerable<string>> GetAllCurrencies()
+        {
+            try
+            {
+                var currencies = Enum.GetNames(typeof(CurrencyType));
+                return Ok(currencies);
+            }
+            catch (Exception)
+            {
                 return StatusCode(500, "Внутренняя ошибка сервера");
             }
         }

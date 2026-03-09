@@ -1,4 +1,4 @@
-using BottleGame.Application.DTOs;
+﻿using BottleGame.Application.DTOs;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
 using BottleGame.Application.Interfaces;
@@ -43,7 +43,6 @@ namespace BottleGame.API.Controllers
         const string prefix = "[Authorization Controller]";
 
         #endregion Fields
-
         #region Constructor
 
         #endregion Constructor

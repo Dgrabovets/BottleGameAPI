@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using BottleGame.Domain.Constants;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
