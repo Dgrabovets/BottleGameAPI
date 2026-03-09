@@ -21,12 +21,12 @@ jobs:
 
       - name: Deploy to server and restart API
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY_B64: ${{ secrets.SSH_PRIVATE_KEY }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/key
+          echo "$SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/key
           chmod 600 ~/.ssh/key
           rsync -avz --delete -e "ssh -i ~/.ssh/key -o StrictHostKeyChecking=no" publish/ ${SERVER_USER}@${SERVER_HOST}:/var/www/backend/publish/
           ssh -i ~/.ssh/key -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} /root/deploy-api.sh
