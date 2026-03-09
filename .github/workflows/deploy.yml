@@ -21,12 +21,12 @@ jobs:
 
       - name: Create appsettings.Production.json from secrets
         env:
-          POSTGRES_CONNECTION: ${{ secrets.POSTGRES_CONNECTION }}
-          JWT_KEY: ${{ secrets.JWT_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          PASSWORD_HASH_SECRET: ${{ secrets.PASSWORD_HASH_SECRET }}
-          PAYSHARK_ACCESS_TOKEN: ${{ secrets.PAYSHARK_ACCESS_TOKEN }}
-          PAYSHARK_MERCHANT_ID: ${{ secrets.PAYSHARK_MERCHANT_ID }}
+          POSTGRES_CONNECTION: ${{ secrets.CONNECTIONSTRING }}
+          JWT_KEY: ${{ secrets.JWT__KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAMBOTTOKEN }}
+          PASSWORD_HASH_SECRET: ${{ secrets.PASSWORDHASHSECRETKEY }}
+          PAYSHARK_ACCESS_TOKEN: ${{ secrets.PROCESSING__ACCESSTOKEN }}
+          PAYSHARK_MERCHANT_ID: ${{ secrets.PROCESSING__MERCHANTID }}
         run: |
           jq -n \
             --arg conn "$POSTGRES_CONNECTION" \
