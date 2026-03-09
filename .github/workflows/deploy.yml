@@ -49,7 +49,19 @@ jobs:
               },
               CORS: { AllowedOrigins: ["https://admin.adminbottle.ru", "https://luckybottlex.com", "https://localhost:3000"] }
             }' > publish/appsettings.Production.json
-
+      - name: Check required secrets are set
+        run: |
+          KEY_LEN=$(jq -r '.JWT.Key | length' publish/appsettings.Production.json)
+          if [ "$KEY_LEN" -lt 32 ]; then
+            echo "::error::JWT_KEY secret is empty or too short (min 32 chars). Set it in Settings → Secrets → Actions."
+            exit 1
+          fi
+          PWD_LEN=$(jq -r '.Security.PasswordHashSecretKey | length' publish/appsettings.Production.json)
+          if [ "$PWD_LEN" -eq 0 ]; then
+            echo "::error::PASSWORD_HASH_SECRET is empty. Set it in Settings → Secrets → Actions."
+            exit 1
+          fi
+          echo "Secrets check OK."
       - name: Deploy to server and restart API
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
