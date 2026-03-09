@@ -19,6 +19,49 @@ jobs:
       - name: Publish API
         run: dotnet publish BottleGame.API/BottleGame.API.csproj -c Release -o ./publish
 
+      - name: Create appsettings.Production.json from secrets
+        env:
+          POSTGRES_CONNECTION: ${{ secrets.CONNECTIONSTRING }}
+          JWT_KEY: ${{ secrets.JWTKEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAMBOTTOKEN }}
+          PASSWORD_HASH_SECRET: ${{ secrets.PASSWORDHASHSECRETKEY }}
+          PAYSHARK_ACCESS_TOKEN: ${{ secrets.PROCESSINGACCESSTOKEN }}
+          PAYSHARK_MERCHANT_ID: ${{ secrets.PROCESSINGMERCHANTID }}
+        run: |
+          jq -n \
+            --arg conn "$POSTGRES_CONNECTION" \
+            --arg jwtKey "$JWT_KEY" \
+            --arg telegram "$TELEGRAM_BOT_TOKEN" \
+            --arg pwdSecret "$PASSWORD_HASH_SECRET" \
+            --arg payToken "$PAYSHARK_ACCESS_TOKEN" \
+            --arg merchantId "$PAYSHARK_MERCHANT_ID" \
+            '{
+              ConnectionStrings: { PostgresConnection: $conn },
+              JWT: { Key: $jwtKey, Issuer: "BottleAppAPI", Audience: "BottleGame", ExpireMinutes: 360 },
+              TelegramBotToken: $telegram,
+              Security: { PasswordHashSecretKey: $pwdSecret },
+              Processing: {
+                BaseUrl: "https://app.payshark.net",
+                AccessToken: $payToken,
+                MerchantId: $merchantId,
+                CallbackUrl: "https://api.adminbottle.ru/api/webhook",
+                MaxWaitMs: 30000
+              },
+              CORS: { AllowedOrigins: ["https://admin.adminbottle.ru", "https://luckybottlex.com", "https://localhost:3000"] }
+            }' > publish/appsettings.Production.json
+      - name: Check required secrets are set
+        run: |
+          KEY_LEN=$(jq -r '.JWT.Key | length' publish/appsettings.Production.json)
+          if [ "$KEY_LEN" -lt 32 ]; then
+            echo "::error::JWT_KEY secret is empty or too short (min 32 chars). Set it in Settings → Secrets → Actions."
+            exit 1
+          fi
+          PWD_LEN=$(jq -r '.Security.PasswordHashSecretKey | length' publish/appsettings.Production.json)
+          if [ "$PWD_LEN" -eq 0 ]; then
+            echo "::error::PASSWORD_HASH_SECRET is empty. Set it in Settings → Secrets → Actions."
+            exit 1
+          fi
+          echo "Secrets check OK."
       - name: Deploy to server and restart API
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
