@@ -19,6 +19,37 @@ jobs:
       - name: Publish API
         run: dotnet publish BottleGame.API/BottleGame.API.csproj -c Release -o ./publish
 
+      - name: Create appsettings.Production.json from secrets
+        env:
+          POSTGRES_CONNECTION: ${{ secrets.POSTGRES_CONNECTION }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          PASSWORD_HASH_SECRET: ${{ secrets.PASSWORD_HASH_SECRET }}
+          PAYSHARK_ACCESS_TOKEN: ${{ secrets.PAYSHARK_ACCESS_TOKEN }}
+          PAYSHARK_MERCHANT_ID: ${{ secrets.PAYSHARK_MERCHANT_ID }}
+        run: |
+          jq -n \
+            --arg conn "$POSTGRES_CONNECTION" \
+            --arg jwtKey "$JWT_KEY" \
+            --arg telegram "$TELEGRAM_BOT_TOKEN" \
+            --arg pwdSecret "$PASSWORD_HASH_SECRET" \
+            --arg payToken "$PAYSHARK_ACCESS_TOKEN" \
+            --arg merchantId "$PAYSHARK_MERCHANT_ID" \
+            '{
+              ConnectionStrings: { PostgresConnection: $conn },
+              JWT: { Key: $jwtKey, Issuer: "BottleAppAPI", Audience: "BottleGame", ExpireMinutes: 360 },
+              TelegramBotToken: $telegram,
+              Security: { PasswordHashSecretKey: $pwdSecret },
+              Processing: {
+                BaseUrl: "https://app.payshark.net",
+                AccessToken: $payToken,
+                MerchantId: $merchantId,
+                CallbackUrl: "https://api.adminbottle.ru/api/webhook",
+                MaxWaitMs: 30000
+              },
+              CORS: { AllowedOrigins: ["https://admin.adminbottle.ru", "https://luckybottlex.com", "https://localhost:3000"] }
+            }' > publish/appsettings.Production.json
+
       - name: Deploy to server and restart API
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
