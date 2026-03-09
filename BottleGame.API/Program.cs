@@ -1,15 +1,16 @@
-﻿using BottleGame.API.Middleware;
+using BottleGame.API.Middleware;
 using BottleGame.API.Options;
 using BottleGame.Application;
 using BottleGame.Infrastructure;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
 using System.Reflection;
+using System.Text;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,9 +49,24 @@ builder.Services.AddOptions<JwtOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-builder.Services.AddSingleton<IConfigureNamedOptions<JwtBearerOptions>, JwtBearerOptionsSetup>();
+var jwtKey = builder.Configuration["JWT:Key"] ?? string.Empty;
+var jwtIssuer = builder.Configuration["JWT:Issuer"] ?? "BottleAppAPI";
+var jwtAudience = builder.Configuration["JWT:Audience"] ?? "BottleGame";
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer();
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
+            ValidateLifetime = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateIssuerSigningKey = true,
+        };
+    });
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Admin", policy => policy.RequireRole("Admin"))

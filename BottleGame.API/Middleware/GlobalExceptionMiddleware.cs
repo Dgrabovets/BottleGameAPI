@@ -86,14 +86,14 @@ namespace BottleGame.API.Middleware
             {
                 case KeyNotFoundException:
                     response.StatusCode = (int)HttpStatusCode.NotFound;
-                    errorResponse.Message = isProduction ? "Ресурс не найден" : exception.Message;
+                    errorResponse.Message = exception.Message;
                     errorResponse.StatusCode = response.StatusCode;
                     _logger.LogWarning(exception, "Ресурс не найден: {Message}", exception.Message);
                     break;
 
                 case UnauthorizedAccessException:
                     response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    errorResponse.Message = "Доступ запрещён";
+                    errorResponse.Message = $"Доступ запрещён\r\n{exception.Message}";
                     errorResponse.StatusCode = response.StatusCode;
                     _logger.LogWarning(exception, "Неавторизованный доступ: {Message}", exception.Message);
                     break;
@@ -101,14 +101,14 @@ namespace BottleGame.API.Middleware
                 case ArgumentException:
                 case InvalidOperationException:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    errorResponse.Message = isProduction ? "Некорректный запрос" : exception.Message;
+                    errorResponse.Message = exception.Message;
                     errorResponse.StatusCode = response.StatusCode;
                     _logger.LogWarning(exception, "Некорректный запрос: {Message}", exception.Message);
                     break;
 
                 default:
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                    errorResponse.Message = "Внутренняя ошибка сервера";
+                    errorResponse.Message = $"Внутренняя ошибка сервера\r\n{exception.Message}";
                     errorResponse.StatusCode = response.StatusCode;
                     _logger.LogError(exception, "Необработанное исключение: {Type}: {Message}. StackTrace: {StackTrace}",
                         exception.GetType().Name, exception.Message, exception.StackTrace);

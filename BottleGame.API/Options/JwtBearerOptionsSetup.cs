@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -22,8 +22,13 @@ namespace BottleGame.API.Options
         /// <inheritdoc/>
         public void Configure(string? name, JwtBearerOptions options)
         {
-            if (name != JwtBearerDefaults.AuthenticationScheme)
+            // Настраиваем и когда name == null (общий Configure), и когда name == "Bearer"
+            if (!string.IsNullOrEmpty(name) && name != JwtBearerDefaults.AuthenticationScheme)
                 return;
+
+            var key = _jwtOptions.Key;
+            if (string.IsNullOrEmpty(key))
+                throw new InvalidOperationException("JWT:Key не задан. Укажите переменную окружения JWT__Key или добавьте ключ в appsettings.Production.json.");
 
             options.TokenValidationParameters = new TokenValidationParameters
             {
@@ -32,7 +37,7 @@ namespace BottleGame.API.Options
                 ValidateAudience = true,
                 ValidAudience = _jwtOptions.Audience,
                 ValidateLifetime = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Key)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
                 ValidateIssuerSigningKey = true,
             };
         }
