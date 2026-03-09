@@ -3,6 +3,7 @@
 on:
   push:
     branches: [main]
+  workflow_dispatch:   # Кнопка "Run workflow" во вкладке Actions
 
 jobs:
   deploy:
