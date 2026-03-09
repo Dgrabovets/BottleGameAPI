@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11512.155 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BottleGame.Domain", "BottleGame.Domain\BottleGame.Domain.csproj", "{62658366-5077-45A0-B383-ECA326587F84}"
 EndProject
@@ -14,6 +14,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BottleGame.UnitTests", "BottleGame.UnitTests\BottleGame.UnitTests.csproj", "{61050AC3-C48C-48B1-81B4-CFF31F0811AF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BottleGame.IntegrationTests", "BottleGame.IntegrationTests\BottleGame.IntegrationTests.csproj", "{8CFEB463-D284-4EC7-ACAE-FCB978A1EAEE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{F06DECF5-997D-4A58-A9F2-5FF48A766E8E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{851DE1B4-575C-42D0-A5CC-E317BB1C74CB}"
+	ProjectSection(SolutionItems) = preProject
+		deploy.yml = deploy.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,5 +107,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{851DE1B4-575C-42D0-A5CC-E317BB1C74CB} = {F06DECF5-997D-4A58-A9F2-5FF48A766E8E}
 	EndGlobalSection
 EndGlobal
