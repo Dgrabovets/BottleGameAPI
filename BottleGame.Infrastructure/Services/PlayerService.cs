@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using BottleGame.Application.Common;
 using BottleGame.Infrastructure.Data;
 using BottleGame.Application.DTOs.Requests;
@@ -533,7 +533,8 @@ namespace BottleGame.Infrastructure.Services
             // Изменение баланса (только для админа)
             if (isAdmin && request.Balance is not null)
             {
-                player.Balance.Amount = request.Balance.Value;
+                var amountToUpdateBalance = player.Balance.Amount - request.Balance.Value;
+                player.Balance.Amount += amountToUpdateBalance;
 
                 var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
                 if (appBalance is null)
@@ -542,7 +543,7 @@ namespace BottleGame.Infrastructure.Services
                     return Result.Failure("Не найдены данные баланса приложения");
                 }
 
-                appBalance.Amount += request.Balance.Value;
+                appBalance.Amount += amountToUpdateBalance;
                 appBalance.BalanceAmountUpdatedAt = DateTime.UtcNow;
                 appBalance.BalanceAmountAdminIdUpdatedBy = 1;
             }
