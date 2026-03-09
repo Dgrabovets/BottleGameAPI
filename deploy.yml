@@ -1,12 +1,4 @@
-﻿# Пример: автодеплой API при push в main
-# Скопируйте в ваш репозиторий с API как .github/workflows/deploy.yml
-#
-# В настройках репозитория GitHub (Settings → Secrets and variables → Actions) добавьте:
-#   SSH_PRIVATE_KEY — приватный SSH-ключ для доступа к серверу
-#   SERVER_HOST     — IP или hostname сервера
-#   SERVER_USER     — пользователь (обычно root)
-
-name: Build and Deploy API
+﻿name: Build and Deploy API
 
 on:
   push:
@@ -21,7 +13,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '9.0.x'
 
       # Укажите путь к .csproj вашего API
       - name: Publish API
