@@ -1,11 +1,3 @@
-# Пример: автодеплой API при push в main
-# Скопируйте в ваш репозиторий с API как .github/workflows/deploy.yml
-#
-# Секреты (Settings → Secrets and variables → Actions):
-#   SSH_PRIVATE_KEY — приватный ключ: либо PEM целиком (с переносами строк), либо Base64 без переносов
-#   SERVER_HOST     — IP или hostname сервера
-#   SERVER_USER     — пользователь (обычно root)
-
 name: Build and Deploy API
 
 on:
@@ -25,7 +17,7 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Publish API
-        run: dotnet publish -c Release -o ./publish
+        run: dotnet publish BottleGame.API/BottleGame.API.csproj -c Release -o ./publish
 
       - name: Deploy to server and restart API
         env:
