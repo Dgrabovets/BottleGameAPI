@@ -16,7 +16,8 @@ namespace BottleGame.API.Middleware
     /// </remarks>
     /// <param name="next">Делегат следующего middleware в pipeline</param>
     /// <param name="logger">Логгер для записи ошибок</param>
-    public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
+    /// <param name="environment">Окружение приложения (в Production детали исключений не отдаются клиенту)</param>
+    public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger, IWebHostEnvironment environment)
     {
         #region Fields
 
@@ -29,6 +30,8 @@ namespace BottleGame.API.Middleware
         /// Логгер для записи информации об ошибках
         /// </summary>
         private readonly ILogger<GlobalExceptionMiddleware> _logger = logger;
+
+        private readonly IWebHostEnvironment _environment = environment;
 
         #endregion Fields
 
@@ -77,12 +80,13 @@ namespace BottleGame.API.Middleware
             response.ContentType = "application/json";
 
             var errorResponse = new ErrorResponse();
+            var isProduction = _environment.IsProduction();
 
             switch (exception)
             {
                 case KeyNotFoundException:
                     response.StatusCode = (int)HttpStatusCode.NotFound;
-                    errorResponse.Message = exception.Message;
+                    errorResponse.Message = isProduction ? "Ресурс не найден" : exception.Message;
                     errorResponse.StatusCode = response.StatusCode;
                     _logger.LogWarning(exception, "Ресурс не найден: {Message}", exception.Message);
                     break;
@@ -97,7 +101,7 @@ namespace BottleGame.API.Middleware
                 case ArgumentException:
                 case InvalidOperationException:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    errorResponse.Message = exception.Message;
+                    errorResponse.Message = isProduction ? "Некорректный запрос" : exception.Message;
                     errorResponse.StatusCode = response.StatusCode;
                     _logger.LogWarning(exception, "Некорректный запрос: {Message}", exception.Message);
                     break;
@@ -106,7 +110,8 @@ namespace BottleGame.API.Middleware
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
                     errorResponse.Message = "Внутренняя ошибка сервера";
                     errorResponse.StatusCode = response.StatusCode;
-                    _logger.LogError(exception, "Необработанное исключение: {Message}", exception.Message);
+                    _logger.LogError(exception, "Необработанное исключение: {Type}: {Message}. StackTrace: {StackTrace}",
+                        exception.GetType().Name, exception.Message, exception.StackTrace);
                     break;
             }
 

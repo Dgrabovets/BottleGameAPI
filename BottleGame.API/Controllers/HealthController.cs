@@ -1,3 +1,4 @@
+using System.Reflection;
 using BottleGame.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,12 +17,15 @@ namespace BottleGame.API.Controllers
     [ApiExplorerSettings(IgnoreApi = true)]
     public class HealthController(
         ApplicationDbContext context,
+        IConfiguration configuration,
         ILogger<HealthController> logger) : ControllerBase
     {
         #region Fields
 
         /// <inheritdoc cref="ApplicationDbContext"/>
         private readonly ApplicationDbContext _context = context;
+
+        private readonly IConfiguration _configuration = configuration;
 
         /// <summary>
         /// Логгер
@@ -49,11 +53,12 @@ namespace BottleGame.API.Controllers
             {
                 _logger.LogInformation("{Prefix} Health check initiated", Prefix);
 
+                var version = _configuration["App:Version"] ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
                 var checks = new Dictionary<string, object>
                 {
                     ["status"] = "healthy",
                     ["timestamp"] = DateTime.UtcNow.ToString("O"),
-                    ["version"] = "1.0.0",
+                    ["version"] = version,
                     ["database"] = await CheckDatabase(),
                     ["uptime"] = Environment.TickCount64 / 1000
                 };

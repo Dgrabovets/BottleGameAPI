@@ -1,15 +1,15 @@
 ﻿using BottleGame.API.Middleware;
+using BottleGame.API.Options;
 using BottleGame.Application;
 using BottleGame.Infrastructure;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
 using System.Reflection;
-using System.Text;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,20 +43,14 @@ builder.Services.AddFluentValidationAutoValidation();
 
 #region Аутентификация и авторизация
 
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection("JWT"))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddSingleton<IConfigureNamedOptions<JwtBearerOptions>, JwtBearerOptionsSetup>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["JWT:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["JWT:Audience"],
-            ValidateLifetime = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]!)),
-            ValidateIssuerSigningKey = true,
-        };
-    });
+    .AddJwtBearer();
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
@@ -132,13 +126,6 @@ var allowedOrigins = builder.Configuration.GetSection("CORS:AllowedOrigins").Get
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-
     options.AddPolicy("AllowedOrigins", policy =>
     {
         policy.WithOrigins(allowedOrigins)
@@ -170,7 +157,7 @@ builder.Services.AddRateLimiter(options =>
     // Политика для аутентификации (более строгая)
     options.AddFixedWindowLimiter("auth", opt =>
     {
-        opt.PermitLimit = 10;
+        opt.PermitLimit = 50;
         opt.Window = TimeSpan.FromMinutes(1);
         opt.AutoReplenishment = true;
     });
@@ -178,7 +165,7 @@ builder.Services.AddRateLimiter(options =>
     // Политика для игровых действий
     options.AddSlidingWindowLimiter("game", opt =>
     {
-        opt.PermitLimit = 30;
+        opt.PermitLimit = 100;
         opt.Window = TimeSpan.FromSeconds(30);
         opt.SegmentsPerWindow = 3;
         opt.AutoReplenishment = true;

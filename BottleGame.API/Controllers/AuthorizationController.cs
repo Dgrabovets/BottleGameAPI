@@ -1,4 +1,4 @@
-﻿using BottleGame.Application.DTOs;
+using BottleGame.Application.DTOs;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
 using BottleGame.Application.Interfaces;
@@ -6,6 +6,7 @@ using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
 using BottleGame.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
@@ -61,6 +62,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [EnableRateLimiting("auth")]
         [HttpPost("admin-login")]
         public async Task<ActionResult<AuthResponse>> LoginAdmin([FromBody] AdministrationRoleUserCredentials authRequest)
         {
@@ -122,6 +124,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [EnableRateLimiting("auth")]
         [HttpPost("player-login/{initData}")]
         public async Task<ActionResult<AuthResponse>> TelegramLogin([FromRoute] string initData)
         {

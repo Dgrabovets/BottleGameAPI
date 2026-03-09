@@ -21,9 +21,14 @@ namespace BottleGame.Infrastructure
         /// <returns>Коллекция сервисов</returns>
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            var connectionString = configuration.GetConnectionString("PostgresConnection");
+            if (string.IsNullOrWhiteSpace(connectionString) || connectionString.StartsWith("ENV_", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException(
+                    "Строка подключения к БД не задана. Укажите переменную окружения ConnectionStrings__PostgresConnection или добавьте секрет POSTGRES_CONNECTION в GitHub Actions.");
+
             // База данных
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(configuration.GetConnectionString("PostgresConnection")));
+                options.UseNpgsql(connectionString));
 
             // Кэширование
             services.AddMemoryCache();
@@ -34,8 +39,11 @@ namespace BottleGame.Infrastructure
             services.AddScoped<ITelegramAuthService, TelegramAuthService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
 
-            // Processing (платёжная система)
-            services.Configure<ProcessingOptions>(configuration.GetSection("Processing"));
+            // Processing (платёжная система) — валидация при старте приложения
+            services.AddOptions<ProcessingOptions>()
+                .Bind(configuration.GetSection("Processing"))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
             services.AddHttpClient<IProcessingService, ProcessingService>();
             services.AddScoped<ICurrencyService, CurrencyService>();
 

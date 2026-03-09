@@ -4,6 +4,7 @@ using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using BottleGame.Application.Interfaces;
 
 namespace BottleGame.API.Controllers
@@ -50,6 +51,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [EnableRateLimiting("game")]
         [HttpPost("finish-game-round/{playerId:int}")]
         public async Task<IActionResult> FinishGameRound([FromRoute] int playerId, [FromBody] FinishRoundRequest request)
         {
