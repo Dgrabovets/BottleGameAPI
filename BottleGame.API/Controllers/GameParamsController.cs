@@ -1,8 +1,7 @@
-using BottleGame.Infrastructure.Data;
+﻿using BottleGame.Infrastructure.Data;
 using BottleGame.Domain.Entities;
 using BottleGame.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BottleGame.Application.Interfaces;
@@ -150,7 +149,7 @@ namespace BottleGame.API.Controllers
         {
             try
             {
-                var methods = Enum.GetNames(typeof(PayoutMethodType));
+                var methods = Enum.GetNames<PayoutMethodType>();
                 return Ok(methods);
             }
             catch (Exception)
@@ -172,7 +171,7 @@ namespace BottleGame.API.Controllers
         {
             try
             {
-                var methods = Enum.GetNames(typeof(PaymentMethodType));
+                var methods = Enum.GetNames<PaymentMethodType>();
                 return Ok(methods);
             }
             catch (Exception)
@@ -194,7 +193,7 @@ namespace BottleGame.API.Controllers
         {
             try
             {
-                var currencies = Enum.GetNames(typeof(CurrencyType));
+                var currencies = Enum.GetNames<CurrencyType>();
                 return Ok(currencies);
             }
             catch (Exception)

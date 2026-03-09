@@ -13,6 +13,6 @@
         /// <summary>
         /// Список транзакций
         /// </summary>
-        public List<TransactionDTO> Transactions { get; set; } = new();
+        public List<TransactionDTO> Transactions { get; set; } = [];
     }
 }

@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using BottleGame.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -8,22 +8,13 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// <inheritdoc cref="IPasswordHasher"/>
     /// </summary>
-    public class PasswordHasher : IPasswordHasher
+    public class PasswordHasher(IConfiguration config) : IPasswordHasher
     {
         #region Fields
 
-        private readonly byte[] _secretKey;
+        private readonly byte[] _secretKey = Encoding.UTF8.GetBytes(config["Security:PasswordHashSecretKey"]!);
 
         #endregion Fields
-
-        #region Constructor
-
-        public PasswordHasher(IConfiguration config)
-        {
-            _secretKey = Encoding.UTF8.GetBytes(config["Security:PasswordHashSecretKey"]!);
-        }
-
-        #endregion Constructor
 
         #region Methods
 

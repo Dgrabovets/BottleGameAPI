@@ -1,4 +1,4 @@
-using BottleGame.Application.DTOs.Processing;
+﻿using BottleGame.Application.DTOs.Processing;
 using BottleGame.Application.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -235,7 +235,7 @@ namespace BottleGame.Infrastructure.Services
             if (gateway is null)
             {
                 _logger.LogWarning("{Prefix} Шлюз {Gateway} не найден", Prefix, gatewayCode);
-                return Enumerable.Empty<string>();
+                return [];
             }
 
             return gateway.DetailTypes;

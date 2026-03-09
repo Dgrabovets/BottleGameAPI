@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
 
 namespace BottleGame.API.Middleware
@@ -110,7 +110,7 @@ namespace BottleGame.API.Middleware
                     break;
             }
 
-            var result = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
+            var result = JsonSerializer.Serialize(errorResponse, options: new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });

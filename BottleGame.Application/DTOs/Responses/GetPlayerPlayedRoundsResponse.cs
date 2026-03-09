@@ -13,6 +13,6 @@
         /// <summary>
         /// Список раундов
         /// </summary>
-        public List<RoundDTO> Rounds { get; set; } = new();
+        public List<RoundDTO> Rounds { get; set; } = [];
     }
 }

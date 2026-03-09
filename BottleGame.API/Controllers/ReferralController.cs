@@ -5,7 +5,6 @@ using BottleGame.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace BottleGame.API.Controllers
 {
@@ -15,37 +14,23 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Управление реферальными ссылками и приглашениями
     /// </remarks>
+    /// <param name="context">Контекст базы данных.</param>
+    /// <param name="logger">Логгер.</param>
+    /// <param name="configuration">Конфигурация приложения.</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Реферальная система")]
-    public class ReferralController : Controller
+    public class ReferralController(ApplicationDbContext context, ILogger<ReferralController> logger, IConfiguration configuration) : Controller
     {
         #region Fields
 
-        private readonly ApplicationDbContext _context;
-        private readonly ILogger<ReferralController> _logger;
-        private readonly string _appName;
+        private readonly ApplicationDbContext _context = context;
+        private readonly ILogger<ReferralController> _logger = logger;
+        private readonly string _appName = configuration["AppName"]!;
 
         const string prefix = "[Referral Controller]";
 
         #endregion Fields
-
-        #region Constructor
-
-        /// <summary>
-        /// Инициализирует новый экземпляр <see cref="ReferralController"/>.
-        /// </summary>
-        /// <param name="context">Контекст базы данных.</param>
-        /// <param name="logger">Логгер.</param>
-        /// <param name="configuration">Конфигурация приложения.</param>
-        public ReferralController(ApplicationDbContext context, ILogger<ReferralController> logger, IConfiguration configuration)
-        {
-            _context = context;
-            _logger = logger;
-            _appName = configuration["AppName"]!;
-        }
-
-        #endregion Constructor
 
         #region ActionMethods
 

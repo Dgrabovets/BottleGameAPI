@@ -1,4 +1,4 @@
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
@@ -11,24 +11,14 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// <inheritdoc cref="ITelegramAuthService"/>
     /// </summary>
-    public class TelegramAuthService : ITelegramAuthService
+    public class TelegramAuthService(IConfiguration config, ILogger<TelegramAuthService> logger) : ITelegramAuthService
     {
         #region Fields
 
-        private readonly string _botToken;
-        private readonly ILogger<TelegramAuthService> _logger;
+        private readonly string _botToken = config["TelegramBotToken"]!;
+        private readonly ILogger<TelegramAuthService> _logger = logger;
 
         #endregion Fields
-
-        #region Constructor
-
-        public TelegramAuthService(IConfiguration config, ILogger<TelegramAuthService> logger)
-        {
-            _botToken = config["TelegramBotToken"]!;
-            _logger = logger;
-        }
-
-        #endregion Constructor
 
         #region Methods
 

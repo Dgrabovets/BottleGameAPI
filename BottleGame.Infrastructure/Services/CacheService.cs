@@ -11,7 +11,13 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Сервис кэширования справочных данных
     /// </summary>
-    public class CacheService : ICacheService
+    /// <param name="cache">Кэш в памяти</param>
+    /// <param name="scopeFactory">Фабрика скоупов для создания DbContext</param>
+    /// <param name="logger">Логгер</param>
+    public class CacheService(
+        IMemoryCache cache,
+        IServiceScopeFactory scopeFactory,
+        ILogger<CacheService> logger) : ICacheService
     {
         #region Constants
 
@@ -44,31 +50,11 @@ namespace BottleGame.Infrastructure.Services
 
         #region Fields
 
-        private readonly IMemoryCache _cache;
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ILogger<CacheService> _logger;
+        private readonly IMemoryCache _cache = cache;
+        private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
+        private readonly ILogger<CacheService> _logger = logger;
 
         #endregion Fields
-
-        #region Constructor
-
-        /// <summary>
-        /// Инициализирует новый экземпляр <see cref="CacheService"/>
-        /// </summary>
-        /// <param name="cache">Кэш в памяти</param>
-        /// <param name="scopeFactory">Фабрика скоупов для создания DbContext</param>
-        /// <param name="logger">Логгер</param>
-        public CacheService(
-            IMemoryCache cache,
-            IServiceScopeFactory scopeFactory,
-            ILogger<CacheService> logger)
-        {
-            _cache = cache;
-            _scopeFactory = scopeFactory;
-            _logger = logger;
-        }
-
-        #endregion Constructor
 
         #region Public Methods
 
@@ -109,7 +95,7 @@ namespace BottleGame.Infrastructure.Services
                 _logger.LogDebug("[CacheService] TransactionTypes загружены в кэш ({Count} записей)", types.Count);
 
                 return types;
-            }) ?? new Dictionary<int, string>();
+            }) ?? [];
         }
 
         /// <inheritdoc/>
@@ -129,7 +115,7 @@ namespace BottleGame.Infrastructure.Services
                 _logger.LogDebug("[CacheService] TransactionStatuses загружены в кэш ({Count} записей)", statuses.Count);
 
                 return statuses;
-            }) ?? new Dictionary<int, string>();
+            }) ?? [];
         }
 
         /// <inheritdoc/>

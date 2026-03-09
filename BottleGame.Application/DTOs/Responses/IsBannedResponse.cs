@@ -18,6 +18,6 @@
         /// <summary>
         /// История банов
         /// </summary>
-        public List<BanHistoryItem> BanHistory { get; set; } = new();
+        public List<BanHistoryItem> BanHistory { get; set; } = [];
     }
 }
