@@ -1,4 +1,4 @@
-﻿using BottleGame.Infrastructure.Data;
+using BottleGame.Infrastructure.Data;
 using BottleGame.Domain.Entities;
 using BottleGame.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -49,23 +49,6 @@ namespace BottleGame.API.Controllers
         private const string Prefix = "[GameParams Controller]";
 
         #endregion Fields
-
-        #region Constructor
-
-        /// <summary>
-        /// Инициализирует новый экземпляр <see cref="GameParamsController"/>
-        /// </summary>
-        /// <param name="context">Контекст базы данных</param>
-        /// <param name="logger">Логгер</param>
-        /// <param name="cacheService">Сервис кэширования</param>
-        public GameParamsController(ApplicationDbContext context, ILogger<GameParamsController> logger, ICacheService cacheService)
-        {
-            _context = context;
-            _logger = logger;
-            _cacheService = cacheService;
-        }
-
-        #endregion Constructor
 
         #region ActionMethods
 
