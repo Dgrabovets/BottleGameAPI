@@ -130,6 +130,9 @@ builder.Services.AddSwaggerGen(c =>
 
 #region CORS
 
+var allowedOrigins = builder.Configuration.GetSection("CORS:AllowedOrigins").Get<string[]>()
+    ?? ["https://admin.adminbottle.ru"];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -137,6 +140,14 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
+    });
+
+    options.AddPolicy("AllowedOrigins", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -192,7 +203,7 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseCors("AllowAll");
+app.UseCors("AllowedOrigins");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

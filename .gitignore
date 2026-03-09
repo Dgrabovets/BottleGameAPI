@@ -18,8 +18,9 @@
 # Mono auto generated files
 mono_crash.*
 
-# Configuration files
+# Configuration files (секреты — только через env или appsettings.Development/Production)
 appsettings.json
+!BottleGame.API/appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 
