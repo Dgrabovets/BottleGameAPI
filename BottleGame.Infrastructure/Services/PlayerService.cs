@@ -534,7 +534,8 @@ namespace BottleGame.Infrastructure.Services
             if (isAdmin && request.Balance is not null)
             {
                 var amountToUpdateBalance = player.Balance.Amount - request.Balance.Value;
-                player.Balance.Amount += amountToUpdateBalance;
+
+                player.Balance.Amount = request.Balance.Value;
 
                 var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
                 if (appBalance is null)
@@ -543,7 +544,8 @@ namespace BottleGame.Infrastructure.Services
                     return Result.Failure("Не найдены данные баланса приложения");
                 }
 
-                appBalance.Amount += amountToUpdateBalance;
+                appBalance.Amount -= amountToUpdateBalance;
+
                 appBalance.BalanceAmountUpdatedAt = DateTime.UtcNow;
                 appBalance.BalanceAmountAdminIdUpdatedBy = 1;
             }
