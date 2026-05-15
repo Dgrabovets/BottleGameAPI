@@ -138,7 +138,7 @@ builder.Services.AddSwaggerGen(c =>
 #region CORS
 
 var allowedOrigins = builder.Configuration.GetSection("CORS:AllowedOrigins").Get<string[]>()
-    ?? ["https://admin.adminbottle.ru"];
+    ?? ["https://admin.bottledevadmin.ru"];
 
 builder.Services.AddCors(options =>
 {
