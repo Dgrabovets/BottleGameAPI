@@ -1,11 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-	<cvversion<proPropertyGroup></PropertyGroup>	
-		
-	<VeVersion></Version>0.9.0  <ItemGroup>
-    <ProjectReference Include="..\BottleGame.Application\BottleGame.Application.csproj" />
-    <ProjectReference Include="..\BottleGame.Infrastructure\BottleGame.Infrastructure.csproj" />
-  </ItemGroup>
+	<PropertyGroup>
+		<Version>0.9.0</Version>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\BottleGame.Application\BottleGame.Application.csproj" />
+		<ProjectReference Include="..\BottleGame.Infrastructure\BottleGame.Infrastructure.csproj" />
+	</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
