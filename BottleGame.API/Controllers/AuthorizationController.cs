@@ -5,6 +5,7 @@ using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
 using BottleGame.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -119,13 +120,14 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Регистрация нового администратора (ПРЕДНАЗНАЧЕНО ТОЛЬКО ДЛЯ АДМИНОВ, ДАЛЕЕ НЕОБХОДИМО СКРЫТЬ)
+        /// Регистрация нового администратора
         /// </summary>
         /// <param name="authRequest">Данные для регистрации (логин и пароль)</param>
         /// <response code="200">Администратор успешно зарегистрирован</response>
         /// <response code="400">Некорректные данные запроса</response>
         /// <response code="409">Администратор уже есть</response>
         /// <response code="500">Внутренняя ошибка сервера</response>
+        [Authorize(Roles = RoleNames.Admin)]
         [ApiExplorerSettings(IgnoreApi = true)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
