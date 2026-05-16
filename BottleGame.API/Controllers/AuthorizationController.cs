@@ -35,18 +35,26 @@ namespace BottleGame.API.Controllers
     {
         #region Fields
 
+        /// <inheritdoc cref="ITokenService"/>
         private readonly ITokenService _tokenService = tokenService;
+
+        /// <inheritdoc cref="ApplicationDbContext"/>
         private readonly ApplicationDbContext _context = context;
+
+        /// <inheritdoc cref="IPasswordHasher"/>
         private readonly IPasswordHasher _passwordHasher = passwordHasher;
+
+        /// <summary>
+        /// Логгер
+        /// </summary>
         private readonly ILogger<AuthorizationController> _logger = logger;
+
+        /// <inheritdoc cref="ITelegramAuthService"/>
         private readonly ITelegramAuthService _telegramAuthService = telegramAuthService;
 
         const string prefix = "[Authorization Controller]";
 
         #endregion Fields
-        #region Constructor
-
-        #endregion Constructor
 
         #region ActionMethods
 
@@ -106,6 +114,62 @@ namespace BottleGame.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "{Prefix} Ошибка при авторизации администратора", prefix);
+                return StatusCode(500, "Внутренняя ошибка сервера");
+            }
+        }
+
+        /// <summary>
+        /// Регистрация нового администратора (ПРЕДНАЗНАЧЕНО ТОЛЬКО ДЛЯ АДМИНОВ, ДАЛЕЕ НЕОБХОДИМО СКРЫТЬ)
+        /// </summary>
+        /// <param name="authRequest">Данные для регистрации (логин и пароль)</param>
+        /// <response code="200">Администратор успешно зарегистрирован</response>
+        /// <response code="400">Некорректные данные запроса</response>
+        /// <response code="409">Администратор уже есть</response>
+        /// <response code="500">Внутренняя ошибка сервера</response>
+        [ApiExplorerSettings(IgnoreApi = true)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [EnableRateLimiting("auth")]
+        [HttpPost("admin-register")]
+        public async Task<IActionResult> RegisterAdmin([FromBody] AdministrationRoleUserCredentials authRequest)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("{Prefix} Некорректные данные для регистрации администратора", prefix);
+                    return BadRequest(ModelState);
+                }
+
+                if (await _context.AdminCreds.AnyAsync(a => a.Login == authRequest.Login))
+                {
+                    _logger.LogWarning("{Prefix} Администратор уже есть", prefix);
+                    return Conflict("Администратор уже существует");
+                }
+
+                var (hash, salt) = _passwordHasher.HashWithSalt(authRequest.Password);
+
+                var admin = new AdministrationRoleUser
+                {
+                    Login = authRequest.Login,
+                    PasswordHash = hash,
+                    Salt = salt,
+                    CreatedAt = DateTime.UtcNow,
+                    Role = AdministrationRoles.Admin,
+                };
+
+                _context.AdminCreds.Add(admin);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("{Prefix} Зарегистрирован новый администратор: {Login}", prefix, authRequest.Login);
+
+                return Ok(new { Message = "Администратор успешно зарегистрирован" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "{Prefix} Ошибка при регистрации администратора", prefix);
                 return StatusCode(500, "Внутренняя ошибка сервера");
             }
         }
