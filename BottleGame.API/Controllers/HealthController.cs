@@ -15,17 +15,12 @@ namespace BottleGame.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public class HealthController(
-        ApplicationDbContext context,
-        IConfiguration configuration,
-        ILogger<HealthController> logger) : ControllerBase
+    public class HealthController(ApplicationDbContext context, ILogger<HealthController> logger) : ControllerBase
     {
         #region Fields
 
         /// <inheritdoc cref="ApplicationDbContext"/>
         private readonly ApplicationDbContext _context = context;
-
-        private readonly IConfiguration _configuration = configuration;
 
         /// <summary>
         /// Логгер
@@ -53,7 +48,7 @@ namespace BottleGame.API.Controllers
             {
                 _logger.LogInformation("{Prefix} Health check initiated", Prefix);
 
-                var version = _configuration["App:Version"] ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0";
+                var version = GetApplicationVersion();
                 var checks = new Dictionary<string, object>
                 {
                     ["status"] = "healthy",
@@ -81,6 +76,17 @@ namespace BottleGame.API.Controllers
         #endregion Public Methods
 
         #region Private Methods
+
+        /// <summary>
+        /// Версия из <c>BottleGame.API.csproj</c> → <c>Version</c>.
+        /// </summary>
+        private static string GetApplicationVersion()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            return assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                ?? assembly.GetName().Version?.ToString()
+                ?? "0.0.0";
+        }
 
         /// <summary>
         /// Проверка состояния базы данных

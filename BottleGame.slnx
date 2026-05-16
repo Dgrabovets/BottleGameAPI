@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="BottleGame.API/BottleGame.API.csproj" />
+  <Project Path="BottleGame.Application/BottleGame.Application.csproj" />
+  <Project Path="BottleGame.Domain/BottleGame.Domain.csproj" />
+  <Project Path="BottleGame.Infrastructure/BottleGame.Infrastructure.csproj" />
+  <Project Path="BottleGame.IntegrationTests/BottleGame.IntegrationTests.csproj" />
+  <Project Path="BottleGame.UnitTests/BottleGame.UnitTests.csproj" />
+</Solution>

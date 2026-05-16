@@ -16,6 +16,7 @@ namespace BottleGame.Application.Validators
 
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Пароль обязателен")
+                .MinimumLength(6).WithMessage("Пароль должен содержать не менее 6 символов")
                 .MaximumLength(100).WithMessage("Пароль не должен превышать 100 символов");
         }
     }

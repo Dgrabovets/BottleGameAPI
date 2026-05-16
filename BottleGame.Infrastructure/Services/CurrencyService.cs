@@ -117,7 +117,7 @@ namespace BottleGame.Infrastructure.Services
             var gateways = await GetPaymentGatewaysAsync(cancellationToken: cancellationToken);
 
             return gateways.Where(g =>
-                //g.SupportsPayments &&
+                g.SupportsPayments &&
                 g.Currency.Equals(currencyCode, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -127,7 +127,7 @@ namespace BottleGame.Infrastructure.Services
             var gateways = await GetPaymentGatewaysAsync(cancellationToken: cancellationToken);
 
             return gateways.Where(g =>
-                //g.SupportsPayouts &&
+                g.SupportsPayouts &&
                 g.Currency.Equals(currencyCode, StringComparison.OrdinalIgnoreCase));
         }
 
