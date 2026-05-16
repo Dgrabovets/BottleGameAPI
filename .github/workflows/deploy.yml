@@ -76,4 +76,4 @@ jobs:
           fi
           chmod 600 ~/.ssh/key
           rsync -avz --delete -e "ssh -i ~/.ssh/key -o StrictHostKeyChecking=no" publish/ ${SERVER_USER}@${SERVER_HOST}:/var/www/backend/publish/
-          ssh -i ~/.ssh/key -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} /root/deploy-api.sh
+          ssh -i ~/.ssh/key -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} /root/scripts/deploy-api.sh
