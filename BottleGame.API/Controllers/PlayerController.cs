@@ -190,6 +190,11 @@ namespace BottleGame.API.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (!HasAccessToPlayer(playerId))
+            {
+                return Unauthorized();
+            }
+
             var isAdmin = User.IsInRole(RoleNames.Admin);
             var result = await _playerService.EditPlayer(playerId, request, isAdmin);
             return ToActionResult(result);
