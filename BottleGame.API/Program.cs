@@ -159,33 +159,39 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    // Глобальное ограничение: 100 запросов в минуту
+    // Глобально: 750 запросов в минуту на IP
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.User.Identity?.Name ?? context.Request.Headers.Host.ToString(),
+            partitionKey: GetClientIpAddress(context),
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
-                PermitLimit = 100,
-                Window = TimeSpan.FromMinutes(1)
+                PermitLimit = 750,
+                Window = TimeSpan.FromMinutes(1),
             }));
 
-    // Политика для аутентификации (более строгая)
-    options.AddFixedWindowLimiter("auth", opt =>
-    {
-        opt.PermitLimit = 50;
-        opt.Window = TimeSpan.FromMinutes(1);
-        opt.AutoReplenishment = true;
-    });
+    // auth (логин, Telegram): 25 запросов в минуту на IP
+    options.AddPolicy("auth", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetClientIpAddress(context),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 25,
+                Window = TimeSpan.FromMinutes(1),
+            }));
 
-    // Политика для игровых действий
-    options.AddSlidingWindowLimiter("game", opt =>
-    {
-        opt.PermitLimit = 100;
-        opt.Window = TimeSpan.FromSeconds(30);
-        opt.SegmentsPerWindow = 3;
-        opt.AutoReplenishment = true;
-    });
+    // game (раунды): 250 запросов за 30 секунд на IP
+    options.AddPolicy("game", context =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: GetClientIpAddress(context),
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 250,
+                Window = TimeSpan.FromSeconds(30),
+                SegmentsPerWindow = 3,
+            }));
 });
 
 #endregion
@@ -210,3 +216,14 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static string GetClientIpAddress(HttpContext context)
+{
+    var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+    if (!string.IsNullOrWhiteSpace(forwardedFor))
+    {
+        return forwardedFor.Split(',')[0].Trim();
+    }
+
+    return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+}
