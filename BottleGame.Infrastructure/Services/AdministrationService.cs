@@ -298,9 +298,9 @@ namespace BottleGame.Infrastructure.Services
         #region Private Statistics Methods
 
         /// <summary>
-        /// Максимальная длина запрашиваемого периода статистики в днях
+        /// Максимальная длина запрашиваемого периода статистики в днях (100 лет)
         /// </summary>
-        private const int MaxStatisticsRangeDays = 366;
+        private const int MaxStatisticsRangeDays = 36_500;
 
         /// <summary>
         /// Проверяет корректность диапазона дат для статистики
@@ -399,7 +399,12 @@ namespace BottleGame.Infrastructure.Services
                 return "week";
             }
 
-            return "month";
+            if (days <= 1_825)
+            {
+                return "month";
+            }
+
+            return "year";
         }
 
         /// <summary>
@@ -424,6 +429,7 @@ namespace BottleGame.Infrastructure.Services
                 {
                     "week" => current.AddDays(7),
                     "month" => current.AddMonths(1),
+                    "year" => current.AddYears(1),
                     _ => current.AddDays(1)
                 };
             }
@@ -444,6 +450,7 @@ namespace BottleGame.Infrastructure.Services
             {
                 "week" => bucketStart.AddDays(7).AddTicks(-1),
                 "month" => bucketStart.AddMonths(1).AddTicks(-1),
+                "year" => bucketStart.AddYears(1).AddTicks(-1),
                 _ => bucketStart.AddDays(1).AddTicks(-1)
             };
 

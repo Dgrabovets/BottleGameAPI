@@ -184,12 +184,26 @@ public class AdministrationServiceStatisticsTests : IDisposable
     {
         var result = await _service.GetStatistics(new GetAppGeneralStatisticsRequest
         {
-            DateFrom = new DateTime(2025, 1, 1),
-            DateTill = new DateTime(2026, 6, 1)
+            DateFrom = new DateTime(1900, 1, 1),
+            DateTill = new DateTime(2100, 1, 1)
         });
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("366");
+        result.Error.Should().Contain("36500");
+    }
+
+    [Fact]
+    public async Task GetStatisticsTimeline_WithMultiYearPeriod_UsesYearBuckets()
+    {
+        var result = await _service.GetStatisticsTimeline(new GetAppStatisticsTimelineRequest
+        {
+            DateFrom = new DateTime(2004, 1, 1),
+            DateTill = new DateTime(2026, 5, 29)
+        });
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Bucket.Should().Be("year");
+        result.Value.Points.Count.Should().BeInRange(20, 25);
     }
 
     #endregion GetStatistics — общая статистика
