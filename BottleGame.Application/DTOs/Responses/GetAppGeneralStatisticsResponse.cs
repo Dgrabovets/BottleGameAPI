@@ -11,17 +11,27 @@ namespace BottleGame.Application.DTOs.Responses
         public int UsersTotal { get; set; }
 
         /// <summary>
-        /// Общая сумма депозитов
+        /// Сумма успешно обработанных пополнений
         /// </summary>
         public decimal DepositsTotal { get; set; }
 
         /// <summary>
-        /// Общая сумма балансов игроков
+        /// Общая сумма балансов игроков (только для общей статистики без периода)
         /// </summary>
-        public decimal BalancesTotal { get; set; }
+        public decimal? BalancesTotal { get; set; }
 
         /// <summary>
-        /// Общая сумма ожидающих выводов
+        /// Сумма успешно обработанных выводов
+        /// </summary>
+        public decimal WithdrawalsTotal { get; set; }
+
+        /// <summary>
+        /// Доход: успешно обработанные пополнения минус успешно обработанные выводы
+        /// </summary>
+        public decimal IncomeTotal { get; set; }
+
+        /// <summary>
+        /// Сумма выводов в обработке (статус Pending)
         /// </summary>
         public decimal PendingWithdrawalsTotal { get; set; }
     }

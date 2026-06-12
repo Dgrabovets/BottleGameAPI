@@ -142,9 +142,38 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpGet("get-statistics")]
-        public async Task<ActionResult<GetAppGeneralStatisticsResponse>> GetStatistics()
+        public async Task<ActionResult<GetAppGeneralStatisticsResponse>> GetStatistics([FromQuery] DateTime? dateFrom,
+                                                                                       [FromQuery] DateTime? dateTill)
         {
-            var result = await _administrationService.GetStatistics();
+            var request = new GetAppGeneralStatisticsRequest
+            {
+                DateFrom = dateFrom,
+                DateTill = dateTill
+            };
+
+            var result = await _administrationService.GetStatistics(request);
+            return ToActionResult(result);
+        }
+
+        /// <summary>
+        /// Получение временной шкалы статистики для графиков
+        /// </summary>
+        [Authorize(Roles = RoleNames.Admin)]
+        [ProducesResponseType(typeof(GetAppStatisticsTimelineResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [HttpGet("get-statistics-timeline")]
+        public async Task<ActionResult<GetAppStatisticsTimelineResponse>> GetStatisticsTimeline(
+            [FromQuery] DateTime dateFrom,
+            [FromQuery] DateTime dateTill)
+        {
+            var request = new GetAppStatisticsTimelineRequest
+            {
+                DateFrom = dateFrom,
+                DateTill = dateTill
+            };
+
+            var result = await _administrationService.GetStatisticsTimeline(request);
             return ToActionResult(result);
         }
 

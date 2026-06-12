@@ -40,8 +40,16 @@ namespace BottleGame.Application.Interfaces
         /// <summary>
         /// Получить статистику для администратора
         /// </summary>
+        /// <param name="request">Опциональный период</param>
         /// <returns>Административная статистика</returns>
-        Task<Result<GetAppGeneralStatisticsResponse>> GetStatistics();
+        Task<Result<GetAppGeneralStatisticsResponse>> GetStatistics(GetAppGeneralStatisticsRequest? request = null);
+
+        /// <summary>
+        /// Получить временную шкалу статистики для графиков
+        /// </summary>
+        /// <param name="request">Период</param>
+        /// <returns>Точки шкалы</returns>
+        Task<Result<GetAppStatisticsTimelineResponse>> GetStatisticsTimeline(GetAppStatisticsTimelineRequest request);
 
         #endregion Statistics Methods
 
