@@ -176,6 +176,50 @@ public class PlayerServiceTests : IDisposable
         result.Value!.Count().Should().Be(2);
     }
 
+    [Fact]
+    public async Task GetAllPlayers_ExcludesActivelyBanned()
+    {
+        var active = TestDbContextFactory.CreateTestPlayer(_context, 111);
+        var banned = TestDbContextFactory.CreateTestPlayer(_context, 222);
+        TestDbContextFactory.AddActiveBan(_context, banned.Id);
+
+        var result = await _service.GetAllPlayers();
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Should().ContainSingle();
+        result.Value!.Single().Player.Id.Should().Be(active.Id);
+    }
+
+    [Fact]
+    public async Task GetAllPlayers_SearchByTelegramId_IncludesBanned()
+    {
+        var banned = TestDbContextFactory.CreateTestPlayer(_context, 625593041);
+        banned.Name = "Dgrabovets";
+        _context.SaveChanges();
+        TestDbContextFactory.AddActiveBan(_context, banned.Id);
+
+        var result = await _service.GetAllPlayers(telegramId: 625593041);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Should().ContainSingle();
+        result.Value!.Single().BannedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetAllPlayers_SearchByName_IncludesBanned()
+    {
+        var banned = TestDbContextFactory.CreateTestPlayer(_context, 333);
+        banned.Name = "UniqueNick";
+        _context.SaveChanges();
+        TestDbContextFactory.AddActiveBan(_context, banned.Id);
+
+        var result = await _service.GetAllPlayers(name: "uniquenick");
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Should().ContainSingle();
+        result.Value!.Single().Player.Name.Should().Be("UniqueNick");
+    }
+
     #endregion GetAllPlayers Tests
 
     #region EditPlayer Tests

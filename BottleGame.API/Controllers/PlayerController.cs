@@ -135,9 +135,10 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(IEnumerable<PlayerInfoResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<PlayerInfoResponse>>> GetAllPlayers()
+        public async Task<ActionResult<IEnumerable<PlayerInfoResponse>>> GetAllPlayers([FromQuery] long? telegramId = null,
+                                                                                       [FromQuery] string? name = null)
         {
-            var result = await _playerService.GetAllPlayers();
+            var result = await _playerService.GetAllPlayers(telegramId, name);
             return ToActionResult(result);
         }
 

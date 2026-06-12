@@ -32,10 +32,12 @@ namespace BottleGame.Application.Interfaces
         Task<Result<PlayerInfoByIdResponse>> GetPlayerById(int playerId, int? requestingPlayerId, bool isAdmin);
 
         /// <summary>
-        /// Получить список всех игроков
+        /// Получить список игроков (без поиска — без активно забаненных)
         /// </summary>
+        /// <param name="telegramId">Точный Telegram ID (поиск, включает забаненных)</param>
+        /// <param name="name">Частичное совпадение по нику (поиск, включает забаненных)</param>
         /// <returns>Список игроков</returns>
-        Task<Result<IEnumerable<PlayerInfoResponse>>> GetAllPlayers();
+        Task<Result<IEnumerable<PlayerInfoResponse>>> GetAllPlayers(long? telegramId = null, string? name = null);
 
         /// <summary>
         /// Получить топ-100 игроков по балансу
