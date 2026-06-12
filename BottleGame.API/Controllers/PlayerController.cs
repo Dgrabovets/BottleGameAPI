@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Security.Claims;
 using BottleGame.Domain.Constants;
+using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
@@ -136,9 +137,23 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<PlayerInfoResponse>>> GetAllPlayers([FromQuery] long? telegramId = null,
-                                                                                       [FromQuery] string? name = null)
+                                                                                       [FromQuery] string? name = null,
+                                                                                       [FromQuery] string? q = null)
         {
-            var result = await _playerService.GetAllPlayers(telegramId, name);
+            var search = PlayerSearchQuery.Resolve(telegramId, name, q);
+            var result = await _playerService.GetAllPlayers(search.TelegramId, search.Name);
+            return ToActionResult(result);
+        }
+
+        /// <summary>
+        /// Получить ID игроков с активным баном
+        /// </summary>
+        [Authorize(Roles = RoleNames.Admin)]
+        [HttpGet("actively-banned-player-ids")]
+        [ProducesResponseType(typeof(IEnumerable<int>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<int>>> GetActivelyBannedPlayerIds()
+        {
+            var result = await _playerService.GetActivelyBannedPlayerIds();
             return ToActionResult(result);
         }
 

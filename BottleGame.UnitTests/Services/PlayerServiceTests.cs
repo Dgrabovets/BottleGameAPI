@@ -206,6 +206,19 @@ public class PlayerServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task GetActivelyBannedPlayerIds_ReturnsOnlyActiveBans()
+    {
+        var active = TestDbContextFactory.CreateTestPlayer(_context, 111);
+        var banned = TestDbContextFactory.CreateTestPlayer(_context, 222);
+        TestDbContextFactory.AddActiveBan(_context, banned.Id);
+
+        var result = await _service.GetActivelyBannedPlayerIds();
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Should().ContainSingle().Which.Should().Be(banned.Id);
+    }
+
+    [Fact]
     public async Task GetAllPlayers_SearchNoResults_ReturnsEmptyList()
     {
         TestDbContextFactory.CreateTestPlayer(_context, 111);
