@@ -471,53 +471,65 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public async Task<Result<IEnumerable<GetPlayerTransactionsResponse>>> GetAllTransactions(int? typeId)
         {
-            var query = _context.MoneyTransactions
-                .Include(t => t.Player)
-                .Include(t => t.TransactionType)
-                .Include(t => t.TransactionStatus)
-                .AsQueryable();
+            var query = _context.MoneyTransactions.AsNoTracking().AsQueryable();
 
             if (typeId is not null)
             {
                 query = query.Where(t => t.TransactionTypeId == typeId);
             }
 
-            var transactions = await query
+            var rows = await query
                 .OrderByDescending(t => t.CreatedAt)
-                .AsNoTracking()
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Amount,
+                    t.TransactionStatusId,
+                    StatusName = t.TransactionStatus.Name,
+                    t.TransactionTypeId,
+                    TypeName = t.TransactionType.Name,
+                    t.CreatedAt,
+                    t.ProcessedAt,
+                    t.PlayerId,
+                    PlayerTelegramId = t.Player.TelegramId,
+                    PlayerName = t.Player.Name,
+                    PlayerAvatarUrl = t.Player.AvatarUrl,
+                    PlayerRegisteredInAppAt = t.Player.RegisteredInAppAt,
+                })
                 .ToListAsync();
 
-            _logger.LogInformation("{Prefix} Получено {Count} транзакций", Prefix, transactions.Count);
+            _logger.LogInformation("{Prefix} Получено {Count} транзакций", Prefix, rows.Count);
 
-            var response = transactions
+            var response = rows
                 .GroupBy(t => t.PlayerId)
                 .Select(group =>
                 {
-                    var player = group.First().Player;
+                    var player = group.First();
                     return new GetPlayerTransactionsResponse
                     {
                         Player = new PlayerDTO
                         {
-                            Id = player.Id,
-                            TelegramId = player.TelegramId,
-                            Name = player.Name,
-                            AvatarUrl = player.AvatarUrl,
-                            RegisteredInAppAt = player.RegisteredInAppAt,
-                            WinRate = player.WinRate,
+                            Id = player.PlayerId,
+                            TelegramId = player.PlayerTelegramId,
+                            Name = player.PlayerName,
+                            AvatarUrl = player.PlayerAvatarUrl,
+                            RegisteredInAppAt = player.PlayerRegisteredInAppAt,
+                            WinRate = 0,
                         },
                         Transactions = [.. group.Select(t => new TransactionDTO
                         {
                             Id = t.Id,
                             Amount = t.Amount,
                             StatusId = t.TransactionStatusId,
-                            StatusName = t.TransactionStatus.Name,
+                            StatusName = t.StatusName,
                             TypeId = t.TransactionTypeId,
-                            TypeName = t.TransactionType.Name,
+                            TypeName = t.TypeName,
                             CreatedAt = t.CreatedAt,
                             ProcessedAt = t.ProcessedAt
                         })]
                     };
-                });
+                })
+                .ToList();
 
             return Result<IEnumerable<GetPlayerTransactionsResponse>>.Success(response);
         }
