@@ -146,18 +146,6 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получить ID игроков с активным баном
-        /// </summary>
-        [Authorize(Roles = RoleNames.Admin)]
-        [HttpGet("actively-banned-player-ids")]
-        [ProducesResponseType(typeof(IEnumerable<int>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<int>>> GetActivelyBannedPlayerIds()
-        {
-            var result = await _playerService.GetActivelyBannedPlayerIds();
-            return ToActionResult(result);
-        }
-
-        /// <summary>
         /// Получение данных об игроке
         /// </summary>
         /// <response code="200">Пользователь</response>
