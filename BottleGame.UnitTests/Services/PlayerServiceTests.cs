@@ -206,6 +206,17 @@ public class PlayerServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task GetAllPlayers_SearchNoResults_ReturnsEmptyList()
+    {
+        TestDbContextFactory.CreateTestPlayer(_context, 111);
+
+        var result = await _service.GetAllPlayers(name: "nonexistent_user_xyz");
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetAllPlayers_SearchByName_IncludesBanned()
     {
         var banned = TestDbContextFactory.CreateTestPlayer(_context, 333);

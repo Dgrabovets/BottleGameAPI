@@ -471,9 +471,11 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public async Task<Result<IEnumerable<GetPlayerTransactionsResponse>>> GetAllTransactions(int? typeId)
         {
+            var bannedPlayerIds = _context.ActivelyBannedPlayerIds();
+
             var query = _context.MoneyTransactions
                 .AsNoTracking()
-                .WherePlayerNotActivelyBanned()
+                .WherePlayerNotActivelyBanned(bannedPlayerIds)
                 .AsQueryable();
 
             if (typeId is not null)

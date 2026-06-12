@@ -163,6 +163,7 @@ namespace BottleGame.Infrastructure.Services
                                                                                  string? name = null)
         {
             var isSearch = telegramId.HasValue || !string.IsNullOrWhiteSpace(name);
+            var bannedPlayerIds = _context.ActivelyBannedPlayerIds();
 
             var query = _context.Players
                 .Include(p => p.GameRounds)
@@ -174,7 +175,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (!isSearch)
             {
-                query = query.WhereNotActivelyBanned();
+                query = query.WhereNotActivelyBanned(bannedPlayerIds);
             }
             else
             {
@@ -194,6 +195,11 @@ namespace BottleGame.Infrastructure.Services
 
             if (players.Count == 0)
             {
+                if (isSearch)
+                {
+                    return Result<IEnumerable<PlayerInfoResponse>>.Success([]);
+                }
+
                 _logger.LogWarning("{Prefix} Игроки не найдены", Prefix);
                 return Result<IEnumerable<PlayerInfoResponse>>.NotFound("Игроки не найдены");
             }
@@ -208,12 +214,14 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public async Task<Result<IEnumerable<PlayerInfoResponse>>> GetTop100Players()
         {
+            var bannedPlayerIds = _context.ActivelyBannedPlayerIds();
+
             var players = await _context.Players
                 .Include(p => p.GameRounds)
                 .Include(p => p.Balance)
                 .Include(p => p.InvitedByMe)
                 .Include(p => p.Ban)
-                .WhereNotActivelyBanned()
+                .WhereNotActivelyBanned(bannedPlayerIds)
                 .OrderByDescending(p => p.Balance.Amount)
                 .Take(100)
                 .AsNoTracking()
