@@ -224,6 +224,43 @@ public class TransactionServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task GetAllTransactions_DoesNotDuplicateWhenPlayerHasManyRounds()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        _context.GameRounds.AddRange(
+            new GameRound { PlayerId = player.Id, Bet = 100, IsWin = false, FinishedAt = DateTime.UtcNow },
+            new GameRound { PlayerId = player.Id, Bet = 100, IsWin = true, FinishedAt = DateTime.UtcNow },
+            new GameRound { PlayerId = player.Id, Bet = 50, IsWin = false, FinishedAt = DateTime.UtcNow },
+            new GameRound { PlayerId = player.Id, Bet = 50, IsWin = true, FinishedAt = DateTime.UtcNow }
+        );
+        _context.MoneyTransactions.AddRange(
+            new MoneyTransaction
+            {
+                PlayerId = player.Id,
+                Amount = 2000,
+                TransactionTypeId = TransactionTypes.Deposit,
+                TransactionStatusId = TransactionStatuses.Approved,
+                CreatedAt = DateTime.UtcNow
+            },
+            new MoneyTransaction
+            {
+                PlayerId = player.Id,
+                Amount = 10000,
+                TransactionTypeId = TransactionTypes.Withdrawal,
+                TransactionStatusId = TransactionStatuses.Pending,
+                CreatedAt = DateTime.UtcNow
+            }
+        );
+        await _context.SaveChangesAsync();
+
+        var result = await _service.GetAllTransactions(null);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Should().ContainSingle();
+        result.Value!.Single().Transactions.Should().HaveCount(2);
+    }
+
+    [Fact]
     public async Task GetAllTransactions_FilterByType_ReturnsFiltered()
     {
         // Arrange
