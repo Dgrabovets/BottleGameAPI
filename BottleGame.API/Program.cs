@@ -4,7 +4,6 @@ using BottleGame.Application;
 using BottleGame.Infrastructure;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
