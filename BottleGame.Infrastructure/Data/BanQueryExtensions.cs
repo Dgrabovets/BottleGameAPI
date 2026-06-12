@@ -8,33 +8,27 @@ namespace BottleGame.Infrastructure.Data
     public static class BanQueryExtensions
     {
         /// <summary>
-        /// ID игроков с активным баном
-        /// </summary>
-        public static IQueryable<int> ActivelyBannedPlayerIds(this ApplicationDbContext context) =>
-            context.Bans.Where(b => b.IsActive).Select(b => b.PlayerId);
-
-        /// <summary>
         /// Исключает игроков с активным баном
         /// </summary>
         public static IQueryable<Player> WhereNotActivelyBanned(
             this IQueryable<Player> query,
-            IQueryable<int> activelyBannedPlayerIds) =>
-            query.Where(p => !activelyBannedPlayerIds.Contains(p.Id));
+            ApplicationDbContext context) =>
+            query.Where(p => !context.Bans.Any(b => b.PlayerId == p.Id && b.IsActive));
 
         /// <summary>
         /// Исключает транзакции игроков с активным баном
         /// </summary>
         public static IQueryable<MoneyTransaction> WherePlayerNotActivelyBanned(
             this IQueryable<MoneyTransaction> query,
-            IQueryable<int> activelyBannedPlayerIds) =>
-            query.Where(t => !activelyBannedPlayerIds.Contains(t.PlayerId));
+            ApplicationDbContext context) =>
+            query.Where(t => !context.Bans.Any(b => b.PlayerId == t.PlayerId && b.IsActive));
 
         /// <summary>
         /// Исключает балансы игроков с активным баном
         /// </summary>
         public static IQueryable<Balance> WherePlayerNotActivelyBanned(
             this IQueryable<Balance> query,
-            IQueryable<int> activelyBannedPlayerIds) =>
-            query.Where(b => !activelyBannedPlayerIds.Contains(b.PlayerId));
+            ApplicationDbContext context) =>
+            query.Where(b => !context.Bans.Any(ban => ban.PlayerId == b.PlayerId && ban.IsActive));
     }
 }
