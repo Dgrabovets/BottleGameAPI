@@ -40,11 +40,6 @@ namespace BottleGame.Application.Interfaces
         Task<Result<IEnumerable<PlayerInfoResponse>>> GetAllPlayers(long? telegramId = null, string? name = null);
 
         /// <summary>
-        /// Получить ID игроков с активным баном
-        /// </summary>
-        Task<Result<IEnumerable<int>>> GetActivelyBannedPlayerIds();
-
-        /// <summary>
         /// Получить топ-100 игроков по балансу
         /// </summary>
         /// <returns>Список топ-100 игроков</returns>
