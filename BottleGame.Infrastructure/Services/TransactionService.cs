@@ -195,53 +195,55 @@ namespace BottleGame.Infrastructure.Services
 
             if (request.IsDeposit)
             {
-                try
-                {
-                    _logger.LogInformation("{Prefix} Создание запроса для платежа игрока {PlayerId}, сумма {Amount}", Prefix, playerId, request.Amount);
+                // До подключения процессинговой площадки отрубаем — вернуть блок CreateOrderAsync перед продом
+                //try
+                //{
+                //    _logger.LogInformation("{Prefix} Создание запроса для платежа игрока {PlayerId}, сумма {Amount}", Prefix, playerId, request.Amount);
+                //
+                //    var createOrderRequest = new CreateOrderRequest(
+                //        _options.MerchantId,
+                //        transaction.Id.ToString(),
+                //        request.Amount,
+                //        player.PlayerOptions.PaymentMethod.ToString(),
+                //        "card",
+                //        player.TelegramId.ToString());
+                //
+                //    var orderResponse = await _processingService.CreateOrderAsync(createOrderRequest);
+                //
+                //    if (!orderResponse.IsSuccess || string.IsNullOrEmpty(orderResponse.PaymentUrl))
+                //    {
+                //        transaction.TransactionStatusId = TransactionStatuses.Rejected;
+                //        transaction.IsProcessingSuccess = false;
+                //        transaction.ProcessingError = orderResponse.ErrorMessage;
+                //        await _context.SaveChangesAsync();
+                //
+                //        _logger.LogError("{Prefix} Ошибка при создании платежа для игрока {PlayerId}: {ErrorMessage}", Prefix, playerId, orderResponse.ErrorMessage);
+                //        return Result<object?>.InternalError("Ошибка при создании платежа: " + orderResponse.ErrorMessage);
+                //    }
+                //
+                //    transaction.ProcessingOrderId = orderResponse.OrderId;
+                //    transaction.PaymentUrl = orderResponse.PaymentUrl;
+                //    transaction.PaymentGateway = player.PlayerOptions.PaymentMethod.ToString();
+                //    transaction.Currency = player.PlayerOptions.Currency?.ToString() ?? "rub";
+                //    await _context.SaveChangesAsync();
+                //
+                //    responseData = new
+                //    {
+                //        PaymentLink = orderResponse.PaymentUrl,
+                //        orderResponse.OrderId
+                //    };
+                //}
+                //catch (Exception ex)
+                //{
+                //    transaction.TransactionStatusId = TransactionStatuses.Rejected;
+                //    transaction.IsProcessingSuccess = false;
+                //    await _context.SaveChangesAsync();
+                //
+                //    _logger.LogError(ex, "{Prefix} Ошибка при создании платежа для игрока {PlayerId}", Prefix, playerId);
+                //    return Result<object?>.InternalError("Ошибка при создании платежа");
+                //}
 
-                    var createOrderRequest = new CreateOrderRequest(
-                        _options.MerchantId,
-                        transaction.Id.ToString(),
-                        request.Amount,
-                        player.PlayerOptions.PaymentMethod.ToString(),
-                        "card",
-                        player.TelegramId.ToString());
-
-                    var orderResponse = await _processingService.CreateOrderAsync(createOrderRequest);
-
-                    if (!orderResponse.IsSuccess || string.IsNullOrEmpty(orderResponse.PaymentUrl))
-                    {
-                        transaction.TransactionStatusId = TransactionStatuses.Rejected;
-                        transaction.IsProcessingSuccess = false;
-                        transaction.ProcessingError = orderResponse.ErrorMessage;
-                        await _context.SaveChangesAsync();
-
-                        _logger.LogError("{Prefix} Ошибка при создании платежа для игрока {PlayerId}: {ErrorMessage}", Prefix, playerId, orderResponse.ErrorMessage);
-                        return Result<object?>.InternalError("Ошибка при создании платежа: " + orderResponse.ErrorMessage);
-                    }
-
-                    // Сохраняем данные процессинга
-                    transaction.ProcessingOrderId = orderResponse.OrderId;
-                    transaction.PaymentUrl = orderResponse.PaymentUrl;
-                    transaction.PaymentGateway = player.PlayerOptions.PaymentMethod.ToString();
-                    transaction.Currency = player.PlayerOptions.Currency?.ToString() ?? "rub";
-                    await _context.SaveChangesAsync();
-
-                    responseData = new
-                    {
-                        PaymentLink = orderResponse.PaymentUrl,
-                        orderResponse.OrderId
-                    };
-                }
-                catch (Exception ex)
-                {
-                    transaction.TransactionStatusId = TransactionStatuses.Rejected;
-                    transaction.IsProcessingSuccess = false;
-                    await _context.SaveChangesAsync();
-
-                    _logger.LogError(ex, "{Prefix} Ошибка при создании платежа для игрока {PlayerId}", Prefix, playerId);
-                    return Result<object?>.InternalError("Ошибка при создании платежа");
-                }
+                responseData = await CompleteDepositLocallyForTestsAsync(transaction, player, request.Amount);
             }
 
             _logger.LogInformation(
@@ -309,13 +311,14 @@ namespace BottleGame.Infrastructure.Services
                 return Result.Failure("Не найдены игровые параметры");
             }
 
-            var roundsPlayedStat = await _context.PlayersPlayedRoundsStatisticForWithdrawals
-                .FirstOrDefaultAsync(s => s.PlayerId == transaction.PlayerId);
+            // До подключения процессинговой площадки отрубаем
+            //var roundsPlayedStat = await _context.PlayersPlayedRoundsStatisticForWithdrawals
+            //    .FirstOrDefaultAsync(s => s.PlayerId == transaction.PlayerId);
 
-            if (roundsPlayedStat is null)
-            {
-                return Result.Failure("Не найдены данные статистики сыгранных раундов игрока");
-            }
+            //if (roundsPlayedStat is null)
+            //{
+            //    return Result.Failure("Не найдены данные статистики сыгранных раундов игрока");
+            //}
 
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
             if (appBalance is null)
@@ -330,61 +333,68 @@ namespace BottleGame.Infrastructure.Services
             }
             else if (request.TransactionStatusId == approvedStatusId)
             {
-                if (roundsPlayedStat.PlayedRoundsCount < gameParams.MinRoundsCountForWithdrawal)
-                {
-                    _logger.LogWarning("{Prefix} Недостаточно сыгранных раундов для вывода у игрока {PlayerId}", Prefix, transaction.PlayerId);
-                    return Result.Failure($"Для вывода необходимо сыграть минимум {gameParams.MinRoundsCountForWithdrawal} раундов. Сейчас сыграно: {roundsPlayedStat.PlayedRoundsCount}");
-                }
+                // До подключения процессинговой площадки отрубаем
+                //if (roundsPlayedStat.PlayedRoundsCount < gameParams.MinRoundsCountForWithdrawal)
+                //{
+                //    _logger.LogWarning("{Prefix} Недостаточно сыгранных раундов для вывода у игрока {PlayerId}", Prefix, transaction.PlayerId);
+                //    return Result.Failure($"Для вывода необходимо сыграть минимум {gameParams.MinRoundsCountForWithdrawal} раундов. Сейчас сыграно: {roundsPlayedStat.PlayedRoundsCount}");
+                //}
 
-                if (transaction.Amount > appBalance.LowerThreshold * 0.1m)
-                {
-                    _logger.LogWarning("{Prefix} Одобрение транзакции невозможно - сумма превышает порог", Prefix);
-                    return Result.Failure("Одобрение транзакции невозможно - сумма к выводу превышает нижний порог баланса приложения!");
-                }
+                //if (transaction.Amount > appBalance.LowerThreshold * 0.1m)
+                //{
+                //    _logger.LogWarning("{Prefix} Одобрение транзакции невозможно - сумма превышает порог", Prefix);
+                //    return Result.Failure("Одобрение транзакции невозможно - сумма к выводу превышает нижний порог баланса приложения!");
+                //}
 
-                try
-                {
-                    var createPoolPayoutRequest = new CreatePoolPayoutRequest(
-                        _options.MerchantId,
-                        transaction.Id.ToString(),
-                        transaction.Amount,
-                        transaction.Player.PlayerOptions.PayoutMethod.ToString(),
-                        transaction.Player.PlayerOptions.Wallet!,
-                        transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub",
-                        30);
+                // До подключения процессинговой площадки отрубаем — вернуть блок CreatePoolPayoutAsync перед продом
+                //try
+                //{
+                //    var createPoolPayoutRequest = new CreatePoolPayoutRequest(
+                //        _options.MerchantId,
+                //        transaction.Id.ToString(),
+                //        transaction.Amount,
+                //        transaction.Player.PlayerOptions.PayoutMethod.ToString(),
+                //        transaction.Player.PlayerOptions.Wallet!,
+                //        transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub",
+                //        30);
+                //
+                //    var payoutResponse = await _processingService.CreatePoolPayoutAsync(createPoolPayoutRequest);
+                //
+                //    if (!payoutResponse.IsSuccess)
+                //    {
+                //        transaction.Player.Balance.Amount += transaction.Amount;
+                //        transaction.TransactionStatusId = TransactionStatuses.Rejected;
+                //        transaction.IsProcessingSuccess = false;
+                //        transaction.ProcessingError = payoutResponse.ErrorMessage;
+                //        transaction.ProcessedAt = DateTime.UtcNow;
+                //        await _context.SaveChangesAsync();
+                //
+                //        _logger.LogError("{Prefix} Ошибка при создании выплаты для игрока {PlayerId}: {ErrorMessage}", Prefix, transaction.PlayerId, payoutResponse.ErrorMessage);
+                //        return Result.InternalError("Ошибка при создании выплаты: " + payoutResponse.ErrorMessage);
+                //    }
+                //
+                //    transaction.ProcessingOrderId = payoutResponse.PayoutId;
+                //    transaction.PaymentGateway = transaction.Player.PlayerOptions.PayoutMethod.ToString();
+                //    transaction.Currency = transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub";
+                //    transaction.TransactionStatusId = approvedStatusId;
+                //}
+                //catch (Exception ex)
+                //{
+                //    transaction.Player.Balance.Amount += transaction.Amount;
+                //    transaction.TransactionStatusId = TransactionStatuses.Rejected;
+                //    transaction.IsProcessingSuccess = false;
+                //    transaction.ProcessedAt = DateTime.UtcNow;
+                //    await _context.SaveChangesAsync();
+                //
+                //    _logger.LogError(ex, "{Prefix} Ошибка при создании выплаты для игрока {PlayerId}", Prefix, transaction.PlayerId);
+                //    return Result.InternalError("Ошибка при создании выплаты");
+                //}
 
-                    var payoutResponse = await _processingService.CreatePoolPayoutAsync(createPoolPayoutRequest);
-
-                    if (!payoutResponse.IsSuccess)
-                    {
-                        transaction.Player.Balance.Amount += transaction.Amount;
-                        transaction.TransactionStatusId = TransactionStatuses.Rejected;
-                        transaction.IsProcessingSuccess = false;
-                        transaction.ProcessingError = payoutResponse.ErrorMessage;
-                        transaction.ProcessedAt = DateTime.UtcNow;
-                        await _context.SaveChangesAsync();
-
-                        _logger.LogError("{Prefix} Ошибка при создании выплаты для игрока {PlayerId}: {ErrorMessage}", Prefix, transaction.PlayerId, payoutResponse.ErrorMessage);
-                        return Result.InternalError("Ошибка при создании выплаты: " + payoutResponse.ErrorMessage);
-                    }
-
-                    // Сохраняем данные процессинга
-                    transaction.ProcessingOrderId = payoutResponse.PayoutId;
-                    transaction.PaymentGateway = transaction.Player.PlayerOptions.PayoutMethod.ToString();
-                    transaction.Currency = transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub";
-                    transaction.TransactionStatusId = approvedStatusId;
-                }
-                catch (Exception ex)
-                {
-                    transaction.Player.Balance.Amount += transaction.Amount;
-                    transaction.TransactionStatusId = TransactionStatuses.Rejected;
-                    transaction.IsProcessingSuccess = false;
-                    transaction.ProcessedAt = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
-
-                    _logger.LogError(ex, "{Prefix} Ошибка при создании выплаты для игрока {PlayerId}", Prefix, transaction.PlayerId);
-                    return Result.InternalError("Ошибка при создании выплаты");
-                }
+                CompleteWithdrawalLocallyForTests(transaction, appBalance, approvedStatusId);
+                _logger.LogWarning(
+                    "{Prefix} [TEST BYPASS] Вывод {TransactionId} одобрен локально без процессинга",
+                    Prefix,
+                    transaction.Id);
             }
 
             transaction.ProcessedAt = DateTime.UtcNow;
@@ -509,6 +519,69 @@ namespace BottleGame.Infrastructure.Services
         }
 
         #endregion Transaction Methods
+
+        #region Private Test Bypass Methods
+
+        /// <summary>
+        /// Локально завершает пополнение без обращения к процессинговой площадке
+        /// </summary>
+        /// <param name="transaction">Транзакция пополнения</param>
+        /// <param name="player">Игрок</param>
+        /// <param name="amount">Сумма пополнения</param>
+        /// <returns>Ответ API с тестовым идентификатором ордера</returns>
+        private async Task<object> CompleteDepositLocallyForTestsAsync(
+            MoneyTransaction transaction,
+            Player player,
+            decimal amount)
+        {
+            var appBalance = await _context.AppBalance.FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Не найден баланс приложения");
+
+            transaction.TransactionStatusId = TransactionStatuses.Approved;
+            transaction.IsProcessingSuccess = true;
+            transaction.ProcessedAt = DateTime.UtcNow;
+            transaction.ProcessingOrderId = $"test-deposit-{transaction.Id}";
+            transaction.PaymentGateway = player.PlayerOptions!.PaymentMethod.ToString();
+            transaction.Currency = player.PlayerOptions.Currency?.ToString() ?? "rub";
+
+            player.Balance!.Amount += amount;
+            appBalance.Amount += amount;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogWarning(
+                "{Prefix} [TEST BYPASS] Пополнение {TransactionId} завершено локально без процессинга",
+                Prefix,
+                transaction.Id);
+
+            return new
+            {
+                PaymentLink = (string?)null,
+                OrderId = transaction.ProcessingOrderId
+            };
+        }
+
+        /// <summary>
+        /// Локально завершает вывод без обращения к процессинговой площадке
+        /// </summary>
+        /// <param name="transaction">Транзакция вывода</param>
+        /// <param name="appBalance">Баланс приложения</param>
+        /// <param name="approvedStatusId">Идентификатор статуса «Одобрено»</param>
+        private void CompleteWithdrawalLocallyForTests(
+            MoneyTransaction transaction,
+            AppBalance appBalance,
+            int approvedStatusId)
+        {
+            transaction.TransactionStatusId = approvedStatusId;
+            transaction.IsProcessingSuccess = true;
+            transaction.ProcessedAt = DateTime.UtcNow;
+            transaction.ProcessingOrderId = $"test-payout-{transaction.Id}";
+            transaction.PaymentGateway = transaction.Player!.PlayerOptions!.PayoutMethod.ToString();
+            transaction.Currency = transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub";
+            appBalance.Amount -= transaction.Amount;
+        }
+
+        #endregion Private Test Bypass Methods
 
         #region Reference Data Methods
 

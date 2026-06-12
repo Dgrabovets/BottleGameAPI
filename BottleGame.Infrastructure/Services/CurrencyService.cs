@@ -72,43 +72,51 @@ namespace BottleGame.Infrastructure.Services
         #region Public Methods
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<CurrencyInfo>> GetAvailableCurrenciesAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<CurrencyInfo>> GetAvailableCurrenciesAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
         {
-            if (forceRefresh)
-            {
-                _cache.Remove(CurrenciesCacheKey);
-            }
+            // До подключения процессинговой площадки отрубаем — вернуть блок с API перед продом
+            //if (forceRefresh)
+            //{
+            //    _cache.Remove(CurrenciesCacheKey);
+            //}
+            //
+            //var currencies = await _cache.GetOrCreateAsync(CurrenciesCacheKey, async entry =>
+            //{
+            //    entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
+            //
+            //    _logger.LogInformation("{Prefix} Загрузка списка валют из API", Prefix);
+            //    var result = await _processingService.GetCurrenciesAsync(cancellationToken);
+            //    return result.ToList();
+            //});
+            //
+            //return currencies ?? Enumerable.Empty<CurrencyInfo>();
 
-            var currencies = await _cache.GetOrCreateAsync(CurrenciesCacheKey, async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
-
-                _logger.LogInformation("{Prefix} Загрузка списка валют из API", Prefix);
-                var result = await _processingService.GetCurrenciesAsync(cancellationToken);
-                return result.ToList();
-            });
-
-            return currencies ?? Enumerable.Empty<CurrencyInfo>();
+            _logger.LogWarning("{Prefix} [TEST BYPASS] Список валют без процессинга", Prefix);
+            return Task.FromResult<IEnumerable<CurrencyInfo>>(GetTestCurrencies());
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<PaymentGatewayInfo>> GetPaymentGatewaysAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<PaymentGatewayInfo>> GetPaymentGatewaysAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
         {
-            if (forceRefresh)
-            {
-                _cache.Remove(GatewaysCacheKey);
-            }
+            // До подключения процессинговой площадки отрубаем — вернуть блок с API перед продом
+            //if (forceRefresh)
+            //{
+            //    _cache.Remove(GatewaysCacheKey);
+            //}
+            //
+            //var gateways = await _cache.GetOrCreateAsync(GatewaysCacheKey, async entry =>
+            //{
+            //    entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
+            //
+            //    _logger.LogInformation("{Prefix} Загрузка списка платёжных шлюзов из API", Prefix);
+            //    var result = await _processingService.GetPaymentGatewaysAsync(cancellationToken);
+            //    return result.ToList();
+            //});
+            //
+            //return gateways ?? Enumerable.Empty<PaymentGatewayInfo>();
 
-            var gateways = await _cache.GetOrCreateAsync(GatewaysCacheKey, async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
-
-                _logger.LogInformation("{Prefix} Загрузка списка платёжных шлюзов из API", Prefix);
-                var result = await _processingService.GetPaymentGatewaysAsync(cancellationToken);
-                return result.ToList();
-            });
-
-            return gateways ?? Enumerable.Empty<PaymentGatewayInfo>();
+            _logger.LogWarning("{Prefix} [TEST BYPASS] Список шлюзов без процессинга", Prefix);
+            return Task.FromResult<IEnumerable<PaymentGatewayInfo>>(GetTestPaymentGateways());
         }
 
         /// <inheritdoc/>
@@ -132,19 +140,27 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <inheritdoc/>
-        public async Task<decimal> GetExchangeRateAsync(string currencyCode, CancellationToken cancellationToken = default)
+        public Task<decimal> GetExchangeRateAsync(string currencyCode, CancellationToken cancellationToken = default)
         {
-            var cacheKey = $"{ExchangeRateCacheKeyPrefix}{currencyCode.ToLowerInvariant()}";
+            // До подключения процессинговой площадки отрубаем — вернуть блок с API перед продом
+            //var cacheKey = $"{ExchangeRateCacheKeyPrefix}{currencyCode.ToLowerInvariant()}";
+            //
+            //var rate = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            //{
+            //    entry.AbsoluteExpirationRelativeToNow = ExchangeRateCacheExpiration;
+            //
+            //    _logger.LogDebug("{Prefix} Загрузка курса для {Currency} из API", Prefix, currencyCode);
+            //    return await _processingService.GetMerchantExchangeRateAsync(currencyCode, cancellationToken);
+            //});
+            //
+            //return rate;
 
-            var rate = await _cache.GetOrCreateAsync(cacheKey, async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = ExchangeRateCacheExpiration;
+            _logger.LogWarning(
+                "{Prefix} [TEST BYPASS] Курс {Currency}=1 без процессинга",
+                Prefix,
+                currencyCode);
 
-                _logger.LogDebug("{Prefix} Загрузка курса для {Currency} из API", Prefix, currencyCode);
-                return await _processingService.GetMerchantExchangeRateAsync(currencyCode, cancellationToken);
-            });
-
-            return rate;
+            return Task.FromResult(1m);
         }
 
         /// <inheritdoc/>
@@ -273,6 +289,44 @@ namespace BottleGame.Infrastructure.Services
         }
 
         #endregion Public Methods
+
+        #region Private Test Bypass Methods
+
+        /// <summary>
+        /// Тестовый код валюты по умолчанию (совпадает с регистрацией игрока)
+        /// </summary>
+        private const string TestCurrencyCode = "rub";
+
+        /// <summary>
+        /// Тестовый шлюз по умолчанию (совпадает с PaymentMethod/PayoutMethod при регистрации)
+        /// </summary>
+        private const string TestGatewayCode = "sberbank";
+
+        /// <summary>
+        /// Возвращает одну тестовую валюту без обращения к процессингу
+        /// </summary>
+        private static IReadOnlyList<CurrencyInfo> GetTestCurrencies() =>
+        [
+            new CurrencyInfo(TestCurrencyCode, "Российский рубль (тест)", isActive: true)
+        ];
+
+        /// <summary>
+        /// Возвращает один тестовый шлюз для пополнений и выводов
+        /// </summary>
+        private static IReadOnlyList<PaymentGatewayInfo> GetTestPaymentGateways() =>
+        [
+            new PaymentGatewayInfo(
+                code: TestGatewayCode,
+                name: "Sberbank (тест)",
+                currency: TestCurrencyCode,
+                supportsPayments: true,
+                supportsPayouts: true,
+                minAmount: 100m,
+                maxAmount: 1_000_000m,
+                detailTypes: ["card", "phone", "sbp"])
+        ];
+
+        #endregion Private Test Bypass Methods
     }
 }
 
