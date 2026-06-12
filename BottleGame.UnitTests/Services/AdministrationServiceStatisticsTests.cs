@@ -80,6 +80,34 @@ public class AdministrationServiceStatisticsTests : IDisposable
     }
 
     [Fact]
+    public async Task GetStatistics_ExcludesActivelyBannedPlayer()
+    {
+        var (context, builder) = StatisticsTestDataBuilder.Create();
+        var active = builder.AddPlayer(May20, 1_000m, "Active");
+        var banned = builder.AddPlayer(May20, 2_000m, "Banned");
+        TestDbContextFactory.AddActiveBan(context, banned.Id);
+
+        builder.AddSuccessfulDeposit(active.Id, 300m, May10);
+        builder.AddSuccessfulDeposit(banned.Id, 900m, May10);
+        builder.AddPendingWithdrawal(banned.Id, 200m);
+
+        var service = new AdministrationService(
+            context,
+            new Mock<ILogger<AdministrationService>>().Object,
+            new Mock<Application.Interfaces.IPasswordHasher>().Object);
+
+        var result = await service.GetStatistics();
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.UsersTotal.Should().Be(1);
+        result.Value.BalancesTotal.Should().Be(1_000m);
+        result.Value.DepositsTotal.Should().Be(300m);
+        result.Value.PendingWithdrawalsTotal.Should().Be(0m);
+
+        context.Dispose();
+    }
+
+    [Fact]
     public async Task GetStatistics_WithoutPeriod_CountsOnlySuccessfullyProcessedTransactions()
     {
         // Arrange — дополнительный шум в отдельном контексте

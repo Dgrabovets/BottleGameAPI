@@ -159,15 +159,38 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <inheritdoc/>
-        public async Task<Result<IEnumerable<PlayerInfoResponse>>> GetAllPlayers()
+        public async Task<Result<IEnumerable<PlayerInfoResponse>>> GetAllPlayers(long? telegramId = null,
+                                                                                 string? name = null)
         {
-            var players = await _context.Players
+            var isSearch = telegramId.HasValue || !string.IsNullOrWhiteSpace(name);
+
+            var query = _context.Players
                 .Include(p => p.GameRounds)
                 .Include(p => p.Balance)
                 .Include(p => p.InvitedByMe)
                 .Include(p => p.Ban)
                 .AsNoTracking()
-                .ToListAsync();
+                .AsQueryable();
+
+            if (!isSearch)
+            {
+                query = query.WhereNotActivelyBanned();
+            }
+            else
+            {
+                if (telegramId.HasValue)
+                {
+                    query = query.Where(p => p.TelegramId == telegramId.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    var normalizedName = name.Trim().ToLowerInvariant();
+                    query = query.Where(p => p.Name.ToLower().Contains(normalizedName));
+                }
+            }
+
+            var players = await query.ToListAsync();
 
             if (players.Count == 0)
             {
@@ -175,14 +198,7 @@ namespace BottleGame.Infrastructure.Services
                 return Result<IEnumerable<PlayerInfoResponse>>.NotFound("Игроки не найдены");
             }
 
-            var response = players.Select(p => new PlayerInfoResponse
-            {
-                Player = MapToPlayerDTO(p),
-                Balance = p.Balance.Amount,
-                Rounds = [.. p.GameRounds.Select(MapToRoundDTO)],
-                BannedAt = p.Ban is not null && p.Ban.IsActive ? p.Ban.BannedAt : null,
-                PlayersIdsInvited = [.. p.InvitedByMe.Select(pi => pi.PlayerIdInvited)],
-            });
+            var response = players.Select(MapToPlayerInfoResponse);
 
             _logger.LogInformation("{Prefix} Получены данные об игроках", Prefix);
 
@@ -197,6 +213,7 @@ namespace BottleGame.Infrastructure.Services
                 .Include(p => p.Balance)
                 .Include(p => p.InvitedByMe)
                 .Include(p => p.Ban)
+                .WhereNotActivelyBanned()
                 .OrderByDescending(p => p.Balance.Amount)
                 .Take(100)
                 .AsNoTracking()
@@ -208,14 +225,7 @@ namespace BottleGame.Infrastructure.Services
                 return Result<IEnumerable<PlayerInfoResponse>>.NotFound("Игроки не найдены");
             }
 
-            var response = players.Select(p => new PlayerInfoResponse
-            {
-                Player = MapToPlayerDTO(p),
-                Balance = p.Balance.Amount,
-                Rounds = [.. p.GameRounds.Select(MapToRoundDTO)],
-                BannedAt = p.Ban is not null && p.Ban.IsActive ? p.Ban.BannedAt : null,
-                PlayersIdsInvited = [.. p.InvitedByMe.Select(pi => pi.PlayerIdInvited)],
-            });
+            var response = players.Select(MapToPlayerInfoResponse);
 
             _logger.LogInformation("{Prefix} Получены данные о топ-100 игроках", Prefix);
 
@@ -560,6 +570,19 @@ namespace BottleGame.Infrastructure.Services
         #endregion Update Methods
 
         #region Private Methods
+
+        /// <summary>
+        /// Маппинг Player в PlayerInfoResponse
+        /// </summary>
+        private static PlayerInfoResponse MapToPlayerInfoResponse(Player player) =>
+            new()
+            {
+                Player = MapToPlayerDTO(player),
+                Balance = player.Balance.Amount,
+                Rounds = [.. player.GameRounds.Select(MapToRoundDTO)],
+                BannedAt = player.Ban is not null && player.Ban.IsActive ? player.Ban.BannedAt : null,
+                PlayersIdsInvited = [.. player.InvitedByMe.Select(pi => pi.PlayerIdInvited)],
+            };
 
         /// <summary>
         /// Маппинг Player в PlayerDTO

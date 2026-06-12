@@ -158,7 +158,7 @@ namespace BottleGame.Infrastructure.Services
                 return Result<GetAppGeneralStatisticsResponse>.Failure("Укажите обе даты периода: dateFrom и dateTill");
             }
 
-            var usersQuery = _context.Players.AsNoTracking();
+            var usersQuery = _context.Players.AsNoTracking().WhereNotActivelyBanned();
             if (rangeFrom.HasValue && rangeTill.HasValue)
             {
                 usersQuery = usersQuery.Where(p =>
@@ -169,7 +169,7 @@ namespace BottleGame.Infrastructure.Services
             var usersTotal = await usersQuery.CountAsync();
 
             var depositsQuery = FilterSuccessfullyProcessedTransactions(
-                _context.MoneyTransactions.AsNoTracking(),
+                _context.MoneyTransactions.AsNoTracking().WherePlayerNotActivelyBanned(),
                 TransactionTypes.Deposit);
 
             if (rangeFrom.HasValue && rangeTill.HasValue)
@@ -181,7 +181,9 @@ namespace BottleGame.Infrastructure.Services
 
             var depositsTotal = await depositsQuery.SumAsync(t => t.Amount);
 
-            var withdrawalsQuery = FilterSuccessfullyProcessedTransactions(_context.MoneyTransactions.AsNoTracking(), TransactionTypes.Withdrawal);
+            var withdrawalsQuery = FilterSuccessfullyProcessedTransactions(
+                _context.MoneyTransactions.AsNoTracking().WherePlayerNotActivelyBanned(),
+                TransactionTypes.Withdrawal);
 
             if (rangeFrom.HasValue && rangeTill.HasValue)
             {
@@ -195,11 +197,14 @@ namespace BottleGame.Infrastructure.Services
             decimal? balancesTotal = null;
             if (!hasPeriod)
             {
-                balancesTotal = await _context.PlayersBalances.SumAsync(b => b.Amount);
+                balancesTotal = await _context.PlayersBalances
+                    .WherePlayerNotActivelyBanned()
+                    .SumAsync(b => b.Amount);
             }
 
             var pendingWithdrawalsTotal = await _context.MoneyTransactions
                 .AsNoTracking()
+                .WherePlayerNotActivelyBanned()
                 .Where(t => t.TransactionTypeId == TransactionTypes.Withdrawal
                          && t.TransactionStatusId == TransactionStatuses.Pending)
                 .SumAsync(t => t.Amount);
@@ -235,11 +240,13 @@ namespace BottleGame.Infrastructure.Services
 
             var registrationDates = await _context.Players
                 .AsNoTracking()
+                .WhereNotActivelyBanned()
                 .Select(p => p.RegisteredInAppAt)
                 .ToListAsync();
 
             var transactions = await _context.MoneyTransactions
                 .AsNoTracking()
+                .WherePlayerNotActivelyBanned()
                 .Where(t => t.TransactionStatusId == TransactionStatuses.Approved
                          && t.IsProcessingSuccess == true
                          && t.ProcessedAt != null

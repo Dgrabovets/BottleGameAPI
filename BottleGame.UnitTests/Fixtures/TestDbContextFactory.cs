@@ -130,4 +130,19 @@ public static class TestDbContextFactory
 
         return player;
     }
+
+    /// <summary>
+    /// Назначает игроку активный бан
+    /// </summary>
+    public static void AddActiveBan(ApplicationDbContext context, int playerId, string reason = "Test ban")
+    {
+        context.Bans.Add(new Ban
+        {
+            PlayerId = playerId,
+            BanReason = reason,
+            BannedAt = DateTime.UtcNow,
+            IsActive = true
+        });
+        context.SaveChanges();
+    }
 }

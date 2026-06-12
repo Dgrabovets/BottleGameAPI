@@ -261,6 +261,41 @@ public class TransactionServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task GetAllTransactions_ExcludesActivelyBannedPlayer()
+    {
+        var active = TestDbContextFactory.CreateTestPlayer(_context, 111);
+        var banned = TestDbContextFactory.CreateTestPlayer(_context, 222);
+        TestDbContextFactory.AddActiveBan(_context, banned.Id);
+
+        _context.MoneyTransactions.AddRange(
+            new MoneyTransaction
+            {
+                PlayerId = active.Id,
+                Amount = 100,
+                TransactionTypeId = TransactionTypes.Deposit,
+                TransactionStatusId = TransactionStatuses.Pending,
+                CreatedAt = DateTime.UtcNow
+            },
+            new MoneyTransaction
+            {
+                PlayerId = banned.Id,
+                Amount = 500,
+                TransactionTypeId = TransactionTypes.Deposit,
+                TransactionStatusId = TransactionStatuses.Pending,
+                CreatedAt = DateTime.UtcNow
+            }
+        );
+        await _context.SaveChangesAsync();
+
+        var result = await _service.GetAllTransactions(null);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Should().ContainSingle();
+        result.Value!.Single().Player.Id.Should().Be(active.Id);
+        result.Value!.Single().Transactions.Should().HaveCount(1);
+    }
+
+    [Fact]
     public async Task GetAllTransactions_FilterByType_ReturnsFiltered()
     {
         // Arrange
