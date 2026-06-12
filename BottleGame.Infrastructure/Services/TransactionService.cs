@@ -151,20 +151,21 @@ namespace BottleGame.Infrastructure.Services
                 return Result<object?>.Failure("Не найдены игровые параметры");
             }
 
-            var roundsPlayedStat = await _context.PlayersPlayedRoundsStatisticForWithdrawals
-                .FirstOrDefaultAsync(s => s.PlayerId == playerId);
+            // До подключение процессинговой площадки отрубаем
+            //var roundsPlayedStat = await _context.PlayersPlayedRoundsStatisticForWithdrawals
+            //    .FirstOrDefaultAsync(s => s.PlayerId == playerId);
 
-            if (roundsPlayedStat is null)
-            {
-                _logger.LogWarning("{Prefix} Не найдены данные статистики сыгранных раундов для игрока {PlayerId}", Prefix, playerId);
-                return Result<object?>.Failure("Не найдены данные статистики сыгранных раундов игрока");
-            }
+            //if (roundsPlayedStat is null)
+            //{
+            //    _logger.LogWarning("{Prefix} Не найдены данные статистики сыгранных раундов для игрока {PlayerId}", Prefix, playerId);
+            //    return Result<object?>.Failure("Не найдены данные статистики сыгранных раундов игрока");
+            //}
 
-            if (!request.IsDeposit && roundsPlayedStat.PlayedRoundsCount < gameParams.MinRoundsCountForWithdrawal)
-            {
-                _logger.LogWarning("{Prefix} Недостаточно сыгранных раундов для вывода у игрока {PlayerId}", Prefix, playerId);
-                return Result<object?>.Failure($"Для вывода необходимо сыграть минимум {gameParams.MinRoundsCountForWithdrawal} раундов. Сейчас сыграно: {roundsPlayedStat.PlayedRoundsCount}");
-            }
+            //if (!request.IsDeposit && roundsPlayedStat.PlayedRoundsCount < gameParams.MinRoundsCountForWithdrawal)
+            //{
+            //    _logger.LogWarning("{Prefix} Недостаточно сыгранных раундов для вывода у игрока {PlayerId}", Prefix, playerId);
+            //    return Result<object?>.Failure($"Для вывода необходимо сыграть минимум {gameParams.MinRoundsCountForWithdrawal} раундов. Сейчас сыграно: {roundsPlayedStat.PlayedRoundsCount}");
+            //}
 
             var transactionType = await _context.TransactionTypes.FirstOrDefaultAsync(t => t.Id == (request.IsDeposit ? TransactionTypes.Deposit : TransactionTypes.Withdrawal));
             var transactionStatus = await _context.TransactionStatuses.FirstOrDefaultAsync(s => s.Id == TransactionStatuses.Pending);
