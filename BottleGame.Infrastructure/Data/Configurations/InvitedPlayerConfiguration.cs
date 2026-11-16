@@ -14,12 +14,12 @@ namespace BottleGame.Infrastructure.Data.Configurations
             builder.ToTable("InvitedPlayers");
             builder.HasKey(ip => new { ip.PlayerIdInvited, ip.PlayerIdInvitedBy });
 
-            builder.HasOne(ip => ip.PlayerInvited)
+            builder.HasOne(ip => ip.Inviter)
                 .WithMany(p => p.InvitedByMe)
                 .HasForeignKey(ip => ip.PlayerIdInvitedBy)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(ip => ip.PlayerInvitedBy)
+            builder.HasOne(ip => ip.Invitee)
                 .WithOne(p => p.InvitedMe)
                 .HasForeignKey<InvitedPlayer>(ip => ip.PlayerIdInvited)
                 .OnDelete(DeleteBehavior.Restrict);

@@ -128,6 +128,16 @@ namespace BottleGame.Domain.Entities
 
         #endregion Date Fields
 
+        #region Concurrency
+
+        /// <summary>
+        /// Версия строки для оптимистичной блокировки. В PostgreSQL это системный столбец xmin,
+        /// поэтому отдельного столбца и миграции не требуется.
+        /// </summary>
+        public uint Version { get; set; }
+
+        #endregion Concurrency
+
         #region Navigation Properties
 
         /// <summary>

@@ -22,6 +22,13 @@ namespace BottleGame.Infrastructure.Data.Configurations
             builder.Property(t => t.PlayerId)
                 .HasColumnName("PlayerId");
 
+            // Два одновременных обработчика одной транзакции не должны оба её применить.
+            builder.Property(t => t.Version)
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
+
             builder.Property(t => t.Amount)
                 .HasColumnName("Amount")
                 .IsRequired();

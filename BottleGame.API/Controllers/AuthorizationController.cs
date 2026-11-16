@@ -295,10 +295,8 @@ namespace BottleGame.API.Controllers
                             {
                                 var invitedPlayer = new InvitedPlayer
                                 {
-                                    PlayerInvited = playerInvitedBy,
-                                    PlayerInvitedBy = player,
-                                    PlayerIdInvited = playerInvitedBy.Id,
-                                    PlayerIdInvitedBy = playerData.InvitingPlayerId.Value,
+                                    Inviter = playerInvitedBy,
+                                    Invitee = player,
                                     InvitedAt = DateTime.UtcNow
                                 };
 

@@ -32,14 +32,14 @@ namespace BottleGame.Domain.Entities
         #region Navigation Properties
 
         /// <summary>
-        /// Приглашённый игрок
+        /// Пригласивший игрок (связан через PlayerIdInvitedBy)
         /// </summary>
-        public virtual Player PlayerInvited { get; set; } = null!;
+        public virtual Player Inviter { get; set; } = null!;
 
         /// <summary>
-        /// Пригласивший игрок
+        /// Приглашённый игрок (связан через PlayerIdInvited)
         /// </summary>
-        public virtual Player PlayerInvitedBy { get; set; } = null!;
+        public virtual Player Invitee { get; set; } = null!;
 
         #endregion Navigation Properties
     }
