@@ -10,91 +10,50 @@ using Moq;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Тесты для AdministrationService
+/// Тесты для ModeratorService
 /// </summary>
-public class AdministrationServiceTests : IDisposable
+public class ModeratorServiceTests : IDisposable
 {
+    /// <summary>
+    /// Database context of the test.
+    /// </summary>
     private readonly Infrastructure.Data.ApplicationDbContext _context;
-    private readonly AdministrationService _service;
-    private readonly Mock<ILogger<AdministrationService>> _loggerMock;
-    private readonly Mock<Application.Interfaces.IPasswordHasher> _passwordHasherMock;
 
-    public AdministrationServiceTests()
+    /// <summary>
+    /// The moderator service under test.
+    /// </summary>
+    private readonly ModeratorService _moderatorService;
+
+    /// <summary>
+    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// </summary>
+    public ModeratorServiceTests()
     {
         _context = TestDbContextFactory.CreateWithReferenceData();
-        _loggerMock = new Mock<ILogger<AdministrationService>>();
-        _passwordHasherMock = new Mock<Application.Interfaces.IPasswordHasher>();
+        var passwordHasherMock = new Mock<Application.Interfaces.IPasswordHasher>();
 
-        _passwordHasherMock.Setup(x => x.HashWithSalt(It.IsAny<string>()))
+        passwordHasherMock.Setup(x => x.HashWithSalt(It.IsAny<string>()))
             .Returns((string pwd) => ($"hashed_{pwd}", "salt"));
-        _passwordHasherMock.Setup(x => x.Verify(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+        passwordHasherMock.Setup(x => x.Verify(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns((string hash, string pwd, string salt) => hash == $"hashed_{pwd}");
 
-        _service = new AdministrationService(_context, _loggerMock.Object, _passwordHasherMock.Object);
+        _moderatorService = new ModeratorService(_context, new Mock<ILogger<ModeratorService>>().Object, passwordHasherMock.Object);
     }
 
+    /// <summary>
+    /// Releases the database context used by the tests.
+    /// </summary>
     public void Dispose()
     {
         _context.Dispose();
         GC.SuppressFinalize(this);
     }
 
-    #region GetAppBalance Tests
-
-    [Fact]
-    public async Task GetAppBalance_Exists_ReturnsBalance()
-    {
-        // Act
-        var result = await _service.GetAppBalance();
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value!.Amount.Should().Be(100000);
-    }
-
-    #endregion GetAppBalance Tests
-
-    #region UpdateAppBalanceThreshold Tests
-
-    [Fact]
-    public async Task UpdateAppBalanceThreshold_Success()
-    {
-        // Arrange
-        var request = new UpdateAppBalanceThresholdRequest { LowerThreshold = 5000 };
-
-        // Act
-        var result = await _service.UpdateAppBalanceThreshold(request, 1);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        var balance = _context.AppBalance.First();
-        balance.LowerThreshold.Should().Be(5000);
-    }
-
-    #endregion UpdateAppBalanceThreshold Tests
-
-    #region TopUpAppBalance Tests
-
-    [Fact]
-    public async Task TopUpAppBalance_Success()
-    {
-        // Arrange
-        var initialAmount = _context.AppBalance.First().Amount;
-        var request = new TopUpAppBalanceRequest { Amount = 10000 };
-
-        // Act
-        var result = await _service.TopUpAppBalance(request, 1);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        var balance = _context.AppBalance.First();
-        balance.Amount.Should().Be(initialAmount + 10000);
-    }
-
-    #endregion TopUpAppBalance Tests
-
     #region RegisterModerator Tests
 
+    /// <summary>
+    /// Register moderator: success.
+    /// </summary>
     [Fact]
     public async Task RegisterModerator_Success()
     {
@@ -102,7 +61,7 @@ public class AdministrationServiceTests : IDisposable
         var request = new AdministrationRoleUserCredentials { Login = "moderator", Password = "password123" };
 
         // Act
-        var result = await _service.RegisterModerator(request);
+        var result = await _moderatorService.RegisterModerator(request);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -111,6 +70,9 @@ public class AdministrationServiceTests : IDisposable
         moderator!.Role.Should().Be(AdministrationRoles.Moderator);
     }
 
+    /// <summary>
+    /// Register moderator: already exists; returns conflict.
+    /// </summary>
     [Fact]
     public async Task RegisterModerator_AlreadyExists_ReturnsConflict()
     {
@@ -128,7 +90,7 @@ public class AdministrationServiceTests : IDisposable
         var request = new AdministrationRoleUserCredentials { Login = "existing", Password = "password123" };
 
         // Act
-        var result = await _service.RegisterModerator(request);
+        var result = await _moderatorService.RegisterModerator(request);
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -139,6 +101,9 @@ public class AdministrationServiceTests : IDisposable
 
     #region GetModerators Tests
 
+    /// <summary>
+    /// Get moderators: returns all moderators.
+    /// </summary>
     [Fact]
     public async Task GetModerators_ReturnsAllModerators()
     {
@@ -151,7 +116,7 @@ public class AdministrationServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.GetModerators(null);
+        var result = await _moderatorService.GetModerators(null);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -163,17 +128,23 @@ public class AdministrationServiceTests : IDisposable
 
     #region DeleteModerator Tests
 
+    /// <summary>
+    /// Delete moderator: not found; returns not found.
+    /// </summary>
     [Fact]
     public async Task DeleteModerator_NotFound_ReturnsNotFound()
     {
         // Act
-        var result = await _service.DeleteModerator(999);
+        var result = await _moderatorService.DeleteModerator(999);
 
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(404);
     }
 
+    /// <summary>
+    /// Delete moderator: success.
+    /// </summary>
     [Fact]
     public async Task DeleteModerator_Success()
     {
@@ -190,7 +161,7 @@ public class AdministrationServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.DeleteModerator(moderator.Id);
+        var result = await _moderatorService.DeleteModerator(moderator.Id);
 
         // Assert
         result.IsSuccess.Should().BeTrue();

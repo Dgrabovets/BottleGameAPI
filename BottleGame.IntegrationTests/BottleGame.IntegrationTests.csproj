@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BottleGame.API\BottleGame.API.csproj" />
     <ProjectReference Include="..\BottleGame.Infrastructure\BottleGame.Infrastructure.csproj" />
   </ItemGroup>
 

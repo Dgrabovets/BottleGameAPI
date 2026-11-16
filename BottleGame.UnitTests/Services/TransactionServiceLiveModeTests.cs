@@ -1,0 +1,318 @@
+using BottleGame.Application.DTOs.Processing;
+using BottleGame.Application.DTOs.Requests;
+using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Constants;
+using BottleGame.Domain.Entities;
+using BottleGame.Infrastructure.Data;
+using BottleGame.Infrastructure.Services;
+using BottleGame.Infrastructure.Services.Payments;
+using BottleGame.UnitTests.Fixtures;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+
+namespace BottleGame.UnitTests.Services;
+
+/// <summary>
+/// Tests for TransactionServiceLiveMode.
+/// </summary>
+public class TransactionServiceLiveModeTests : IDisposable
+{
+    /// <summary>
+    /// Database context of the test.
+    /// </summary>
+    private readonly ApplicationDbContext _context;
+
+    /// <summary>
+    /// The service under test.
+    /// </summary>
+    private readonly TransactionService _service;
+
+    /// <summary>
+    /// Mock of the payment provider.
+    /// </summary>
+    private readonly Mock<IPaymentProvider> _providerMock = new();
+
+    /// <summary>
+    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// </summary>
+    public TransactionServiceLiveModeTests()
+    {
+        _context = TestDbContextFactory.CreateWithReferenceData();
+
+        var cacheServiceMock = new Mock<ICacheService>();
+        cacheServiceMock.Setup(x => x.GetGameParamsAsync()).ReturnsAsync(_context.GameParams.First());
+
+        var processor = new LiveTransactionProcessor(
+            _context,
+            new Mock<ILogger<LiveTransactionProcessor>>().Object,
+            _providerMock.Object);
+
+        _service = new TransactionService(
+            _context,
+            new Mock<ILogger<TransactionService>>().Object,
+            cacheServiceMock.Object,
+            processor);
+    }
+
+    /// <summary>
+    /// Releases the database context used by the tests.
+    /// </summary>
+    public void Dispose()
+    {
+        _context.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    #region Helpers
+
+    /// <summary>
+    /// Adds a pending withdrawal for the player and returns it.
+    /// </summary>
+    /// <param name="player">Player.</param>
+    /// <param name="amount">Amount.</param>
+    /// <returns>The created value.</returns>
+    private MoneyTransaction AddWithdrawal(Player player, decimal amount)
+    {
+        var transaction = new MoneyTransaction
+        {
+            PlayerId = player.Id,
+            Amount = amount,
+            TransactionTypeId = TransactionTypes.Withdrawal,
+            TransactionStatusId = TransactionStatuses.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.MoneyTransactions.Add(transaction);
+        _context.SaveChanges();
+        return transaction;
+    }
+
+    /// <summary>
+    /// Sets how many rounds the player has played since the last deposit.
+    /// </summary>
+    /// <param name="player">Player.</param>
+    /// <param name="count">Count.</param>
+    private void SetPlayedRounds(Player player, int count)
+    {
+        _context.PlayersPlayedRoundsStatisticForWithdrawals.Single(s => s.PlayerId == player.Id).PlayedRoundsCount = count;
+        _context.SaveChanges();
+    }
+
+    /// <summary>
+    /// Player balance.
+    /// </summary>
+    /// <param name="player">Player.</param>
+    /// <returns>The created value.</returns>
+    private decimal PlayerBalance(Player player) =>
+        _context.PlayersBalances.AsNoTracking().Single(b => b.PlayerId == player.Id).Amount;
+
+    /// <summary>
+    /// Builds the request that approves a withdrawal.
+    /// </summary>
+    /// <returns>The created value.</returns>
+    private static ChangeTransactionStatusRequest Approve() =>
+        new() { TransactionStatusId = TransactionStatuses.Approved };
+
+    /// <summary>
+    /// Verifies how many times the provider was asked to create a payout.
+    /// </summary>
+    /// <param name="times">Times.</param>
+    private void PayoutVerify(Times times) =>
+        _providerMock.Verify(
+            x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()),
+            times);
+
+    #endregion Helpers
+
+    #region Deposit Tests
+
+    /// <summary>
+    /// When the provider accepts a deposit, the payment link is returned and the transaction waits for the notification.
+    /// </summary>
+    [Fact]
+    public async Task CreateDeposit_ProviderAccepts_ReturnsPaymentLinkAndWaitsForNotification()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        _providerMock
+            .Setup(x => x.CreatePaymentAsync(It.IsAny<CreatePaymentRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePaymentResult(true, "pay-1", "https://pay.example/1", null));
+
+        var result = await _service.CreateTransaction(player.Id, new MoneyTransactionRequest { IsDeposit = true, Amount = 500 }, player.Id, false);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(new { PaymentLink = "https://pay.example/1", OrderId = "pay-1" });
+        var transaction = _context.MoneyTransactions.Single();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.ProcessingOrderId.Should().Be("pay-1");
+        transaction.IsProcessingSuccess.Should().BeNull();
+        PlayerBalance(player).Should().Be(1000);
+    }
+
+    /// <summary>
+    /// The payment request sent to the provider carries the transaction id, amount and currency.
+    /// </summary>
+    [Fact]
+    public async Task CreateDeposit_RequestCarriesTransactionIdAndAmount()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        CreatePaymentRequest? sent = null;
+        _providerMock
+            .Setup(x => x.CreatePaymentAsync(It.IsAny<CreatePaymentRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<CreatePaymentRequest, CancellationToken>((request, _) => sent = request)
+            .ReturnsAsync(new CreatePaymentResult(true, "pay-1", "https://pay.example/1", null));
+
+        await _service.CreateTransaction(player.Id, new MoneyTransactionRequest { IsDeposit = true, Amount = 500 }, player.Id, false);
+
+        sent.Should().NotBeNull();
+        sent!.TransactionId.Should().Be(_context.MoneyTransactions.Single().Id);
+        sent.Amount.Should().Be(500);
+        sent.Currency.Should().Be("rub");
+    }
+
+    /// <summary>
+    /// When the provider fails, the deposit is rejected and the balance is not credited.
+    /// </summary>
+    [Fact]
+    public async Task CreateDeposit_ProviderFails_RejectsTransactionWithoutCreditingBalance()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        _providerMock
+            .Setup(x => x.CreatePaymentAsync(It.IsAny<CreatePaymentRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePaymentResult(false, null, null, "gateway down"));
+
+        var result = await _service.CreateTransaction(player.Id, new MoneyTransactionRequest { IsDeposit = true, Amount = 500 }, player.Id, false);
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(500);
+        var transaction = _context.MoneyTransactions.Single();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.ProcessingError.Should().Be("gateway down");
+        PlayerBalance(player).Should().Be(1000);
+    }
+
+    #endregion Deposit Tests
+
+    #region Withdrawal Tests
+
+    /// <summary>
+    /// A withdrawal is refused when the player has not played enough rounds.
+    /// </summary>
+    [Fact]
+    public async Task CreateWithdrawal_NotEnoughPlayedRounds_ReturnsFailure()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 1);
+
+        var result = await _service.CreateTransaction(player.Id, new MoneyTransactionRequest { IsDeposit = false, Amount = 300 }, player.Id, false);
+
+        result.IsSuccess.Should().BeFalse();
+        _context.MoneyTransactions.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// When the provider accepts the payout, the withdrawal is approved and waits for the payout notification.
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_ProviderAccepts_WaitsForPayoutNotification()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePayoutResult(true, "payout-1", null));
+
+        var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        result.IsSuccess.Should().BeTrue();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+        transaction.ProcessingOrderId.Should().Be("payout-1");
+        transaction.IsProcessingSuccess.Should().BeNull();
+        _context.AppBalance.Single().Amount.Should().Be(100000);
+    }
+
+    /// <summary>
+    /// The payout request carries the player's payout method and wallet.
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_RequestCarriesPayoutMethodAndWallet()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var options = _context.PlayersOptions.Single(o => o.PlayerId == player.Id);
+        options.PayoutMethod = "sbp";
+        options.Wallet = "79001234567:100000000111";
+        _context.SaveChanges();
+        var transaction = AddWithdrawal(player, 300);
+        CreatePayoutRequest? sent = null;
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<CreatePayoutRequest, CancellationToken>((request, _) => sent = request)
+            .ReturnsAsync(new CreatePayoutResult(true, "payout-1", null));
+
+        await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        sent.Should().NotBeNull();
+        sent!.TransactionId.Should().Be(transaction.Id);
+        sent.Gateway.Should().Be("sbp");
+        sent.Destination.Should().Be("79001234567:100000000111");
+        sent.Amount.Should().Be(300);
+    }
+
+    /// <summary>
+    /// When the provider fails, the player is refunded and the withdrawal is rejected.
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_ProviderFails_RefundsPlayerAndRejects()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePayoutResult(false, null, "no funds"));
+
+        var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(500);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        PlayerBalance(player).Should().Be(1300);
+    }
+
+    /// <summary>
+    /// A withdrawal above the payout limit is refused without calling the provider.
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_AmountAboveThreshold_ReturnsFailureWithoutCallingProvider()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 1500); // limit: 10% of the lower threshold of 10000 = 1000
+
+        var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        result.IsSuccess.Should().BeFalse();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        PayoutVerify(Times.Never());
+    }
+
+    /// <summary>
+    /// A withdrawal is refused without calling the provider when too few rounds were played.
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_NotEnoughPlayedRounds_ReturnsFailureWithoutCallingProvider()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 1);
+        var transaction = AddWithdrawal(player, 300);
+
+        var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        result.IsSuccess.Should().BeFalse();
+        PayoutVerify(Times.Never());
+    }
+
+    #endregion Withdrawal Tests
+}

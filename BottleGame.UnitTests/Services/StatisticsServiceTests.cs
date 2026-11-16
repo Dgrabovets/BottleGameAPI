@@ -11,18 +11,47 @@ namespace BottleGame.UnitTests.Services;
 /// <summary>
 /// Тесты статистики администратора (общая, за период, timeline)
 /// </summary>
-public class AdministrationServiceStatisticsTests : IDisposable
+public class StatisticsServiceTests : IDisposable
 {
+    /// <summary>
+    /// Jan15.
+    /// </summary>
     private static readonly DateTime Jan15 = new(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>
+    /// May10.
+    /// </summary>
     private static readonly DateTime May10 = new(2026, 5, 10, 14, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>
+    /// May20.
+    /// </summary>
     private static readonly DateTime May20 = new(2026, 5, 20, 10, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>
+    /// May25.
+    /// </summary>
     private static readonly DateTime May25 = new(2026, 5, 25, 16, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>
+    /// Jun10.
+    /// </summary>
     private static readonly DateTime Jun10 = new(2026, 6, 10, 9, 0, 0, DateTimeKind.Utc);
 
+    /// <summary>
+    /// Database context of the test.
+    /// </summary>
     private readonly Infrastructure.Data.ApplicationDbContext _context;
-    private readonly AdministrationService _service;
 
-    public AdministrationServiceStatisticsTests()
+    /// <summary>
+    /// The service under test.
+    /// </summary>
+    private readonly StatisticsService _service;
+
+    /// <summary>
+    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// </summary>
+    public StatisticsServiceTests()
     {
         (_context, var builder) = StatisticsTestDataBuilder.Create();
 
@@ -49,12 +78,14 @@ public class AdministrationServiceStatisticsTests : IDisposable
         builder.AddPendingWithdrawal(player2.Id, 800m);
         builder.AddApprovedWithdrawalAwaitingProcessing(player3.Id, 400m);
 
-        _service = new AdministrationService(
+        _service = new StatisticsService(
             _context,
-            new Mock<ILogger<AdministrationService>>().Object,
-            new Mock<Application.Interfaces.IPasswordHasher>().Object);
+            new Mock<ILogger<StatisticsService>>().Object);
     }
 
+    /// <summary>
+    /// Releases the database context used by the tests.
+    /// </summary>
     public void Dispose()
     {
         _context.Dispose();
@@ -63,6 +94,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
 
     #region GetStatistics — общая статистика
 
+    /// <summary>
+    /// Get statistics: without period; returns all time metrics.
+    /// </summary>
     [Fact]
     public async Task GetStatistics_WithoutPeriod_ReturnsAllTimeMetrics()
     {
@@ -79,6 +113,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         result.Value.PendingWithdrawalsTotal.Should().Be(800m);
     }
 
+    /// <summary>
+    /// Get statistics: excludes actively banned player.
+    /// </summary>
     [Fact]
     public async Task GetStatistics_ExcludesActivelyBannedPlayer()
     {
@@ -91,10 +128,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         builder.AddSuccessfulDeposit(banned.Id, 900m, May10);
         builder.AddPendingWithdrawal(banned.Id, 200m);
 
-        var service = new AdministrationService(
+        var service = new StatisticsService(
             context,
-            new Mock<ILogger<AdministrationService>>().Object,
-            new Mock<Application.Interfaces.IPasswordHasher>().Object);
+            new Mock<ILogger<StatisticsService>>().Object);
 
         var result = await service.GetStatistics();
 
@@ -107,6 +143,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         context.Dispose();
     }
 
+    /// <summary>
+    /// Get statistics: without period; counts only successfully processed transactions.
+    /// </summary>
     [Fact]
     public async Task GetStatistics_WithoutPeriod_CountsOnlySuccessfullyProcessedTransactions()
     {
@@ -117,10 +156,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         builder.AddPendingDeposit(player.Id, 999m);
         builder.AddPendingWithdrawal(player.Id, 50m);
 
-        var service = new AdministrationService(
+        var service = new StatisticsService(
             context,
-            new Mock<ILogger<AdministrationService>>().Object,
-            new Mock<Application.Interfaces.IPasswordHasher>().Object);
+            new Mock<ILogger<StatisticsService>>().Object);
 
         // Act
         var result = await service.GetStatistics();
@@ -134,6 +172,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         context.Dispose();
     }
 
+    /// <summary>
+    /// Get statistics: with period; filters users and transactions by dates.
+    /// </summary>
     [Fact]
     public async Task GetStatistics_WithPeriod_FiltersUsersAndTransactionsByDates()
     {
@@ -154,6 +195,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         result.Value.PendingWithdrawalsTotal.Should().Be(800m, "pending выводы считаются глобально");
     }
 
+    /// <summary>
+    /// Get statistics: with period; excludes transactions outside range.
+    /// </summary>
     [Fact]
     public async Task GetStatistics_WithPeriod_ExcludesTransactionsOutsideRange()
     {
@@ -163,10 +207,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         builder.AddSuccessfulDeposit(player.Id, 1_000m, May10);
         builder.AddSuccessfulDeposit(player.Id, 2_000m, Jun10);
 
-        var service = new AdministrationService(
+        var service = new StatisticsService(
             context,
-            new Mock<ILogger<AdministrationService>>().Object,
-            new Mock<Application.Interfaces.IPasswordHasher>().Object);
+            new Mock<ILogger<StatisticsService>>().Object);
 
         // Act
         var result = await service.GetStatistics(new GetAppGeneralStatisticsRequest
@@ -182,6 +225,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         context.Dispose();
     }
 
+    /// <summary>
+    /// Get statistics: with only one date; returns failure.
+    /// </summary>
     [Fact]
     public async Task GetStatistics_WithOnlyOneDate_ReturnsFailure()
     {
@@ -194,6 +240,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         result.Error.Should().Contain("обе даты");
     }
 
+    /// <summary>
+    /// Get statistics: with invalid range; returns failure.
+    /// </summary>
     [Fact]
     public async Task GetStatistics_WithInvalidRange_ReturnsFailure()
     {
@@ -207,6 +256,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         result.Error.Should().Contain("не может быть позже");
     }
 
+    /// <summary>
+    /// Get statistics: with too long range; returns failure.
+    /// </summary>
     [Fact]
     public async Task GetStatistics_WithTooLongRange_ReturnsFailure()
     {
@@ -220,6 +272,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         result.Error.Should().Contain("36500");
     }
 
+    /// <summary>
+    /// Get statistics timeline: with multi year period; uses year buckets.
+    /// </summary>
     [Fact]
     public async Task GetStatisticsTimeline_WithMultiYearPeriod_UsesYearBuckets()
     {
@@ -238,6 +293,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
 
     #region GetStatisticsTimeline
 
+    /// <summary>
+    /// Get statistics timeline: returns daily buckets for short period.
+    /// </summary>
     [Fact]
     public async Task GetStatisticsTimeline_ReturnsDailyBucketsForShortPeriod()
     {
@@ -267,6 +325,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         may20Point.UsersCount.Should().Be(2);
     }
 
+    /// <summary>
+    /// Get statistics timeline: ignores unprocessed transactions.
+    /// </summary>
     [Fact]
     public async Task GetStatisticsTimeline_IgnoresUnprocessedTransactions()
     {
@@ -277,10 +338,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         builder.AddPendingDeposit(player.Id, 9_999m);
         builder.AddPendingWithdrawal(player.Id, 300m);
 
-        var service = new AdministrationService(
+        var service = new StatisticsService(
             context,
-            new Mock<ILogger<AdministrationService>>().Object,
-            new Mock<Application.Interfaces.IPasswordHasher>().Object);
+            new Mock<ILogger<StatisticsService>>().Object);
 
         // Act
         var result = await service.GetStatisticsTimeline(new GetAppStatisticsTimelineRequest
@@ -297,6 +357,9 @@ public class AdministrationServiceStatisticsTests : IDisposable
         context.Dispose();
     }
 
+    /// <summary>
+    /// Get statistics timeline: with long period; uses week or month buckets.
+    /// </summary>
     [Fact]
     public async Task GetStatisticsTimeline_WithLongPeriod_UsesWeekOrMonthBuckets()
     {
