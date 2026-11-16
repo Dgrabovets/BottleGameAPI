@@ -15,7 +15,7 @@ public class AdministrationRoleUserCredentialsValidatorTests
     private readonly AdministrationRoleUserCredentialsValidator _validator = new();
 
     /// <summary>
-    /// Validate: valid request; no errors
+    /// A login and a password of allowed length pass the validation
     /// </summary>
     [Fact]
     public void Validate_ValidRequest_NoErrors()
@@ -31,7 +31,7 @@ public class AdministrationRoleUserCredentialsValidatorTests
     }
 
     /// <summary>
-    /// Validate: empty login; has error
+    /// An empty login is rejected
     /// </summary>
     /// <param name="login">Login</param>
     [Theory]
@@ -50,7 +50,7 @@ public class AdministrationRoleUserCredentialsValidatorTests
     }
 
     /// <summary>
-    /// Validate: empty password; has error
+    /// An empty password is rejected
     /// </summary>
     /// <param name="password">Password</param>
     [Theory]
@@ -69,7 +69,7 @@ public class AdministrationRoleUserCredentialsValidatorTests
     }
 
     /// <summary>
-    /// Validate: short password; has error
+    /// A password shorter than 6 characters is rejected
     /// </summary>
     [Fact]
     public void Validate_ShortPassword_HasError()

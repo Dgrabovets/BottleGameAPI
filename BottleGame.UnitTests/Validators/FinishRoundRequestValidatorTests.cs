@@ -15,7 +15,7 @@ public class FinishRoundRequestValidatorTests
     private readonly FinishRoundRequestValidator _validator = new();
 
     /// <summary>
-    /// Validate: valid request; no errors
+    /// A positive bet within the limit passes the validation
     /// </summary>
     [Fact]
     public void Validate_ValidRequest_NoErrors()
@@ -31,7 +31,7 @@ public class FinishRoundRequestValidatorTests
     }
 
     /// <summary>
-    /// Validate: invalid bet; has error
+    /// A zero, negative or too large bet is rejected
     /// </summary>
     /// <param name="bet">Bet</param>
     [Theory]
@@ -50,7 +50,7 @@ public class FinishRoundRequestValidatorTests
     }
 
     /// <summary>
-    /// Validate: valid bet; no error
+    /// Bets inside the allowed range pass the validation
     /// </summary>
     [Fact]
     public void Validate_ValidBet_NoError()

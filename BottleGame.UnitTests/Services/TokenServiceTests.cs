@@ -36,7 +36,7 @@ public class TokenServiceTests
     }
 
     /// <summary>
-    /// Generate token: with claims; returns non empty token
+    /// A token generated from claims is not empty
     /// </summary>
     [Fact]
     public void GenerateToken_WithClaims_ReturnsNonEmptyToken()
@@ -57,7 +57,7 @@ public class TokenServiceTests
     }
 
     /// <summary>
-    /// Generate token: returns jwt format
+    /// The token has the JWT format: three parts separated by dots
     /// </summary>
     [Fact]
     public void GenerateToken_ReturnsJwtFormat()
@@ -77,7 +77,7 @@ public class TokenServiceTests
     }
 
     /// <summary>
-    /// Generate token: different claims; returns different tokens
+    /// Different claims give different tokens
     /// </summary>
     [Fact]
     public void GenerateToken_DifferentClaims_ReturnsDifferentTokens()

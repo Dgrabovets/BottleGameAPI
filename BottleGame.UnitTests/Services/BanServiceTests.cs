@@ -48,7 +48,7 @@ public class BanServiceTests : IDisposable
     #region IsBanned Tests
 
     /// <summary>
-    /// Is banned: player not found; returns not found
+    /// Checking the ban of a player that does not exist answers with 404
     /// </summary>
     [Fact]
     public async Task IsBanned_PlayerNotFound_ReturnsNotFound()
@@ -62,7 +62,7 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is banned: player not banned; returns false
+    /// A player without a ban is reported as not banned
     /// </summary>
     [Fact]
     public async Task IsBanned_PlayerNotBanned_ReturnsFalse()
@@ -79,7 +79,7 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is banned: player banned; returns true
+    /// A player with an active ban is reported as banned
     /// </summary>
     [Fact]
     public async Task IsBanned_PlayerBanned_ReturnsTrue()
@@ -105,7 +105,7 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is banned: as player; own data, success
+    /// A player may check their own ban status
     /// </summary>
     [Fact]
     public async Task IsBanned_AsPlayer_OwnData_Success()
@@ -121,7 +121,7 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is banned: as player; other data, unauthorized
+    /// A player cannot check the ban status of another player
     /// </summary>
     [Fact]
     public async Task IsBanned_AsPlayer_OtherData_Unauthorized()
@@ -143,7 +143,7 @@ public class BanServiceTests : IDisposable
     #region BanPlayer Tests
 
     /// <summary>
-    /// Ban player: player not found; returns not found
+    /// Banning a player that does not exist answers with 404
     /// </summary>
     [Fact]
     public async Task BanPlayer_PlayerNotFound_ReturnsNotFound()
@@ -160,7 +160,7 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Ban player: success; creates ban
+    /// Banning creates an active ban and writes it to the ban history
     /// </summary>
     [Fact(Skip = "Requires BanHistoryEntity.Version which InMemory DB does not auto-generate")]
     public async Task BanPlayer_Success_CreatesBan()
@@ -181,7 +181,7 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Ban player: already banned; returns conflict
+    /// Banning an already banned player answers with 409
     /// </summary>
     [Fact]
     public async Task BanPlayer_AlreadyBanned_ReturnsConflict()
@@ -213,7 +213,7 @@ public class BanServiceTests : IDisposable
     #region UnbanPlayer Tests
 
     /// <summary>
-    /// Unban player: player not found; returns not found
+    /// Unbanning a player that does not exist answers with 404
     /// </summary>
     [Fact]
     public async Task UnbanPlayer_PlayerNotFound_ReturnsNotFound()
@@ -227,7 +227,7 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Unban player: not banned; returns conflict
+    /// Unbanning a player without an active ban answers with 409
     /// </summary>
     [Fact(Skip = "Service returns 404 when no active ban exists, not 409")]
     public async Task UnbanPlayer_NotBanned_ReturnsConflict()
@@ -244,7 +244,7 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Unban player: success; deactivates ban
+    /// Unbanning deactivates the ban and updates the history
     /// </summary>
     [Fact]
     public async Task UnbanPlayer_Success_DeactivatesBan()

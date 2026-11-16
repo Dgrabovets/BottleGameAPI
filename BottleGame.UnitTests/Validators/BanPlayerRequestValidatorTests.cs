@@ -15,7 +15,7 @@ public class BanPlayerRequestValidatorTests
     private readonly BanPlayerRequestValidator _validator = new();
 
     /// <summary>
-    /// Validate: valid request; no errors
+    /// A positive player id with a reason passes the validation
     /// </summary>
     [Fact]
     public void Validate_ValidRequest_NoErrors()
@@ -31,7 +31,7 @@ public class BanPlayerRequestValidatorTests
     }
 
     /// <summary>
-    /// Validate: invalid player id; has error
+    /// A zero or negative player id is rejected
     /// </summary>
     /// <param name="playerId">Player id</param>
     [Theory]
@@ -50,7 +50,7 @@ public class BanPlayerRequestValidatorTests
     }
 
     /// <summary>
-    /// Validate: empty ban reason; has error
+    /// An empty ban reason is rejected
     /// </summary>
     /// <param name="reason">Reason</param>
     [Theory]

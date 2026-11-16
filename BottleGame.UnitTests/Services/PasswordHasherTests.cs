@@ -32,7 +32,7 @@ public class PasswordHasherTests
     }
 
     /// <summary>
-    /// Hash: returns non empty string
+    /// Hashing a password gives a non-empty string
     /// </summary>
     [Fact]
     public void Hash_ReturnsNonEmptyString()
@@ -48,7 +48,7 @@ public class PasswordHasherTests
     }
 
     /// <summary>
-    /// Hash: same input; returns same hash
+    /// The same password and salt always give the same hash
     /// </summary>
     [Fact]
     public void Hash_SameInput_ReturnsSameHash()
@@ -65,7 +65,7 @@ public class PasswordHasherTests
     }
 
     /// <summary>
-    /// Hash: different inputs; returns different hashes
+    /// Different passwords give different hashes
     /// </summary>
     [Fact]
     public void Hash_DifferentInputs_ReturnsDifferentHashes()
@@ -83,7 +83,7 @@ public class PasswordHasherTests
     }
 
     /// <summary>
-    /// Hash with salt: returns hash and salt
+    /// Hashing with a new salt returns both the hash and the salt
     /// </summary>
     [Fact]
     public void HashWithSalt_ReturnsHashAndSalt()
@@ -100,7 +100,7 @@ public class PasswordHasherTests
     }
 
     /// <summary>
-    /// Verify: correct password; returns true
+    /// The correct password passes the check against its hash and salt
     /// </summary>
     [Fact]
     public void Verify_CorrectPassword_ReturnsTrue()
@@ -117,7 +117,7 @@ public class PasswordHasherTests
     }
 
     /// <summary>
-    /// Verify: incorrect password; returns false
+    /// A wrong password fails the check
     /// </summary>
     [Fact]
     public void Verify_IncorrectPassword_ReturnsFalse()

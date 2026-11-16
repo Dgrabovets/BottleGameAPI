@@ -15,7 +15,7 @@ public class MoneyTransactionRequestValidatorTests
     private readonly MoneyTransactionRequestValidator _validator = new();
 
     /// <summary>
-    /// Validate: valid deposit request; no errors
+    /// A deposit inside the allowed amount range passes the validation
     /// </summary>
     [Fact]
     public void Validate_ValidDepositRequest_NoErrors()
@@ -31,7 +31,7 @@ public class MoneyTransactionRequestValidatorTests
     }
 
     /// <summary>
-    /// Validate: valid withdrawal request; no errors
+    /// A withdrawal inside the allowed amount range passes the validation
     /// </summary>
     [Fact]
     public void Validate_ValidWithdrawalRequest_NoErrors()
@@ -47,7 +47,7 @@ public class MoneyTransactionRequestValidatorTests
     }
 
     /// <summary>
-    /// Validate: invalid amount; has error
+    /// An amount below the minimum or above the maximum is rejected
     /// </summary>
     /// <param name="amount">Amount</param>
     [Theory]
@@ -66,7 +66,7 @@ public class MoneyTransactionRequestValidatorTests
     }
 
     /// <summary>
-    /// Validate: positive amount; no error
+    /// Amounts inside the allowed range pass the validation
     /// </summary>
     [Fact]
     public void Validate_PositiveAmount_NoError()

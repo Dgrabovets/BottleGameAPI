@@ -57,7 +57,7 @@ public class GameRoundServiceTests : IDisposable
     #region FinishGameRound Tests
 
     /// <summary>
-    /// Finish game round: player not found; returns not found
+    /// Finishing a round for a player that does not exist answers with 404
     /// </summary>
     [Fact]
     public async Task FinishGameRound_PlayerNotFound_ReturnsNotFound()
@@ -74,7 +74,7 @@ public class GameRoundServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Finish game round: as player; other player, unauthorized
+    /// A player cannot finish a round on behalf of another player
     /// </summary>
     [Fact]
     public async Task FinishGameRound_AsPlayer_OtherPlayer_Unauthorized()
@@ -93,7 +93,7 @@ public class GameRoundServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Finish game round: player banned; returns forbidden
+    /// A banned player cannot finish a round and gets 403
     /// </summary>
     [Fact]
     public async Task FinishGameRound_PlayerBanned_ReturnsForbidden()
@@ -121,7 +121,7 @@ public class GameRoundServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Finish game round: win; increases balance
+    /// A won round adds the bet to the balance and records the round
     /// </summary>
     [Fact]
     public async Task FinishGameRound_Win_IncreasesBalance()
@@ -141,7 +141,7 @@ public class GameRoundServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Finish game round: loss; decreases balance
+    /// A lost round subtracts the bet from the balance and records the round
     /// </summary>
     [Fact]
     public async Task FinishGameRound_Loss_DecreasesBalance()
@@ -161,7 +161,7 @@ public class GameRoundServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Finish game round: insufficient balance; returns failure
+    /// A lost round with a bet above the balance is refused and the balance stays the same
     /// </summary>
     [Fact]
     public async Task FinishGameRound_InsufficientBalance_ReturnsFailure()
@@ -186,7 +186,7 @@ public class GameRoundServiceTests : IDisposable
     #region GetPlayerPlayedRounds Tests
 
     /// <summary>
-    /// Get player played rounds: player not found; returns not found
+    /// Asking for the rounds of a player that does not exist answers with 404
     /// </summary>
     [Fact]
     public async Task GetPlayerPlayedRounds_PlayerNotFound_ReturnsNotFound()
@@ -200,7 +200,7 @@ public class GameRoundServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get player played rounds: success; returns rounds
+    /// The rounds of the player are returned together with the player data
     /// </summary>
     [Fact]
     public async Task GetPlayerPlayedRounds_Success_ReturnsRounds()
@@ -230,7 +230,7 @@ public class GameRoundServiceTests : IDisposable
     #region GetProfit Tests
 
     /// <summary>
-    /// Get profit: no rounds; returns not found
+    /// The profit cannot be calculated without any rounds, so the answer is 404
     /// </summary>
     [Fact]
     public async Task GetProfit_NoRounds_ReturnsNotFound()
@@ -247,7 +247,7 @@ public class GameRoundServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get profit: with rounds; calculates profit
+    /// The profit is the sum of the lost bets within the period; won bets are not subtracted
     /// </summary>
     [Fact]
     public async Task GetProfit_WithRounds_CalculatesProfit()
