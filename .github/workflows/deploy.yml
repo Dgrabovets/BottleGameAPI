@@ -6,7 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,30 +29,55 @@ jobs:
           JWT_KEY: ${{ secrets.JWTKEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAMBOTTOKEN }}
           PASSWORD_HASH_SECRET: ${{ secrets.PASSWORDHASHSECRETKEY }}
-          PAYSHARK_ACCESS_TOKEN: ${{ secrets.PROCESSINGACCESSTOKEN }}
-          PAYSHARK_MERCHANT_ID: ${{ secrets.PROCESSINGMERCHANTID }}
+          PROCESSING_MODE: ${{ vars.PROCESSING_MODE || 'Simulated' }}
+          YOOKASSA_SHOP_ID: ${{ secrets.YOOKASSA_SHOP_ID }}
+          YOOKASSA_SECRET_KEY: ${{ secrets.YOOKASSA_SECRET_KEY }}
+          YOOKASSA_PAYOUT_AGENT_ID: ${{ secrets.YOOKASSA_PAYOUT_AGENT_ID }}
+          YOOKASSA_PAYOUT_SECRET_KEY: ${{ secrets.YOOKASSA_PAYOUT_SECRET_KEY }}
+          YOOKASSA_RETURN_URL: ${{ secrets.YOOKASSA_RETURN_URL }}
+          API_ALLOWED_ORIGINS: ${{ secrets.API_ALLOWED_ORIGINS }}
+          TELEGRAM_APP_NAME: ${{ secrets.TELEGRAM_APP_NAME }}
+          API_LISTEN_URL: ${{ secrets.API_LISTEN_URL }}
+          API_CERT_PATH: ${{ secrets.API_CERT_PATH }}
+          API_CERT_KEY_PATH: ${{ secrets.API_CERT_KEY_PATH }}
         run: |
           jq -n \
             --arg conn "$POSTGRES_CONNECTION" \
             --arg jwtKey "$JWT_KEY" \
             --arg telegram "$TELEGRAM_BOT_TOKEN" \
             --arg pwdSecret "$PASSWORD_HASH_SECRET" \
-            --arg payToken "$PAYSHARK_ACCESS_TOKEN" \
-            --arg merchantId "$PAYSHARK_MERCHANT_ID" \
+            --arg mode "$PROCESSING_MODE" \
+            --arg shopId "$YOOKASSA_SHOP_ID" \
+            --arg secretKey "$YOOKASSA_SECRET_KEY" \
+            --arg payoutAgentId "$YOOKASSA_PAYOUT_AGENT_ID" \
+            --arg payoutSecretKey "$YOOKASSA_PAYOUT_SECRET_KEY" \
+            --arg returnUrl "$YOOKASSA_RETURN_URL" \
+            --arg origins "$API_ALLOWED_ORIGINS" \
+            --arg appName "$TELEGRAM_APP_NAME" \
+            --arg listenUrl "$API_LISTEN_URL" \
+            --arg certPath "$API_CERT_PATH" \
+            --arg certKeyPath "$API_CERT_KEY_PATH" \
             '{
               ConnectionStrings: { PostgresConnection: $conn },
               JWT: { Key: $jwtKey, Issuer: "BottleAppAPI", Audience: "BottleGame", ExpireMinutes: 360 },
               TelegramBotToken: $telegram,
               Security: { PasswordHashSecretKey: $pwdSecret },
               Processing: {
-                BaseUrl: "https://app.payshark.net",
-                AccessToken: $payToken,
-                MerchantId: $merchantId,
-                CallbackUrl: "https://api.bottledevadmin.ru/api/webhook",
-                MaxWaitMs: 30000
+                Mode: $mode,
+                ShopId: $shopId,
+                SecretKey: $secretKey,
+                PayoutAgentId: $payoutAgentId,
+                PayoutSecretKey: $payoutSecretKey,
+                ReturnUrl: $returnUrl
               },
-              CORS: { AllowedOrigins: ["https://admin.bottledevadmin.ru", "https://bottle-x.net", "http://localhost:3000"] }
-            }' > publish/appsettings.Production.json
+              AppName: $appName,
+              CORS: { AllowedOrigins: ($origins | split(",") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))) }
+            } + (if $certPath == "" then {} else {
+              Kestrel: { Endpoints: { Https: {
+                Url: (if $listenUrl == "" then "https://0.0.0.0:6001" else $listenUrl end),
+                Certificate: { Path: $certPath, KeyPath: $certKeyPath }
+              } } }
+            } end)' > publish/appsettings.Production.json
       - name: Check required secrets are set
         run: |
           KEY_LEN=$(jq -r '.JWT.Key | length' publish/appsettings.Production.json)
@@ -61,13 +90,24 @@ jobs:
             echo "::error::PASSWORD_HASH_SECRET is empty. Set it in Settings → Secrets → Actions."
             exit 1
           fi
+          ORIGINS=$(jq -r '.CORS.AllowedOrigins | length' publish/appsettings.Production.json)
+          if [ "$ORIGINS" -eq 0 ]; then
+            echo "::error::API_ALLOWED_ORIGINS secret is empty. Set a comma-separated list of allowed browser origins."
+            exit 1
+          fi
           echo "Secrets check OK."
       - name: Deploy to server and restart API
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_SCRIPT: ${{ secrets.DEPLOY_SCRIPT }}
         run: |
+          if [ -z "$DEPLOY_PATH" ] || [ -z "$DEPLOY_SCRIPT" ]; then
+            echo "::error::DEPLOY_PATH and DEPLOY_SCRIPT secrets must be set (target directory and restart script on the server)."
+            exit 1
+          fi
           mkdir -p ~/.ssh
           if echo "$SSH_PRIVATE_KEY" | grep -q "BEGIN "; then
             echo "$SSH_PRIVATE_KEY" | sed 's/\\n/\n/g' > ~/.ssh/key
@@ -75,5 +115,5 @@ jobs:
             echo "$SSH_PRIVATE_KEY" | tr -d '\n' | base64 -d > ~/.ssh/key
           fi
           chmod 600 ~/.ssh/key
-          rsync -avz --delete -e "ssh -i ~/.ssh/key -o StrictHostKeyChecking=no" publish/ ${SERVER_USER}@${SERVER_HOST}:/var/www/backend/publish/
-          ssh -i ~/.ssh/key -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} /root/scripts/deploy-api.sh
+          rsync -avz --delete -e "ssh -i ~/.ssh/key -o StrictHostKeyChecking=no" publish/ ${SERVER_USER}@${SERVER_HOST}:"${DEPLOY_PATH}"/
+          ssh -i ~/.ssh/key -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} "${DEPLOY_SCRIPT}"
