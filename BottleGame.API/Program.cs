@@ -2,17 +2,26 @@ using BottleGame.API.Middleware;
 using BottleGame.API.Options;
 using BottleGame.Application;
 using BottleGame.Infrastructure;
+using BottleGame.Infrastructure.External.Processing;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Events;
+using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// За обратным прокси клиентский IP берётся из X-Forwarded-For только от доверенных прокси.
+// Без списка прокси заголовок используется как раньше, но его может подделать любой клиент.
+var knownProxies = builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [];
+var trustForwardedForHeader = knownProxies.Length == 0;
 
 #region Логирование
 
@@ -84,7 +93,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Bottle Game API",
         Version = "v1",
-        Description = "API для игры Bottle Game с интеграцией Telegram и платёжной системой PayShark",
+        Description = "API для игры Bottle Game с интеграцией Telegram и платёжной системой ЮKassa",
     });
 
     c.TagActionsBy(api => [api.GroupName ?? api.ActionDescriptor.RouteValues["controller"]]);
@@ -126,7 +135,7 @@ builder.Services.AddSwaggerGen(c =>
 #region CORS
 
 var allowedOrigins = builder.Configuration.GetSection("CORS:AllowedOrigins").Get<string[]>()
-    ?? ["https://admin.bottledevadmin.ru"];
+    ?? [];
 
 builder.Services.AddCors(options =>
 {
@@ -184,16 +193,50 @@ builder.Services.AddRateLimiter(options =>
 
 #endregion
 
+#region Forwarded headers
+
+if (!trustForwardedForHeader)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        foreach (var proxy in knownProxies)
+        {
+            options.KnownProxies.Add(IPAddress.Parse(proxy));
+        }
+    });
+}
+
+#endregion
+
 var app = builder.Build();
+
+if (trustForwardedForHeader)
+{
+    app.Logger.LogWarning("ForwardedHeaders:KnownProxies is not set: X-Forwarded-For is trusted as is, so clients can spoof the address used for rate limiting.");
+}
+
+if (app.Services.GetRequiredService<IOptions<ProcessingOptions>>().Value.Mode == ProcessingMode.Simulated)
+{
+    app.Logger.LogWarning("Processing runs in Simulated mode: deposits and withdrawals complete locally without real payments. Set Processing__Mode=Live to use the payment processor.");
+}
 
 // Middleware pipeline
 app.UseGlobalExceptionHandler();
 
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+if (!trustForwardedForHeader)
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Bottle Game API v1");
-});
+    app.UseForwardedHeaders();
+}
+
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Bottle Game API v1");
+    });
+}
 
 app.UseHttpsRedirection();
 app.UseRouting();
@@ -205,12 +248,15 @@ app.MapControllers();
 
 app.Run();
 
-static string GetClientIpAddress(HttpContext context)
+string GetClientIpAddress(HttpContext context)
 {
-    var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-    if (!string.IsNullOrWhiteSpace(forwardedFor))
+    if (trustForwardedForHeader)
     {
-        return forwardedFor.Split(',')[0].Trim();
+        var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(forwardedFor))
+        {
+            return forwardedFor.Split(',')[0].Trim();
+        }
     }
 
     return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";

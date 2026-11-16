@@ -1,43 +1,49 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace BottleGame.Infrastructure.External.Processing
 {
     /// <summary>
-    /// Класс конфигурации для взаимодействия с платёжным процессингом.
+    /// Настройки платёжного провайдера (ЮKassa).
     /// </summary>
     public class ProcessingOptions
     {
         /// <summary>
-        /// Базовый URL API платёжного сервиса.
+        /// Режим работы с платёжным провайдером. Задаётся через Processing__Mode.
         /// </summary>
-        /// <example>https://app.payshark.net</example>
-        public string BaseUrl { get; set; } = "https://app.payshark.net";
+        /// <remarks>По умолчанию: Simulated. Для реальных платежей укажите Live.</remarks>
+        public ProcessingMode Mode { get; set; } = ProcessingMode.Simulated;
 
         /// <summary>
-        /// Access Token для аутентификации запросов к API.
-        /// Передаётся в заголовке Access-Token. Задаётся через Processing__AccessToken.
+        /// Базовый URL API ЮKassa.
         /// </summary>
-        [Required(ErrorMessage = "Processing:AccessToken обязателен. Задайте переменную окружения Processing__AccessToken или секрет PAYSHARK_ACCESS_TOKEN.")]
-        public string AccessToken { get; set; } = string.Empty;
+        public string BaseUrl { get; set; } = "https://api.yookassa.ru/v3/";
 
         /// <summary>
-        /// UUID мерчанта в платёжной системе. Задаётся через Processing__MerchantId.
+        /// Идентификатор магазина для приёма платежей. Задаётся через Processing__ShopId.
         /// </summary>
-        [Required(ErrorMessage = "Processing:MerchantId обязателен. Задайте переменную окружения Processing__MerchantId или секрет PAYSHARK_MERCHANT_ID.")]
-        public string MerchantId { get; set; } = string.Empty;
+        public string ShopId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Базовый URL для callback-уведомлений от платёжной системы.
+        /// Секретный ключ магазина. Задаётся через Processing__SecretKey.
         /// </summary>
-        /// <example>https://your-api.com/api/webhook</example>
-        [Required(ErrorMessage = "Processing:CallbackUrl обязателен. Задайте переменную окружения Processing__CallbackUrl.")]
-        public string CallbackUrl { get; set; } = string.Empty;
+        public string SecretKey { get; set; } = string.Empty;
 
         /// <summary>
-        /// Максимальное время ожидания ответа от API в миллисекундах.
-        /// Используется в заголовке X-Max-Wait-Ms.
+        /// Идентификатор шлюза выплат. Задаётся через Processing__PayoutAgentId; без него выплаты недоступны.
         /// </summary>
-        /// <remarks>По умолчанию: 30000 (30 секунд).</remarks>
-        public int MaxWaitMs { get; set; } = 30000;
+        public string PayoutAgentId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Секретный ключ шлюза выплат. Задаётся через Processing__PayoutSecretKey.
+        /// </summary>
+        public string PayoutSecretKey { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Адрес страницы, на которую ЮKassa возвращает игрока после оплаты. Задаётся через Processing__ReturnUrl.
+        /// </summary>
+        public string ReturnUrl { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Максимальное время ожидания ответа от API в секундах.
+        /// </summary>
+        public int TimeoutSeconds { get; set; } = 30;
     }
 }

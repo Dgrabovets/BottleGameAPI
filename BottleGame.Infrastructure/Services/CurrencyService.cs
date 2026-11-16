@@ -1,31 +1,35 @@
 ﻿using BottleGame.Application.DTOs.Processing;
 using BottleGame.Application.Interfaces;
+using BottleGame.Infrastructure.External.Processing;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
     /// Сервис для работы с валютами и курсами обмена.
-    /// Использует кэширование для оптимизации запросов к API процессинга.
+    /// Использует кэширование для оптимизации запросов к платёжному провайдеру.
     /// </summary>
     /// <remarks>
     /// Инициализирует новый экземпляр <see cref="CurrencyService"/>.
     /// </remarks>
-    /// <param name="processingService">Сервис процессинга.</param>
+    /// <param name="paymentProvider">Платёжный провайдер.</param>
     /// <param name="cache">Кэш.</param>
     /// <param name="logger">Логгер.</param>
+    /// <param name="options">Настройки процессинга.</param>
     public class CurrencyService(
-        IProcessingService processingService,
+        IPaymentProvider paymentProvider,
         IMemoryCache cache,
-        ILogger<CurrencyService> logger) : ICurrencyService
+        ILogger<CurrencyService> logger,
+        IOptions<ProcessingOptions> options) : ICurrencyService
     {
         #region Fields
 
         /// <summary>
-        /// Сервис процессинга для получения данных.
+        /// Платёжный провайдер для получения справочников.
         /// </summary>
-        private readonly IProcessingService _processingService = processingService;
+        private readonly IPaymentProvider _paymentProvider = paymentProvider;
 
         /// <summary>
         /// Кэш для хранения справочников.
@@ -36,6 +40,11 @@ namespace BottleGame.Infrastructure.Services
         /// Логгер для записи событий.
         /// </summary>
         private readonly ILogger<CurrencyService> _logger = logger;
+
+        /// <summary>
+        /// Работает ли сервис с реальным процессингом.
+        /// </summary>
+        private readonly bool _isLive = options.Value.Mode == ProcessingMode.Live;
 
         /// <summary>
         /// Ключ кэша для списка валют.
@@ -72,51 +81,53 @@ namespace BottleGame.Infrastructure.Services
         #region Public Methods
 
         /// <inheritdoc/>
-        public Task<IEnumerable<CurrencyInfo>> GetAvailableCurrenciesAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<CurrencyInfo>> GetAvailableCurrenciesAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
         {
-            // До подключения процессинговой площадки отрубаем — вернуть блок с API перед продом
-            //if (forceRefresh)
-            //{
-            //    _cache.Remove(CurrenciesCacheKey);
-            //}
-            //
-            //var currencies = await _cache.GetOrCreateAsync(CurrenciesCacheKey, async entry =>
-            //{
-            //    entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
-            //
-            //    _logger.LogInformation("{Prefix} Загрузка списка валют из API", Prefix);
-            //    var result = await _processingService.GetCurrenciesAsync(cancellationToken);
-            //    return result.ToList();
-            //});
-            //
-            //return currencies ?? Enumerable.Empty<CurrencyInfo>();
+            if (!_isLive)
+            {
+                return GetSimulatedCurrencies();
+            }
 
-            _logger.LogWarning("{Prefix} [TEST BYPASS] Список валют без процессинга", Prefix);
-            return Task.FromResult<IEnumerable<CurrencyInfo>>(GetTestCurrencies());
+            if (forceRefresh)
+            {
+                _cache.Remove(CurrenciesCacheKey);
+            }
+
+            var currencies = await _cache.GetOrCreateAsync(CurrenciesCacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
+
+                _logger.LogInformation("{Prefix} Загрузка списка валют из API", Prefix);
+                var result = await _paymentProvider.GetCurrenciesAsync(cancellationToken);
+                return result.ToList();
+            });
+
+            return currencies ?? Enumerable.Empty<CurrencyInfo>();
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<PaymentGatewayInfo>> GetPaymentGatewaysAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<PaymentGatewayInfo>> GetPaymentGatewaysAsync(bool forceRefresh = false, CancellationToken cancellationToken = default)
         {
-            // До подключения процессинговой площадки отрубаем — вернуть блок с API перед продом
-            //if (forceRefresh)
-            //{
-            //    _cache.Remove(GatewaysCacheKey);
-            //}
-            //
-            //var gateways = await _cache.GetOrCreateAsync(GatewaysCacheKey, async entry =>
-            //{
-            //    entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
-            //
-            //    _logger.LogInformation("{Prefix} Загрузка списка платёжных шлюзов из API", Prefix);
-            //    var result = await _processingService.GetPaymentGatewaysAsync(cancellationToken);
-            //    return result.ToList();
-            //});
-            //
-            //return gateways ?? Enumerable.Empty<PaymentGatewayInfo>();
+            if (!_isLive)
+            {
+                return GetSimulatedPaymentGateways();
+            }
 
-            _logger.LogWarning("{Prefix} [TEST BYPASS] Список шлюзов без процессинга", Prefix);
-            return Task.FromResult<IEnumerable<PaymentGatewayInfo>>(GetTestPaymentGateways());
+            if (forceRefresh)
+            {
+                _cache.Remove(GatewaysCacheKey);
+            }
+
+            var gateways = await _cache.GetOrCreateAsync(GatewaysCacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
+
+                _logger.LogInformation("{Prefix} Загрузка списка платёжных шлюзов из API", Prefix);
+                var result = await _paymentProvider.GetPaymentGatewaysAsync(cancellationToken);
+                return result.ToList();
+            });
+
+            return gateways ?? Enumerable.Empty<PaymentGatewayInfo>();
         }
 
         /// <inheritdoc/>
@@ -140,27 +151,22 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <inheritdoc/>
-        public Task<decimal> GetExchangeRateAsync(string currencyCode, CancellationToken cancellationToken = default)
+        public async Task<decimal> GetExchangeRateAsync(string currencyCode, CancellationToken cancellationToken = default)
         {
-            // До подключения процессинговой площадки отрубаем — вернуть блок с API перед продом
-            //var cacheKey = $"{ExchangeRateCacheKeyPrefix}{currencyCode.ToLowerInvariant()}";
-            //
-            //var rate = await _cache.GetOrCreateAsync(cacheKey, async entry =>
-            //{
-            //    entry.AbsoluteExpirationRelativeToNow = ExchangeRateCacheExpiration;
-            //
-            //    _logger.LogDebug("{Prefix} Загрузка курса для {Currency} из API", Prefix, currencyCode);
-            //    return await _processingService.GetMerchantExchangeRateAsync(currencyCode, cancellationToken);
-            //});
-            //
-            //return rate;
+            if (!_isLive)
+            {
+                return SimulatedExchangeRate;
+            }
 
-            _logger.LogWarning(
-                "{Prefix} [TEST BYPASS] Курс {Currency}=1 без процессинга",
-                Prefix,
-                currencyCode);
+            var cacheKey = $"{ExchangeRateCacheKeyPrefix}{currencyCode.ToLowerInvariant()}";
 
-            return Task.FromResult(1m);
+            return await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = ExchangeRateCacheExpiration;
+
+                _logger.LogDebug("{Prefix} Загрузка курса для {Currency} из API", Prefix, currencyCode);
+                return await _paymentProvider.GetExchangeRateAsync(currencyCode, cancellationToken);
+            });
         }
 
         /// <inheritdoc/>
@@ -290,35 +296,40 @@ namespace BottleGame.Infrastructure.Services
 
         #endregion Public Methods
 
-        #region Private Test Bypass Methods
+        #region Simulated Data
 
         /// <summary>
-        /// Тестовый код валюты по умолчанию (совпадает с регистрацией игрока)
+        /// Код валюты в режиме Simulated (совпадает с регистрацией игрока)
         /// </summary>
-        private const string TestCurrencyCode = "rub";
+        private const string SimulatedCurrencyCode = "rub";
 
         /// <summary>
-        /// Тестовый шлюз по умолчанию (совпадает с PaymentMethod/PayoutMethod при регистрации)
+        /// Шлюз в режиме Simulated (совпадает с PaymentMethod/PayoutMethod при регистрации)
         /// </summary>
-        private const string TestGatewayCode = "sberbank";
+        private const string SimulatedGatewayCode = "sberbank";
 
         /// <summary>
-        /// Возвращает одну тестовую валюту без обращения к процессингу
+        /// Курс в режиме Simulated: конвертации нет
         /// </summary>
-        private static IReadOnlyList<CurrencyInfo> GetTestCurrencies() =>
+        private const decimal SimulatedExchangeRate = 1m;
+
+        /// <summary>
+        /// Возвращает одну валюту без обращения к процессингу
+        /// </summary>
+        private static IReadOnlyList<CurrencyInfo> GetSimulatedCurrencies() =>
         [
-            new CurrencyInfo(TestCurrencyCode, "Российский рубль (тест)", isActive: true)
+            new CurrencyInfo(SimulatedCurrencyCode, "Российский рубль (тест)", isActive: true)
         ];
 
         /// <summary>
-        /// Возвращает один тестовый шлюз для пополнений и выводов
+        /// Возвращает один шлюз для пополнений и выводов без обращения к процессингу
         /// </summary>
-        private static IReadOnlyList<PaymentGatewayInfo> GetTestPaymentGateways() =>
+        private static IReadOnlyList<PaymentGatewayInfo> GetSimulatedPaymentGateways() =>
         [
             new PaymentGatewayInfo(
-                code: TestGatewayCode,
+                code: SimulatedGatewayCode,
                 name: "Sberbank (тест)",
-                currency: TestCurrencyCode,
+                currency: SimulatedCurrencyCode,
                 supportsPayments: true,
                 supportsPayouts: true,
                 minAmount: 100m,
@@ -326,7 +337,7 @@ namespace BottleGame.Infrastructure.Services
                 detailTypes: ["card", "phone", "sbp"])
         ];
 
-        #endregion Private Test Bypass Methods
+        #endregion Simulated Data
     }
 }
 

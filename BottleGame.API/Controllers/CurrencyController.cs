@@ -22,7 +22,7 @@ namespace BottleGame.API.Controllers
     /// <param name="logger">Логгер.</param>
     [ApiController]
     [Route("api/currencies")]
-    [Tags("Валюты и шлюзы (Processing)")]
+    [Tags("Валюты и шлюзы")]
     public class CurrencyController(ICurrencyService currencyService, ILogger<CurrencyController> logger) : ControllerBase
     {
         #region Fields
