@@ -5,33 +5,33 @@ using BottleGame.Application.DTOs.Responses;
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Интерфейс сервиса для работы с банами игроков
+    /// Interface of the service for working with player bans
     /// </summary>
     public interface IBanService
     {
         #region Methods
 
         /// <summary>
-        /// Проверить, забанен ли игрок
+        /// Checks whether a player is banned
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="requestingPlayerId">ID запрашивающего (для проверки прав)</param>
-        /// <param name="isAdmin">Является ли администратором</param>
-        /// <returns>Информация о бане</returns>
+        /// <param name="playerId">Player id</param>
+        /// <param name="requestingPlayerId">Id of the requesting player (for the access check)</param>
+        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <returns>Ban information</returns>
         Task<Result<IsBannedResponse>> IsBanned(int playerId, int? requestingPlayerId, bool isAdmin);
 
         /// <summary>
-        /// Забанить игрока
+        /// Bans a player
         /// </summary>
-        /// <param name="request">Запрос на бан</param>
-        /// <returns>Результат операции</returns>
+        /// <param name="request">Ban request</param>
+        /// <returns>Operation result</returns>
         Task<Result> BanPlayer(BanPlayerRequest request);
 
         /// <summary>
-        /// Разбанить игрока
+        /// Unbans a player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <returns>Результат операции</returns>
+        /// <param name="playerId">Player id</param>
+        /// <returns>Operation result</returns>
         Task<Result> UnbanPlayer(int playerId);
 
         #endregion Methods

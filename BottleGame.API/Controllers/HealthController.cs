@@ -1,16 +1,16 @@
-using System.Reflection;
 using BottleGame.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace BottleGame.API.Controllers
 {
     /// <summary>
-    /// Контроллер проверки состояния сервисов
+    /// Service health controller
     /// </summary>
     /// <remarks>
-    /// Предоставляет эндпоинт /api/health для мониторинга состояния API, 
-    /// подключения к базе данных и ключевых сервисов. Не отображается в Swagger.
+    /// Provides the /api/health endpoint for monitoring the state of the API,
+    /// the database connection and key services. It is not shown in Swagger
     /// </remarks>
     [ApiController]
     [Route("api/[controller]")]
@@ -23,10 +23,13 @@ namespace BottleGame.API.Controllers
         private readonly ApplicationDbContext _context = context;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<HealthController> _logger = logger;
 
+        /// <summary>
+        /// Prefix of the log messages
+        /// </summary>
         private const string Prefix = "[Health Controller]";
 
         #endregion Fields
@@ -34,11 +37,11 @@ namespace BottleGame.API.Controllers
         #region Public Methods
 
         /// <summary>
-        /// Проверка общего состояния API и зависимостей
+        /// Checks the overall state of the API and its dependencies
         /// </summary>
-        /// <returns>JSON объект с результатами проверок</returns>
-        /// <response code="200">Все сервисы работают корректно</response>
-        /// <response code="500">Внутренняя ошибка при выполнении проверок</response>
+        /// <returns>JSON object with the results of the checks</returns>
+        /// <response code="200">All services work correctly</response>
+        /// <response code="500">Internal error while running the checks</response>
         [HttpGet]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -78,7 +81,7 @@ namespace BottleGame.API.Controllers
         #region Private Methods
 
         /// <summary>
-        /// Версия из <c>BottleGame.API.csproj</c> → <c>Version</c>.
+        /// Version from <c>BottleGame.API.csproj</c> → <c>Version</c>
         /// </summary>
         private static string GetApplicationVersion()
         {
@@ -89,9 +92,9 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Проверка состояния базы данных
+        /// Checks the state of the database
         /// </summary>
-        /// <returns>Результат проверки подключения и статистики</returns>
+        /// <returns>Result of the connection check and statistics</returns>
         private async Task<object> CheckDatabase()
         {
             try

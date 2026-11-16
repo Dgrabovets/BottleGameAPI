@@ -4,20 +4,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Тип транзакции
+    /// Transaction type
     /// </summary>
     [Table("TransactionTypes")]
     public class TransactionType
     {
         /// <summary>
-        /// Идентификатор типа
+        /// Type identifier
         /// </summary>
         [Key]
         [Column("Id")]
         public int Id { get; set; }
 
         /// <summary>
-        /// Название типа
+        /// Type name
         /// </summary>
         [Required]
         [Column("Name")]
@@ -26,7 +26,7 @@ namespace BottleGame.Domain.Entities
         #region Navigation Properties
 
         /// <summary>
-        /// Связанные транзакции
+        /// Related transactions
         /// </summary>
         public virtual ICollection<MoneyTransaction> MoneyTransactions { get; set; } = new List<MoneyTransaction>();
 

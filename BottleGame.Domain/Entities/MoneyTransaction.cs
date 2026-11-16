@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Денежная транзакция.
+    /// Money transaction
     /// </summary>
     [Table("MoneyTransactions")]
     public class MoneyTransaction
@@ -12,7 +12,7 @@ namespace BottleGame.Domain.Entities
         #region Primary Key
 
         /// <summary>
-        /// Идентификатор транзакции.
+        /// Transaction identifier
         /// </summary>
         [Key]
         [Column("Id")]
@@ -24,7 +24,7 @@ namespace BottleGame.Domain.Entities
         #region Foreign Keys
 
         /// <summary>
-        /// Идентификатор игрока.
+        /// Player identifier
         /// </summary>
         [Required]
         [ForeignKey("Player")]
@@ -32,7 +32,7 @@ namespace BottleGame.Domain.Entities
         public int PlayerId { get; set; }
 
         /// <summary>
-        /// Идентификатор статуса транзакции.
+        /// Transaction status identifier
         /// </summary>
         [Required]
         [ForeignKey("TransactionStatus")]
@@ -40,7 +40,7 @@ namespace BottleGame.Domain.Entities
         public int TransactionStatusId { get; set; }
 
         /// <summary>
-        /// Идентификатор типа транзакции.
+        /// Transaction type identifier
         /// </summary>
         [Required]
         [ForeignKey("TransactionType")]
@@ -52,7 +52,7 @@ namespace BottleGame.Domain.Entities
         #region Amount Fields
 
         /// <summary>
-        /// Сумма транзакции.
+        /// Transaction amount
         /// </summary>
         [Required]
         [Column("Amount")]
@@ -63,47 +63,47 @@ namespace BottleGame.Domain.Entities
         #region Processing Fields
 
         /// <summary>
-        /// UUID ордера/выплаты в платёжном процессинге.
+        /// UUID of the order/payout in the payment processing
         /// </summary>
         [Column("ProcessingOrderId")]
         [MaxLength(100)]
         public string? ProcessingOrderId { get; set; }
 
         /// <summary>
-        /// URL для оплаты (для депозитов).
+        /// Payment URL (for deposits)
         /// </summary>
         [Column("PaymentUrl")]
         [MaxLength(500)]
         public string? PaymentUrl { get; set; }
 
         /// <summary>
-        /// Код платёжного шлюза.
+        /// Payment gateway code
         /// </summary>
         [Column("PaymentGateway")]
         [MaxLength(50)]
         public string? PaymentGateway { get; set; }
 
         /// <summary>
-        /// Код валюты транзакции.
+        /// Transaction currency code
         /// </summary>
         [Column("Currency")]
         [MaxLength(10)]
         public string? Currency { get; set; }
 
         /// <summary>
-        /// Курс обмена на момент транзакции.
+        /// Exchange rate at the time of the transaction
         /// </summary>
         [Column("ExchangeRate")]
         public decimal? ExchangeRate { get; set; }
 
         /// <summary>
-        /// Успешно ли обработана транзакция процессингом.
+        /// Whether the processing handled the transaction successfully
         /// </summary>
         [Column("IsProcessingSuccess")]
         public bool? IsProcessingSuccess { get; set; }
 
         /// <summary>
-        /// Сообщение об ошибке от процессинга.
+        /// Error message from the processing
         /// </summary>
         [Column("ProcessingError")]
         [MaxLength(500)]
@@ -114,34 +114,44 @@ namespace BottleGame.Domain.Entities
         #region Date Fields
 
         /// <summary>
-        /// Дата создания транзакции.
+        /// Transaction creation date
         /// </summary>
         [Required]
         [Column("CreatedAt")]
         public DateTime CreatedAt { get; set; }
 
         /// <summary>
-        /// Дата обработки транзакции.
+        /// Transaction processing date
         /// </summary>
         [Column("ProcessedAt")]
         public DateTime? ProcessedAt { get; set; }
 
         #endregion Date Fields
 
+        #region Concurrency
+
+        /// <summary>
+        /// Row version for optimistic concurrency. In PostgreSQL this is the xmin system column,
+        /// so no separate column or migration is needed
+        /// </summary>
+        public uint Version { get; set; }
+
+        #endregion Concurrency
+
         #region Navigation Properties
 
         /// <summary>
-        /// Связанный игрок.
+        /// Related player
         /// </summary>
         public virtual Player Player { get; set; } = null!;
 
         /// <summary>
-        /// Тип транзакции.
+        /// Transaction type
         /// </summary>
         public virtual TransactionType TransactionType { get; set; } = null!;
 
         /// <summary>
-        /// Статус транзакции.
+        /// Transaction status
         /// </summary>
         public virtual TransactionStatus TransactionStatus { get; set; } = null!;
 

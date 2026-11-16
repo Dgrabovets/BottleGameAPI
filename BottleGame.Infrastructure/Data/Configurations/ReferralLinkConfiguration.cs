@@ -5,10 +5,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace BottleGame.Infrastructure.Data.Configurations
 {
     /// <summary>
-    /// Конфигурация сущности ReferralLink
+    /// Configuration of the ReferralLink entity
     /// </summary>
     public class ReferralLinkConfiguration : IEntityTypeConfiguration<ReferralLink>
     {
+        /// <summary>
+        /// Configures the ReferralLink entity
+        /// </summary>
+        /// <param name="builder">Entity type builder</param>
         public void Configure(EntityTypeBuilder<ReferralLink> builder)
         {
             builder.ToTable("ReferralLinks");
@@ -18,6 +22,7 @@ namespace BottleGame.Infrastructure.Data.Configurations
                 .HasColumnName("Link")
                 .HasColumnType("varchar")
                 .IsRequired();
+
             builder.HasOne(b => b.Player)
                 .WithOne(p => p.ReferralLink)
                 .HasForeignKey<ReferralLink>(b => b.PlayerId)

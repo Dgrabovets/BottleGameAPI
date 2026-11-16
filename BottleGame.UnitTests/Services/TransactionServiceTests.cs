@@ -2,32 +2,47 @@ using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
-using BottleGame.Infrastructure.External.Processing;
 using BottleGame.Infrastructure.Services;
+using BottleGame.Infrastructure.Services.Payments;
 using BottleGame.UnitTests.Fixtures;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Тесты для TransactionService
+/// Tests for TransactionService
 /// </summary>
 public class TransactionServiceTests : IDisposable
 {
+    /// <summary>
+    /// Database context of the test
+    /// </summary>
     private readonly Infrastructure.Data.ApplicationDbContext _context;
+
+    /// <summary>
+    /// The service under test
+    /// </summary>
     private readonly TransactionService _service;
+
+    /// <summary>
+    /// Mock of the logger
+    /// </summary>
     private readonly Mock<ILogger<TransactionService>> _loggerMock;
-    private readonly Mock<IProcessingService> _processingServiceMock;
+
+    /// <summary>
+    /// Mock of the cache service
+    /// </summary>
     private readonly Mock<ICacheService> _cacheServiceMock;
 
+    /// <summary>
+    /// Creates the test fixture: the database, the mocks and the object under test
+    /// </summary>
     public TransactionServiceTests()
     {
         _context = TestDbContextFactory.CreateWithReferenceData();
         _loggerMock = new Mock<ILogger<TransactionService>>();
-        _processingServiceMock = new Mock<IProcessingService>();
         _cacheServiceMock = new Mock<ICacheService>();
 
         var gameParams = _context.GameParams.First();
@@ -38,6 +53,7 @@ public class TransactionServiceTests : IDisposable
                 { TransactionTypes.Deposit, "Пополнение" },
                 { TransactionTypes.Withdrawal, "Вывод" }
             });
+
         _cacheServiceMock.Setup(x => x.GetTransactionStatusesAsync()).ReturnsAsync(
             new Dictionary<int, string>
             {
@@ -46,17 +62,13 @@ public class TransactionServiceTests : IDisposable
                 { TransactionStatuses.Rejected, "Отклонено" }
             });
 
-        var options = Options.Create(new ProcessingOptions
-        {
-            MerchantId = "test_merchant",
-            AccessToken = "test_access_token",
-            BaseUrl = "https://app.payshark.net",
-            CallbackUrl = "https://test.com/api/webhook"
-        });
-
-        _service = new TransactionService(_context, _loggerMock.Object, _processingServiceMock.Object, _cacheServiceMock.Object, options);
+        var processor = new SimulatedTransactionProcessor(_context, new Mock<ILogger<SimulatedTransactionProcessor>>().Object);
+        _service = new TransactionService(_context, _loggerMock.Object, _cacheServiceMock.Object, processor);
     }
 
+    /// <summary>
+    /// Releases the database context used by the tests
+    /// </summary>
     public void Dispose()
     {
         _context.Dispose();
@@ -65,6 +77,9 @@ public class TransactionServiceTests : IDisposable
 
     #region GetPlayerBalance Tests
 
+    /// <summary>
+    /// Get player balance: player not found; returns not found
+    /// </summary>
     [Fact]
     public async Task GetPlayerBalance_PlayerNotFound_ReturnsNotFound()
     {
@@ -76,6 +91,9 @@ public class TransactionServiceTests : IDisposable
         result.StatusCode.Should().Be(404);
     }
 
+    /// <summary>
+    /// Get player balance: as player; other player, unauthorized
+    /// </summary>
     [Fact]
     public async Task GetPlayerBalance_AsPlayer_OtherPlayer_Unauthorized()
     {
@@ -91,6 +109,9 @@ public class TransactionServiceTests : IDisposable
         result.StatusCode.Should().Be(401);
     }
 
+    /// <summary>
+    /// Get player balance: success; returns balance
+    /// </summary>
     [Fact]
     public async Task GetPlayerBalance_Success_ReturnsBalance()
     {
@@ -109,6 +130,9 @@ public class TransactionServiceTests : IDisposable
 
     #region UpdateTransactionStatus Tests
 
+    /// <summary>
+    /// Update transaction status: transaction not found; returns not found
+    /// </summary>
     [Fact]
     public async Task UpdateTransactionStatus_TransactionNotFound_ReturnsNotFound()
     {
@@ -123,6 +147,9 @@ public class TransactionServiceTests : IDisposable
         result.StatusCode.Should().Be(404);
     }
 
+    /// <summary>
+    /// Update transaction status: invalid status; returns failure
+    /// </summary>
     [Fact]
     public async Task UpdateTransactionStatus_InvalidStatus_ReturnsFailure()
     {
@@ -136,6 +163,7 @@ public class TransactionServiceTests : IDisposable
             TransactionStatusId = TransactionStatuses.Pending,
             CreatedAt = DateTime.UtcNow
         };
+
         _context.MoneyTransactions.Add(transaction);
         await _context.SaveChangesAsync();
 
@@ -152,6 +180,9 @@ public class TransactionServiceTests : IDisposable
 
     #region GetPlayerTransactions Tests
 
+    /// <summary>
+    /// Get player transactions: player not found; returns not found
+    /// </summary>
     [Fact]
     public async Task GetPlayerTransactions_PlayerNotFound_ReturnsNotFound()
     {
@@ -163,6 +194,9 @@ public class TransactionServiceTests : IDisposable
         result.StatusCode.Should().Be(404);
     }
 
+    /// <summary>
+    /// Get player transactions: success; returns transactions
+    /// </summary>
     [Fact]
     public async Task GetPlayerTransactions_Success_ReturnsTransactions()
     {
@@ -176,6 +210,7 @@ public class TransactionServiceTests : IDisposable
             TransactionStatusId = TransactionStatuses.Pending,
             CreatedAt = DateTime.UtcNow
         });
+
         await _context.SaveChangesAsync();
 
         // Act
@@ -190,6 +225,9 @@ public class TransactionServiceTests : IDisposable
 
     #region GetAllTransactions Tests
 
+    /// <summary>
+    /// Get all transactions: returns all transactions
+    /// </summary>
     [Fact]
     public async Task GetAllTransactions_ReturnsAllTransactions()
     {
@@ -213,6 +251,7 @@ public class TransactionServiceTests : IDisposable
                 CreatedAt = DateTime.UtcNow
             }
         );
+
         await _context.SaveChangesAsync();
 
         // Act
@@ -223,6 +262,9 @@ public class TransactionServiceTests : IDisposable
         result.Value!.Should().NotBeEmpty();
     }
 
+    /// <summary>
+    /// Get all transactions: does not duplicate when player has many rounds
+    /// </summary>
     [Fact]
     public async Task GetAllTransactions_DoesNotDuplicateWhenPlayerHasManyRounds()
     {
@@ -233,6 +275,7 @@ public class TransactionServiceTests : IDisposable
             new GameRound { PlayerId = player.Id, Bet = 50, IsWin = false, FinishedAt = DateTime.UtcNow },
             new GameRound { PlayerId = player.Id, Bet = 50, IsWin = true, FinishedAt = DateTime.UtcNow }
         );
+
         _context.MoneyTransactions.AddRange(
             new MoneyTransaction
             {
@@ -251,6 +294,7 @@ public class TransactionServiceTests : IDisposable
                 CreatedAt = DateTime.UtcNow
             }
         );
+
         await _context.SaveChangesAsync();
 
         var result = await _service.GetAllTransactions(null);
@@ -260,6 +304,9 @@ public class TransactionServiceTests : IDisposable
         result.Value!.Single().Transactions.Should().HaveCount(2);
     }
 
+    /// <summary>
+    /// Get all transactions: excludes actively banned player
+    /// </summary>
     [Fact]
     public async Task GetAllTransactions_ExcludesActivelyBannedPlayer()
     {
@@ -285,6 +332,7 @@ public class TransactionServiceTests : IDisposable
                 CreatedAt = DateTime.UtcNow
             }
         );
+
         await _context.SaveChangesAsync();
 
         var result = await _service.GetAllTransactions(null);
@@ -295,6 +343,9 @@ public class TransactionServiceTests : IDisposable
         result.Value!.Single().Transactions.Should().HaveCount(1);
     }
 
+    /// <summary>
+    /// Get all transactions: filter by type; returns filtered
+    /// </summary>
     [Fact]
     public async Task GetAllTransactions_FilterByType_ReturnsFiltered()
     {
@@ -318,6 +369,7 @@ public class TransactionServiceTests : IDisposable
                 CreatedAt = DateTime.UtcNow
             }
         );
+
         await _context.SaveChangesAsync();
 
         // Act
@@ -332,6 +384,9 @@ public class TransactionServiceTests : IDisposable
 
     #region GetAllTransactionStatuses Tests
 
+    /// <summary>
+    /// Get all transaction statuses: returns statuses
+    /// </summary>
     [Fact]
     public async Task GetAllTransactionStatuses_ReturnsStatuses()
     {
@@ -347,6 +402,9 @@ public class TransactionServiceTests : IDisposable
 
     #region GetAllTransactionTypes Tests
 
+    /// <summary>
+    /// Get all transaction types: returns types
+    /// </summary>
     [Fact]
     public async Task GetAllTransactionTypes_ReturnsTypes()
     {

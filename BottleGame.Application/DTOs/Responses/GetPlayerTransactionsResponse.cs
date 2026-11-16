@@ -1,17 +1,17 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ со списком транзакций игрока
+    /// Response with the list of a player's transactions
     /// </summary>
     public class GetPlayerTransactionsResponse
     {
         /// <summary>
-        /// Данные игрока
+        /// Player data
         /// </summary>
         public PlayerDTO Player { get; set; } = null!;
 
         /// <summary>
-        /// Список транзакций
+        /// List of transactions
         /// </summary>
         public List<TransactionDTO> Transactions { get; set; } = [];
     }

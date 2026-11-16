@@ -5,10 +5,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace BottleGame.Infrastructure.Data.Configurations
 {
     /// <summary>
-    /// Конфигурация сущности Player
+    /// Configuration of the Player entity
     /// </summary>
     public class PlayerConfiguration : IEntityTypeConfiguration<Player>
     {
+        /// <summary>
+        /// Configures the Player entity
+        /// </summary>
+        /// <param name="builder">Entity type builder</param>
         public void Configure(EntityTypeBuilder<Player> builder)
         {
             builder.ToTable("Players");
@@ -20,10 +24,12 @@ namespace BottleGame.Infrastructure.Data.Configurations
                 .HasColumnType("varchar")
                 .HasMaxLength(255)
                 .IsRequired();
+
             builder.Property(p => p.AvatarUrl)
                 .HasColumnName("AvatarUrl")
                 .HasColumnType("varchar")
                 .IsRequired();
+
             builder.Property(p => p.RegisteredInAppAt).HasColumnName("RegisteredInAppAt").IsRequired();
         }
     }

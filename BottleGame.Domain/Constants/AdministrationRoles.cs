@@ -1,22 +1,22 @@
 namespace BottleGame.Domain.Constants
 {
     /// <summary>
-    /// Административные роли
+    /// Administrative roles
     /// </summary>
     public static class AdministrationRoles
     {
         /// <summary>
-        /// Администратор (полный доступ)
+        /// Administrator (full access)
         /// </summary>
         public const int Admin = 1;
 
         /// <summary>
-        /// Модератор (ограниченный доступ)
+        /// Moderator (limited access)
         /// </summary>
         public const int Moderator = 2;
 
         /// <summary>
-        /// Название роли для JWT Claims
+        /// Role name for JWT claims
         /// </summary>
         public static string GetRoleName(int roleId) => roleId switch
         {

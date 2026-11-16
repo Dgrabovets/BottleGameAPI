@@ -4,27 +4,27 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Связь между приглашённым и пригласившим игроками
+    /// Link between the invited and the inviting players
     /// </summary>
     [Table("InvitedPlayers")]
     public class InvitedPlayer
     {
         /// <summary>
-        /// Идентификатор приглашённого игрока
+        /// Identifier of the invited player
         /// </summary>
         [Key]
         [Column("PlayerIdInvited", Order = 0)]
         public int PlayerIdInvited { get; set; }
 
         /// <summary>
-        /// Идентификатор пригласившего игрока
+        /// Identifier of the inviting player
         /// </summary>
         [Key]
         [Column("PlayerIdInvitedBy", Order = 1)]
         public int PlayerIdInvitedBy { get; set; }
 
         /// <summary>
-        /// Дата приглашения
+        /// Invitation date
         /// </summary>
         [Column("InvitedAt")]
         public DateTime InvitedAt { get; set; }
@@ -32,14 +32,14 @@ namespace BottleGame.Domain.Entities
         #region Navigation Properties
 
         /// <summary>
-        /// Приглашённый игрок
+        /// Inviting player (linked through PlayerIdInvitedBy)
         /// </summary>
-        public virtual Player PlayerInvited { get; set; } = null!;
+        public virtual Player Inviter { get; set; } = null!;
 
         /// <summary>
-        /// Пригласивший игрок
+        /// Invited player (linked through PlayerIdInvited)
         /// </summary>
-        public virtual Player PlayerInvitedBy { get; set; } = null!;
+        public virtual Player Invitee { get; set; } = null!;
 
         #endregion Navigation Properties
     }

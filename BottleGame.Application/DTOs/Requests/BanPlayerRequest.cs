@@ -1,17 +1,17 @@
 ﻿namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Запрос на бан игрока
+    /// Request to ban a player
     /// </summary>
     public class BanPlayerRequest
     {
         /// <summary>
-        /// ID игрока для бана
+        /// Id of the player to ban
         /// </summary>
         public int PlayerId { get; set; }
 
         /// <summary>
-        /// Причина бана
+        /// Reason for the ban
         /// </summary>
         public string BanReason { get; set; } = string.Empty;
     }

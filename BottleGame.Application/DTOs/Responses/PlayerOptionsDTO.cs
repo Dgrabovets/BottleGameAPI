@@ -1,37 +1,37 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// DTO настроек игрока
+    /// Player settings DTO
     /// </summary>
     public class PlayerOptionsDTO
     {
         /// <summary>
-        /// Персональный шанс выигрыша
+        /// Personal win chance
         /// </summary>
         public float WinChance { get; set; }
 
         /// <summary>
-        /// Кошелёк для выплат
+        /// Wallet for payouts
         /// </summary>
         public string? Wallet { get; set; }
 
         /// <summary>
-        /// Валюта (строка)
+        /// Currency (string)
         /// </summary>
         public string? Currency { get; set; }
 
         /// <summary>
-        /// Метод выплаты (строка)
+        /// Payout method (string)
         /// </summary>
         public string PayoutMethod { get; set; } = string.Empty;
 
         /// <summary>
-        /// Метод оплаты (строка)
+        /// Payment method (string)
         /// </summary>
         public string PaymentMethod { get; set; } = string.Empty;
 
         /// <summary>
-        /// Тип платёжных реквизитов (например, "card", "phone", "sbp")
+        /// Type of payment details (for example, "card", "phone", "sbp")
         /// </summary>
         public string PaymentDetailType { get; set; } = string.Empty;
     }

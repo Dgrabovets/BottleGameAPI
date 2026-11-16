@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace BottleGame.API.Controllers
 {
     /// <summary>
-    /// Базовый контроллер API с общими методами
+    /// Base API controller with common methods
     /// </summary>
     /// <remarks>
-    /// Предоставляет методы для преобразования Result в ActionResult
-    /// и другие общие методы для всех контроллеров.
+    /// Provides methods that convert a Result to an ActionResult
+    /// and other common methods for all controllers
     /// </remarks>
     [ApiController]
     public abstract class BaseApiController : ControllerBase
@@ -16,10 +16,10 @@ namespace BottleGame.API.Controllers
         #region Protected Methods
 
         /// <summary>
-        /// Преобразует Result без значения в ActionResult
+        /// Converts a Result without a value to an ActionResult
         /// </summary>
-        /// <param name="result">Результат операции</param>
-        /// <returns>ActionResult с соответствующим статус-кодом</returns>
+        /// <param name="result">Operation result</param>
+        /// <returns>ActionResult with the matching status code</returns>
         protected IActionResult ToActionResult(Result result)
         {
             if (result.IsSuccess)
@@ -32,7 +32,7 @@ namespace BottleGame.API.Controllers
             return result.StatusCode switch
             {
                 401 => Unauthorized(result.Error),
-                403 => Forbid(result.Error ?? "Доступ запрещён"),
+                403 => Forbid(result.Error ?? "Access denied"),
                 404 => NotFound(result.Error),
                 409 => Conflict(result.Error),
                 500 => StatusCode(500, result.Error),
@@ -41,11 +41,11 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Преобразует Result с значением в ActionResult
+        /// Converts a Result with a value to an ActionResult
         /// </summary>
-        /// <typeparam name="T">Тип возвращаемого значения</typeparam>
-        /// <param name="result">Результат операции</param>
-        /// <returns>ActionResult с данными или ошибкой</returns>
+        /// <typeparam name="T">Type of the returned value</typeparam>
+        /// <param name="result">Operation result</param>
+        /// <returns>ActionResult with the data or an error</returns>
         protected ActionResult<T> ToActionResult<T>(Result<T> result)
         {
             if (result.IsSuccess)
@@ -67,10 +67,10 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Преобразует Result с значением в ActionResult с анонимным объектом
+        /// Converts a Result with a value to an ActionResult with an anonymous object
         /// </summary>
-        /// <param name="result">Результат операции</param>
-        /// <returns>ActionResult с данными или ошибкой</returns>
+        /// <param name="result">Operation result</param>
+        /// <returns>ActionResult with the data or an error</returns>
         protected IActionResult ToActionResultObject<T>(Result<T> result)
         {
             if (result.IsSuccess)

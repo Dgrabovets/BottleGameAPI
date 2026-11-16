@@ -1,47 +1,47 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// DTO баланса приложения
+    /// Application balance DTO
     /// </summary>
     public class AppBalanceDTO
     {
         /// <summary>
-        /// Сумма на балансе
+        /// Amount on the balance
         /// </summary>
         public decimal Amount { get; set; }
 
         /// <summary>
-        /// Дата обновления суммы баланса
+        /// Date the balance amount was updated
         /// </summary>
         public DateTime? BalanceAmountUpdatedAt { get; set; }
 
         /// <summary>
-        /// ID админа, обновившего сумму баланса
+        /// Id of the admin who updated the balance amount
         /// </summary>
         public int? BalanceAmountAdminIdUpdatedBy { get; set; }
 
         /// <summary>
-        /// Логин админа, обновившего сумму баланса
+        /// Login of the admin who updated the balance amount
         /// </summary>
         public string? BalanceAmountAdminLoginUpdatedBy { get; set; }
 
         /// <summary>
-        /// Нижний порог баланса
+        /// Lower threshold of the balance
         /// </summary>
         public decimal LowerThreshold { get; set; }
 
         /// <summary>
-        /// Дата обновления нижнего порога
+        /// Date the lower threshold was updated
         /// </summary>
         public DateTime? LowerThresholdUpdatedAt { get; set; }
 
         /// <summary>
-        /// ID админа, обновившего нижний порог
+        /// Id of the admin who updated the lower threshold
         /// </summary>
         public int? LowerThresholdAdminIdUpdatedBy { get; set; }
 
         /// <summary>
-        /// Логин админа, обновившего нижний порог
+        /// Login of the admin who updated the lower threshold
         /// </summary>
         public string? LowerThresholdAdminLoginUpdatedBy { get; set; }
     }

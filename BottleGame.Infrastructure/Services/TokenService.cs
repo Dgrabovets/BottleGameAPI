@@ -1,22 +1,22 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using BottleGame.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
     /// <inheritdoc cref="ITokenService"/>
     /// </summary>
-    /// <param name="configuration">Конфигурация</param>
+    /// <param name="configuration">Configuration</param>
     public class TokenService(IConfiguration configuration) : ITokenService
     {
         #region Fields
 
         /// <summary>
-        /// Конфигурация
+        /// Configuration
         /// </summary>
         private readonly IConfiguration _configuration = configuration;
 

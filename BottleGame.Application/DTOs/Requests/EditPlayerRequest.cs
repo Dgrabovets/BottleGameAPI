@@ -1,53 +1,53 @@
 ﻿namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Запрос на редактирование игрока
+    /// Request to edit a player
     /// </summary>
     public class EditPlayerRequest
     {
         /// <summary>
-        /// Имя игрока
+        /// Player name
         /// </summary>
         public string? Name { get; set; }
 
         /// <summary>
-        /// URL аватара игрока
+        /// Avatar URL of the player
         /// </summary>
         public string? AvatarUrl { get; set; }
 
         /// <summary>
-        /// Персональный шанс выигрыша
+        /// Personal win chance
         /// </summary>
         public float? WinChance { get; set; }
 
         /// <summary>
-        /// Валюта
+        /// Currency
         /// </summary>
         public string? Currency { get; set; }
 
         /// <summary>
-        /// Метод оплаты
+        /// Payment method
         /// </summary>
         public string? PaymentMethod { get; set; }
 
         /// <summary>
-        /// Тип платёжных реквизитов (например, "card", "phone", "sbp").
-        /// Должен соответствовать одному из доступных типов для выбранного PaymentMethod.
+        /// Type of payment details (for example, "card", "phone", "sbp").
+        /// Must match one of the types available for the selected PaymentMethod
         /// </summary>
         public string? PaymentDetailType { get; set; }
 
         /// <summary>
-        /// Метод выплаты
+        /// Payout method
         /// </summary>
         public string? PayoutMethod { get; set; }
 
         /// <summary>
-        /// Кошелёк для выплат
+        /// Wallet for payouts
         /// </summary>
         public string? Wallet { get; set; }
 
         /// <summary>
-        /// Баланс (только для админа)
+        /// Balance (admin only)
         /// </summary>
         public decimal? Balance { get; set; }
     }

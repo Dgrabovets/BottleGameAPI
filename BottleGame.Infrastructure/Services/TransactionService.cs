@@ -1,65 +1,56 @@
-﻿using Microsoft.Extensions.Logging;
-using BottleGame.Application.Common;
-using BottleGame.Application.DTOs.Processing;
-using BottleGame.Domain.Constants;
-using BottleGame.Infrastructure.Data;
+﻿using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
-using BottleGame.Domain.Entities;
-using BottleGame.Infrastructure.External.Processing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Constants;
+using BottleGame.Domain.Entities;
+using BottleGame.Infrastructure.Data;
+using BottleGame.Infrastructure.Services.Payments;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
-    /// Сервис для работы с транзакциями
+    /// Service for working with transactions
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="TransactionService"/>
+    /// Initializes a new instance of <see cref="TransactionService"/>
     /// </remarks>
-    /// <param name="context">Контекст базы данных</param>
-    /// <param name="logger">Логгер</param>
-    /// <param name="processingService">Сервис процессинга</param>
-    /// <param name="cacheService">Сервис кэширования</param>
-    /// <param name="options">Настройки процессинга</param>
+    /// <param name="context">Database context</param>
+    /// <param name="logger">Logger</param>
+    /// <param name="cacheService">Cache service</param>
+    /// <param name="processor">Handler of deposits and withdrawals for the current processing mode</param>
     public class TransactionService(
         ApplicationDbContext context,
         ILogger<TransactionService> logger,
-        IProcessingService processingService,
         ICacheService cacheService,
-        IOptions<ProcessingOptions> options) : ITransactionService
+        ITransactionProcessor processor) : ITransactionService
     {
         #region Fields
 
         /// <summary>
-        /// Контекст базы данных
+        /// Database context
         /// </summary>
         private readonly ApplicationDbContext _context = context;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<TransactionService> _logger = logger;
 
         /// <summary>
-        /// Сервис процессинга
-        /// </summary>
-        private readonly IProcessingService _processingService = processingService;
-
-        /// <summary>
-        /// Сервис кэширования
+        /// Cache service
         /// </summary>
         private readonly ICacheService _cacheService = cacheService;
 
         /// <summary>
-        /// Настройки процессинга
+        /// Handler of deposits and withdrawals for the current processing mode
         /// </summary>
-        private readonly ProcessingOptions _options = options.Value;
+        private readonly ITransactionProcessor _processor = processor;
 
         /// <summary>
-        /// Префикс для логов
+        /// Log prefix
         /// </summary>
         private const string Prefix = "[TransactionService]";
 
@@ -82,14 +73,14 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result<GetPlayerBalanceResponse>.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result<GetPlayerBalanceResponse>.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} Пользователь забанен", Prefix);
-                return Result<GetPlayerBalanceResponse>.Forbidden("Пользователь в бане");
+                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                return Result<GetPlayerBalanceResponse>.Forbidden("User is banned");
             }
 
             var balance = await _context.PlayersBalances
@@ -100,10 +91,10 @@ namespace BottleGame.Infrastructure.Services
 
             if (balance == default)
             {
-                _logger.LogError("{Prefix} Баланс игрока не найден! Нарушена целостность данных", Prefix);
+                _logger.LogError("{Prefix} Player balance not found! Data integrity is broken", Prefix);
             }
 
-            _logger.LogInformation("{Prefix} Успешно получен баланс для игрока {PlayerId}: {Amount}", Prefix, playerId, balance);
+            _logger.LogInformation("{Prefix} Balance of player {PlayerId} retrieved successfully: {Amount}", Prefix, playerId, balance);
 
             return Result<GetPlayerBalanceResponse>.Success(new GetPlayerBalanceResponse { PlayerId = playerId, Balance = balance });
         }
@@ -128,44 +119,34 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result<object?>.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result<object?>.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} Пользователь забанен", Prefix);
-                return Result<object?>.Forbidden("Пользователь в бане");
+                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                return Result<object?>.Forbidden("User is banned");
             }
 
             if (!request.IsDeposit && player.Balance.Amount < request.Amount)
             {
-                _logger.LogWarning("{Prefix} Недостаточно средств на балансе для снятия у игрока {PlayerId}", Prefix, playerId);
-                return Result<object?>.Failure("Недостаточно средств!");
+                _logger.LogWarning("{Prefix} Insufficient balance for withdrawal for player {PlayerId}", Prefix, playerId);
+                return Result<object?>.Failure("Insufficient funds!");
             }
 
             var gameParams = await _cacheService.GetGameParamsAsync();
             if (gameParams is null)
             {
-                _logger.LogWarning("{Prefix} Не найдены игровые параметры", Prefix);
-                return Result<object?>.Failure("Не найдены игровые параметры");
+                _logger.LogWarning("{Prefix} Game parameters not found", Prefix);
+                return Result<object?>.Failure("Game parameters not found");
             }
 
-            // До подключение процессинговой площадки отрубаем
-            //var roundsPlayedStat = await _context.PlayersPlayedRoundsStatisticForWithdrawals
-            //    .FirstOrDefaultAsync(s => s.PlayerId == playerId);
-
-            //if (roundsPlayedStat is null)
-            //{
-            //    _logger.LogWarning("{Prefix} Не найдены данные статистики сыгранных раундов для игрока {PlayerId}", Prefix, playerId);
-            //    return Result<object?>.Failure("Не найдены данные статистики сыгранных раундов игрока");
-            //}
-
-            //if (!request.IsDeposit && roundsPlayedStat.PlayedRoundsCount < gameParams.MinRoundsCountForWithdrawal)
-            //{
-            //    _logger.LogWarning("{Prefix} Недостаточно сыгранных раундов для вывода у игрока {PlayerId}", Prefix, playerId);
-            //    return Result<object?>.Failure($"Для вывода необходимо сыграть минимум {gameParams.MinRoundsCountForWithdrawal} раундов. Сейчас сыграно: {roundsPlayedStat.PlayedRoundsCount}");
-            //}
+            var requestCheck = await _processor.CheckRequestAsync(player, request.IsDeposit, gameParams);
+            if (requestCheck.IsFailure)
+            {
+                return Result<object?>.Failure(requestCheck.Error!, requestCheck.StatusCode);
+            }
 
             var transactionType = await _context.TransactionTypes.FirstOrDefaultAsync(t => t.Id == (request.IsDeposit ? TransactionTypes.Deposit : TransactionTypes.Withdrawal));
             var transactionStatus = await _context.TransactionStatuses.FirstOrDefaultAsync(s => s.Id == TransactionStatuses.Pending);
@@ -195,62 +176,20 @@ namespace BottleGame.Infrastructure.Services
 
             if (request.IsDeposit)
             {
-                // До подключения процессинговой площадки отрубаем — вернуть блок CreateOrderAsync перед продом
-                //try
-                //{
-                //    _logger.LogInformation("{Prefix} Создание запроса для платежа игрока {PlayerId}, сумма {Amount}", Prefix, playerId, request.Amount);
-                //
-                //    var createOrderRequest = new CreateOrderRequest(
-                //        _options.MerchantId,
-                //        transaction.Id.ToString(),
-                //        request.Amount,
-                //        player.PlayerOptions.PaymentMethod.ToString(),
-                //        "card",
-                //        player.TelegramId.ToString());
-                //
-                //    var orderResponse = await _processingService.CreateOrderAsync(createOrderRequest);
-                //
-                //    if (!orderResponse.IsSuccess || string.IsNullOrEmpty(orderResponse.PaymentUrl))
-                //    {
-                //        transaction.TransactionStatusId = TransactionStatuses.Rejected;
-                //        transaction.IsProcessingSuccess = false;
-                //        transaction.ProcessingError = orderResponse.ErrorMessage;
-                //        await _context.SaveChangesAsync();
-                //
-                //        _logger.LogError("{Prefix} Ошибка при создании платежа для игрока {PlayerId}: {ErrorMessage}", Prefix, playerId, orderResponse.ErrorMessage);
-                //        return Result<object?>.InternalError("Ошибка при создании платежа: " + orderResponse.ErrorMessage);
-                //    }
-                //
-                //    transaction.ProcessingOrderId = orderResponse.OrderId;
-                //    transaction.PaymentUrl = orderResponse.PaymentUrl;
-                //    transaction.PaymentGateway = player.PlayerOptions.PaymentMethod.ToString();
-                //    transaction.Currency = player.PlayerOptions.Currency?.ToString() ?? "rub";
-                //    await _context.SaveChangesAsync();
-                //
-                //    responseData = new
-                //    {
-                //        PaymentLink = orderResponse.PaymentUrl,
-                //        orderResponse.OrderId
-                //    };
-                //}
-                //catch (Exception ex)
-                //{
-                //    transaction.TransactionStatusId = TransactionStatuses.Rejected;
-                //    transaction.IsProcessingSuccess = false;
-                //    await _context.SaveChangesAsync();
-                //
-                //    _logger.LogError(ex, "{Prefix} Ошибка при создании платежа для игрока {PlayerId}", Prefix, playerId);
-                //    return Result<object?>.InternalError("Ошибка при создании платежа");
-                //}
+                var depositResult = await _processor.StartDepositAsync(transaction, player);
+                if (depositResult.IsFailure)
+                {
+                    return depositResult;
+                }
 
-                responseData = await CompleteDepositLocallyForTestsAsync(transaction, player, request.Amount);
+                responseData = depositResult.Value;
             }
 
             _logger.LogInformation(
-                "{Prefix} Транзакция создана для игрока {PlayerId}. Тип: {Status}, Сумма: {Bet}",
+                "{Prefix} Transaction created for player {PlayerId}. Type: {Status}, Amount: {Bet}",
                 Prefix,
                 playerId,
-                request.IsDeposit ? "Пополнение" : "Вывод",
+                request.IsDeposit ? "Deposit" : "Withdrawal",
                 request.Amount);
 
             return Result<object?>.Success(responseData);
@@ -266,8 +205,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (request.TransactionStatusId == inWaitStatusId)
             {
-                _logger.LogWarning("{Prefix} Некорректный статус транзакции: {StatusId}", Prefix, request.TransactionStatusId);
-                return Result.Failure($"Допустимые статусы: {approvedStatusId}-Одобрено, {rejectedStatusId}-Отклонено");
+                _logger.LogWarning("{Prefix} Invalid transaction status: {StatusId}", Prefix, request.TransactionStatusId);
+                return Result.Failure($"Allowed statuses: {approvedStatusId}-Approved, {rejectedStatusId}-Rejected");
             }
 
             var transaction = await _context.MoneyTransactions
@@ -277,53 +216,44 @@ namespace BottleGame.Infrastructure.Services
 
             if (transaction is null)
             {
-                _logger.LogWarning("{Prefix} Транзакция с ID {TransactionId} не найдена", Prefix, transactionId);
-                return Result.NotFound($"Транзакция с ID {transactionId} не найдена");
+                _logger.LogWarning("{Prefix} Transaction with ID {TransactionId} not found", Prefix, transactionId);
+                return Result.NotFound($"Transaction with ID {transactionId} not found");
             }
 
             if (transaction.Player is null || transaction.Player.Balance is null || transaction.Player.PlayerOptions is null)
             {
-                _logger.LogWarning("{Prefix} Данные транзакции {TransactionId} неполные", Prefix, transaction.Id);
-                return Result.NotFound($"Данные транзакции {transaction.Id} неполные");
+                _logger.LogWarning("{Prefix} Data of transaction {TransactionId} is incomplete", Prefix, transaction.Id);
+                return Result.NotFound($"Data of transaction {transaction.Id} is incomplete");
             }
 
             if (transaction.TransactionTypeId != withdrawalTypeId)
             {
-                _logger.LogWarning("{Prefix} Тип транзакции {TransactionId} не поддерживается для ручного одобрения/отклонения", Prefix, transactionId);
-                return Result.Failure("Возможно изменять статус только у транзакций с типом \"Вывод\"");
+                _logger.LogWarning("{Prefix} Type of transaction {TransactionId} does not support manual approval/rejection", Prefix, transactionId);
+                return Result.Failure("The status can only be changed for transactions of type \"Withdrawal\"");
             }
 
             if (transaction.TransactionStatusId != inWaitStatusId)
             {
-                _logger.LogWarning("{Prefix} Транзакция {TransactionId} уже обработана (статус {StatusId})", Prefix, transactionId, transaction.TransactionStatusId);
-                return Result.Failure("Нельзя изменить статус уже обработанной транзакции");
+                _logger.LogWarning("{Prefix} Transaction {TransactionId} is already handled (status {StatusId})", Prefix, transactionId, transaction.TransactionStatusId);
+                return Result.Failure("The status of an already handled transaction cannot be changed");
             }
 
             if (transaction.TransactionStatusId == request.TransactionStatusId)
             {
-                _logger.LogWarning("{Prefix} Транзакция {TransactionId} уже имеет статус {StatusId}", Prefix, transactionId, request.TransactionStatusId);
-                return Result.Failure("Транзакция уже имеет указанный статус");
+                _logger.LogWarning("{Prefix} Transaction {TransactionId} already has status {StatusId}", Prefix, transactionId, request.TransactionStatusId);
+                return Result.Failure("The transaction already has the given status");
             }
 
             var gameParams = await _cacheService.GetGameParamsAsync();
             if (gameParams is null)
             {
-                return Result.Failure("Не найдены игровые параметры");
+                return Result.Failure("Game parameters not found");
             }
-
-            // До подключения процессинговой площадки отрубаем
-            //var roundsPlayedStat = await _context.PlayersPlayedRoundsStatisticForWithdrawals
-            //    .FirstOrDefaultAsync(s => s.PlayerId == transaction.PlayerId);
-
-            //if (roundsPlayedStat is null)
-            //{
-            //    return Result.Failure("Не найдены данные статистики сыгранных раундов игрока");
-            //}
 
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
             if (appBalance is null)
             {
-                return Result.Failure("Не найдены данные баланса приложения");
+                return Result.Failure("Application balance data not found");
             }
 
             if (request.TransactionStatusId == rejectedStatusId)
@@ -333,74 +263,26 @@ namespace BottleGame.Infrastructure.Services
             }
             else if (request.TransactionStatusId == approvedStatusId)
             {
-                // До подключения процессинговой площадки отрубаем
-                //if (roundsPlayedStat.PlayedRoundsCount < gameParams.MinRoundsCountForWithdrawal)
-                //{
-                //    _logger.LogWarning("{Prefix} Недостаточно сыгранных раундов для вывода у игрока {PlayerId}", Prefix, transaction.PlayerId);
-                //    return Result.Failure($"Для вывода необходимо сыграть минимум {gameParams.MinRoundsCountForWithdrawal} раундов. Сейчас сыграно: {roundsPlayedStat.PlayedRoundsCount}");
-                //}
-
-                //if (transaction.Amount > appBalance.LowerThreshold * 0.1m)
-                //{
-                //    _logger.LogWarning("{Prefix} Одобрение транзакции невозможно - сумма превышает порог", Prefix);
-                //    return Result.Failure("Одобрение транзакции невозможно - сумма к выводу превышает нижний порог баланса приложения!");
-                //}
-
-                // До подключения процессинговой площадки отрубаем — вернуть блок CreatePoolPayoutAsync перед продом
-                //try
-                //{
-                //    var createPoolPayoutRequest = new CreatePoolPayoutRequest(
-                //        _options.MerchantId,
-                //        transaction.Id.ToString(),
-                //        transaction.Amount,
-                //        transaction.Player.PlayerOptions.PayoutMethod.ToString(),
-                //        transaction.Player.PlayerOptions.Wallet!,
-                //        transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub",
-                //        30);
-                //
-                //    var payoutResponse = await _processingService.CreatePoolPayoutAsync(createPoolPayoutRequest);
-                //
-                //    if (!payoutResponse.IsSuccess)
-                //    {
-                //        transaction.Player.Balance.Amount += transaction.Amount;
-                //        transaction.TransactionStatusId = TransactionStatuses.Rejected;
-                //        transaction.IsProcessingSuccess = false;
-                //        transaction.ProcessingError = payoutResponse.ErrorMessage;
-                //        transaction.ProcessedAt = DateTime.UtcNow;
-                //        await _context.SaveChangesAsync();
-                //
-                //        _logger.LogError("{Prefix} Ошибка при создании выплаты для игрока {PlayerId}: {ErrorMessage}", Prefix, transaction.PlayerId, payoutResponse.ErrorMessage);
-                //        return Result.InternalError("Ошибка при создании выплаты: " + payoutResponse.ErrorMessage);
-                //    }
-                //
-                //    transaction.ProcessingOrderId = payoutResponse.PayoutId;
-                //    transaction.PaymentGateway = transaction.Player.PlayerOptions.PayoutMethod.ToString();
-                //    transaction.Currency = transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub";
-                //    transaction.TransactionStatusId = approvedStatusId;
-                //}
-                //catch (Exception ex)
-                //{
-                //    transaction.Player.Balance.Amount += transaction.Amount;
-                //    transaction.TransactionStatusId = TransactionStatuses.Rejected;
-                //    transaction.IsProcessingSuccess = false;
-                //    transaction.ProcessedAt = DateTime.UtcNow;
-                //    await _context.SaveChangesAsync();
-                //
-                //    _logger.LogError(ex, "{Prefix} Ошибка при создании выплаты для игрока {PlayerId}", Prefix, transaction.PlayerId);
-                //    return Result.InternalError("Ошибка при создании выплаты");
-                //}
-
-                CompleteWithdrawalLocallyForTests(transaction, appBalance, approvedStatusId);
-                _logger.LogWarning(
-                    "{Prefix} [TEST BYPASS] Вывод {TransactionId} одобрен локально без процессинга",
-                    Prefix,
-                    transaction.Id);
+                var approvalResult = await _processor.ApproveWithdrawalAsync(transaction, gameParams, appBalance);
+                if (approvalResult.IsFailure)
+                {
+                    return approvalResult;
+                }
             }
 
             transaction.ProcessedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Статус транзакции {TransactionId} изменен на {StatusId}", Prefix, transactionId, request.TransactionStatusId);
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                _logger.LogWarning("{Prefix} Transaction {TransactionId} was already changed by another request", Prefix, transactionId);
+                return Result.Conflict("The transaction was already changed by another request");
+            }
+
+            _logger.LogInformation("{Prefix} Status of transaction {TransactionId} changed to {StatusId}", Prefix, transactionId, request.TransactionStatusId);
 
             return Result.Success();
         }
@@ -416,8 +298,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result<GetPlayerTransactionsResponse>.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result<GetPlayerTransactionsResponse>.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && requestingPlayerId != playerId)
@@ -427,8 +309,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} Пользователь забанен", Prefix);
-                return Result<GetPlayerTransactionsResponse>.Forbidden("Пользователь в бане");
+                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                return Result<GetPlayerTransactionsResponse>.Forbidden("User is banned");
             }
 
             var transactions = await _context.MoneyTransactions
@@ -439,7 +321,7 @@ namespace BottleGame.Infrastructure.Services
                 .AsNoTracking()
                 .ToListAsync();
 
-            _logger.LogInformation("{Prefix} Получено {Count} транзакций для игрока {PlayerId}", Prefix, transactions.Count, playerId);
+            _logger.LogInformation("{Prefix} Got {Count} transactions for player {PlayerId}", Prefix, transactions.Count, playerId);
 
             var response = new GetPlayerTransactionsResponse
             {
@@ -503,7 +385,7 @@ namespace BottleGame.Infrastructure.Services
                 })
                 .ToListAsync();
 
-            _logger.LogInformation("{Prefix} Получено {Count} транзакций", Prefix, rows.Count);
+            _logger.LogInformation("{Prefix} Got {Count} transactions", Prefix, rows.Count);
 
             var response = rows
                 .GroupBy(t => t.PlayerId)
@@ -541,69 +423,6 @@ namespace BottleGame.Infrastructure.Services
 
         #endregion Transaction Methods
 
-        #region Private Test Bypass Methods
-
-        /// <summary>
-        /// Локально завершает пополнение без обращения к процессинговой площадке
-        /// </summary>
-        /// <param name="transaction">Транзакция пополнения</param>
-        /// <param name="player">Игрок</param>
-        /// <param name="amount">Сумма пополнения</param>
-        /// <returns>Ответ API с тестовым идентификатором ордера</returns>
-        private async Task<object> CompleteDepositLocallyForTestsAsync(
-            MoneyTransaction transaction,
-            Player player,
-            decimal amount)
-        {
-            var appBalance = await _context.AppBalance.FirstOrDefaultAsync()
-                ?? throw new InvalidOperationException("Не найден баланс приложения");
-
-            transaction.TransactionStatusId = TransactionStatuses.Approved;
-            transaction.IsProcessingSuccess = true;
-            transaction.ProcessedAt = DateTime.UtcNow;
-            transaction.ProcessingOrderId = $"test-deposit-{transaction.Id}";
-            transaction.PaymentGateway = player.PlayerOptions!.PaymentMethod.ToString();
-            transaction.Currency = player.PlayerOptions.Currency?.ToString() ?? "rub";
-
-            player.Balance!.Amount += amount;
-            appBalance.Amount += amount;
-
-            await _context.SaveChangesAsync();
-
-            _logger.LogWarning(
-                "{Prefix} [TEST BYPASS] Пополнение {TransactionId} завершено локально без процессинга",
-                Prefix,
-                transaction.Id);
-
-            return new
-            {
-                PaymentLink = (string?)null,
-                OrderId = transaction.ProcessingOrderId
-            };
-        }
-
-        /// <summary>
-        /// Локально завершает вывод без обращения к процессинговой площадке
-        /// </summary>
-        /// <param name="transaction">Транзакция вывода</param>
-        /// <param name="appBalance">Баланс приложения</param>
-        /// <param name="approvedStatusId">Идентификатор статуса «Одобрено»</param>
-        private void CompleteWithdrawalLocallyForTests(
-            MoneyTransaction transaction,
-            AppBalance appBalance,
-            int approvedStatusId)
-        {
-            transaction.TransactionStatusId = approvedStatusId;
-            transaction.IsProcessingSuccess = true;
-            transaction.ProcessedAt = DateTime.UtcNow;
-            transaction.ProcessingOrderId = $"test-payout-{transaction.Id}";
-            transaction.PaymentGateway = transaction.Player!.PlayerOptions!.PayoutMethod.ToString();
-            transaction.Currency = transaction.Player.PlayerOptions.Currency?.ToString() ?? "rub";
-            appBalance.Amount -= transaction.Amount;
-        }
-
-        #endregion Private Test Bypass Methods
-
         #region Reference Data Methods
 
         /// <inheritdoc/>
@@ -617,7 +436,7 @@ namespace BottleGame.Infrastructure.Services
                 Name = s.Value
             }).ToList();
 
-            _logger.LogInformation("{Prefix} Выведены статусы транзакций (из кэша)", Prefix);
+            _logger.LogInformation("{Prefix} Transaction statuses returned (from the cache)", Prefix);
 
             return Result<IEnumerable<TransactionStatusOrTypeDTO>>.Success(statuses);
         }
@@ -633,7 +452,7 @@ namespace BottleGame.Infrastructure.Services
                 Name = t.Value
             }).ToList();
 
-            _logger.LogInformation("{Prefix} Выведены типы транзакций (из кэша)", Prefix);
+            _logger.LogInformation("{Prefix} Transaction types returned (from the cache)", Prefix);
 
             return Result<IEnumerable<TransactionStatusOrTypeDTO>>.Success(types);
         }
@@ -641,7 +460,3 @@ namespace BottleGame.Infrastructure.Services
         #endregion Reference Data Methods
     }
 }
-
-
-
-

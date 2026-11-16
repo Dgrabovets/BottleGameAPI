@@ -4,27 +4,30 @@ using FluentValidation;
 namespace BottleGame.Application.Validators
 {
     /// <summary>
-    /// Валидатор для запроса денежной транзакции
+    /// Validator for the money transaction request
     /// </summary>
     public class MoneyTransactionRequestValidator : AbstractValidator<MoneyTransactionRequest>
     {
         /// <summary>
-        /// Минимальная сумма транзакции
+        /// Minimum transaction amount
         /// </summary>
         private const int MinAmount = 100;
 
         /// <summary>
-        /// Максимальная сумма транзакции
+        /// Maximum transaction amount
         /// </summary>
         private const int MaxAmount = 1_000_000;
 
+        /// <summary>
+        /// Sets up the validation rules
+        /// </summary>
         public MoneyTransactionRequestValidator()
         {
             RuleFor(x => x.Amount)
                 .GreaterThanOrEqualTo(MinAmount)
-                .WithMessage($"Минимальная сумма транзакции: {MinAmount}")
+                .WithMessage($"Minimum transaction amount: {MinAmount}")
                 .LessThanOrEqualTo(MaxAmount)
-                .WithMessage($"Максимальная сумма транзакции: {MaxAmount:N0}");
+                .WithMessage($"Maximum transaction amount: {MaxAmount:N0}");
         }
     }
 }

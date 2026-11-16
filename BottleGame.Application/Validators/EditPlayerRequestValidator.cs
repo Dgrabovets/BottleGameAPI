@@ -4,74 +4,82 @@ using FluentValidation;
 namespace BottleGame.Application.Validators
 {
     /// <summary>
-    /// Валидатор для запроса редактирования игрока.
-    /// Базовая валидация формата полей. Проверка допустимых значений
-    /// валют и платёжных методов выполняется в сервисе через API процессинга.
+    /// Validator for the player edit request.
+    /// Basic validation of the field format. The allowed values of
+    /// currencies and payment methods are checked in the service through the processing API
     /// </summary>
     public class EditPlayerRequestValidator : AbstractValidator<EditPlayerRequest>
     {
+        /// <summary>
+        /// Sets up the validation rules
+        /// </summary>
         public EditPlayerRequestValidator()
         {
             RuleFor(x => x.Name)
-                .MaximumLength(100).WithMessage("Имя не должно превышать 100 символов")
+                .MaximumLength(100).WithMessage("Name must not exceed 100 characters")
                 .When(x => !string.IsNullOrWhiteSpace(x.Name));
 
             RuleFor(x => x.AvatarUrl)
-                .MaximumLength(500).WithMessage("URL аватара не должен превышать 500 символов")
-                .Must(BeValidUrlOrEmpty).WithMessage("Некорректный формат URL аватара")
+                .MaximumLength(500).WithMessage("Avatar URL must not exceed 500 characters")
+                .Must(BeValidUrlOrEmpty).WithMessage("Invalid avatar URL format")
                 .When(x => !string.IsNullOrWhiteSpace(x.AvatarUrl));
 
             RuleFor(x => x.WinChance)
-                .InclusiveBetween(0f, 1f).WithMessage("Шанс выигрыша должен быть от 0 до 1")
+                .InclusiveBetween(0f, 1f).WithMessage("Win chance must be between 0 and 1")
                 .When(x => x.WinChance.HasValue);
 
-            // Базовая валидация формата валюты (длина и формат)
+            // Basic validation of the currency format (length and format)
             RuleFor(x => x.Currency)
-                .MaximumLength(10).WithMessage("Код валюты не должен превышать 10 символов")
-                .Matches(@"^[a-zA-Z_]+$").WithMessage("Код валюты должен содержать только латинские буквы и подчёркивания")
+                .MaximumLength(10).WithMessage("Currency code must not exceed 10 characters")
+                .Matches(@"^[a-zA-Z_]+$").WithMessage("Currency code must contain only Latin letters and underscores")
                 .When(x => !string.IsNullOrWhiteSpace(x.Currency));
 
-            // Базовая валидация формата метода оплаты
+            // Basic validation of the payment method format
             RuleFor(x => x.PaymentMethod)
-                .MaximumLength(50).WithMessage("Код метода оплаты не должен превышать 50 символов")
-                .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Код метода оплаты должен содержать только латинские буквы, цифры и подчёркивания")
+                .MaximumLength(50).WithMessage("Payment method code must not exceed 50 characters")
+                .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Payment method code must contain only Latin letters, digits and underscores")
                 .When(x => !string.IsNullOrWhiteSpace(x.PaymentMethod));
 
-            // Базовая валидация формата типа платёжных реквизитов
+            // Basic validation of the payment detail type format
             RuleFor(x => x.PaymentDetailType)
-                .MaximumLength(50).WithMessage("Тип реквизитов не должен превышать 50 символов")
-                .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Тип реквизитов должен содержать только латинские буквы, цифры и подчёркивания")
+                .MaximumLength(50).WithMessage("Detail type must not exceed 50 characters")
+                .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Detail type must contain only Latin letters, digits and underscores")
                 .When(x => !string.IsNullOrWhiteSpace(x.PaymentDetailType));
 
-            // Базовая валидация формата метода выплаты
+            // Basic validation of the payout method format
             RuleFor(x => x.PayoutMethod)
-                .MaximumLength(50).WithMessage("Код метода выплаты не должен превышать 50 символов")
-                .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Код метода выплаты должен содержать только латинские буквы, цифры и подчёркивания")
+                .MaximumLength(50).WithMessage("Payout method code must not exceed 50 characters")
+                .Matches(@"^[a-zA-Z0-9_]+$").WithMessage("Payout method code must contain only Latin letters, digits and underscores")
                 .When(x => !string.IsNullOrWhiteSpace(x.PayoutMethod));
 
             RuleFor(x => x.Wallet)
-                .MaximumLength(100).WithMessage("Кошелёк не должен превышать 100 символов")
+                .MaximumLength(100).WithMessage("Wallet must not exceed 100 characters")
                 .When(x => !string.IsNullOrWhiteSpace(x.Wallet));
 
             RuleFor(x => x.Balance)
-                .GreaterThanOrEqualTo(0).WithMessage("Баланс не может быть отрицательным")
+                .GreaterThanOrEqualTo(0).WithMessage("Balance cannot be negative")
                 .When(x => x.Balance.HasValue);
 
-            // Проверка на парность Currency и PaymentMethod
+            // Check that Currency and PaymentMethod come as a pair
             RuleFor(x => x)
                 .Must(x =>
                     (string.IsNullOrWhiteSpace(x.Currency) && string.IsNullOrWhiteSpace(x.PaymentMethod)) ||
                     (!string.IsNullOrWhiteSpace(x.Currency) && !string.IsNullOrWhiteSpace(x.PaymentMethod)))
-                .WithMessage("Поля Currency и PaymentMethod должны изменяться вместе");
+                .WithMessage("Currency and PaymentMethod must be changed together");
 
-            // Проверка на парность Wallet и PayoutMethod
+            // Check that Wallet and PayoutMethod come as a pair
             RuleFor(x => x)
                 .Must(x =>
                     (string.IsNullOrWhiteSpace(x.Wallet) && string.IsNullOrWhiteSpace(x.PayoutMethod)) ||
                     (!string.IsNullOrWhiteSpace(x.Wallet) && !string.IsNullOrWhiteSpace(x.PayoutMethod)))
-                .WithMessage("Поля Wallet и PayoutMethod должны изменяться вместе");
+                .WithMessage("Wallet and PayoutMethod must be changed together");
         }
 
+        /// <summary>
+        /// Checks that the value is empty or an absolute http(s) URL
+        /// </summary>
+        /// <param name="url">Value to check</param>
+        /// <returns>true if the value is valid</returns>
         private static bool BeValidUrlOrEmpty(string? url)
         {
             if (string.IsNullOrWhiteSpace(url)) return true;

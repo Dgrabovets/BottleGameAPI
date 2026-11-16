@@ -5,24 +5,30 @@ using BottleGame.Infrastructure.Data;
 namespace BottleGame.UnitTests.Fixtures;
 
 /// <summary>
-/// Помощник для подготовки данных статистики в тестах
+/// Helper for preparing statistics data in tests
 /// </summary>
 public sealed class StatisticsTestDataBuilder
 {
+    /// <summary>
+    /// Database context of the test
+    /// </summary>
     private readonly ApplicationDbContext _context;
+    /// <summary>
+    /// Next telegram id
+    /// </summary>
     private long _nextTelegramId = 1_000_000_001;
 
     /// <summary>
-    /// Создаёт билдер поверх тестового контекста с справочниками
+    /// Creates a builder on top of a test context with reference data
     /// </summary>
-    /// <param name="context">Контекст базы данных</param>
+    /// <param name="context">Database context</param>
     public StatisticsTestDataBuilder(ApplicationDbContext context)
     {
         _context = context;
     }
 
     /// <summary>
-    /// Создаёт контекст, билдер и справочные данные одним вызовом
+    /// Creates the context, the builder and the reference data in a single call
     /// </summary>
     public static (ApplicationDbContext Context, StatisticsTestDataBuilder Builder) Create()
     {
@@ -31,11 +37,11 @@ public sealed class StatisticsTestDataBuilder
     }
 
     /// <summary>
-    /// Добавляет игрока с балансом
+    /// Adds a player with a balance
     /// </summary>
-    /// <param name="registeredInAppAt">Дата регистрации</param>
-    /// <param name="balance">Текущий баланс</param>
-    /// <param name="name">Имя игрока</param>
+    /// <param name="registeredInAppAt">Registration date</param>
+    /// <param name="balance">Current balance</param>
+    /// <param name="name">Player name</param>
     public Player AddPlayer(
         DateTime registeredInAppAt,
         decimal balance,
@@ -80,15 +86,15 @@ public sealed class StatisticsTestDataBuilder
     }
 
     /// <summary>
-    /// Добавляет денежную транзакцию с заданным статусом обработки
+    /// Adds a money transaction with the given processing status
     /// </summary>
-    /// <param name="playerId">Идентификатор игрока</param>
-    /// <param name="transactionTypeId">Тип: пополнение или вывод</param>
-    /// <param name="transactionStatusId">Статус транзакции</param>
-    /// <param name="amount">Сумма</param>
-    /// <param name="isProcessingSuccess">Успешность обработки процессингом</param>
-    /// <param name="processedAt">Дата обработки</param>
-    /// <param name="createdAt">Дата создания</param>
+    /// <param name="playerId">Player identifier</param>
+    /// <param name="transactionTypeId">Type: deposit or withdrawal</param>
+    /// <param name="transactionStatusId">Transaction status</param>
+    /// <param name="amount">Amount</param>
+    /// <param name="isProcessingSuccess">Whether the processing succeeded</param>
+    /// <param name="processedAt">Processing date</param>
+    /// <param name="createdAt">Creation date</param>
     public MoneyTransaction AddTransaction(
         int playerId,
         int transactionTypeId,
@@ -115,7 +121,7 @@ public sealed class StatisticsTestDataBuilder
     }
 
     /// <summary>
-    /// Успешно обработанное пополнение
+    /// Successfully processed deposit
     /// </summary>
     public MoneyTransaction AddSuccessfulDeposit(
         int playerId,
@@ -133,7 +139,7 @@ public sealed class StatisticsTestDataBuilder
     }
 
     /// <summary>
-    /// Успешно обработанный вывод
+    /// Successfully processed withdrawal
     /// </summary>
     public MoneyTransaction AddSuccessfulWithdrawal(
         int playerId,
@@ -151,7 +157,7 @@ public sealed class StatisticsTestDataBuilder
     }
 
     /// <summary>
-    /// Вывод в ожидании модерации / обработки
+    /// Withdrawal waiting for moderation / processing
     /// </summary>
     public MoneyTransaction AddPendingWithdrawal(int playerId, decimal amount)
     {
@@ -165,7 +171,7 @@ public sealed class StatisticsTestDataBuilder
     }
 
     /// <summary>
-    /// Одобренный, но ещё не подтверждённый процессингом вывод
+    /// Withdrawal that is approved but not yet confirmed by the processing
     /// </summary>
     public MoneyTransaction AddApprovedWithdrawalAwaitingProcessing(int playerId, decimal amount)
     {
@@ -179,7 +185,7 @@ public sealed class StatisticsTestDataBuilder
     }
 
     /// <summary>
-    /// Пополнение в ожидании оплаты
+    /// Deposit waiting for payment
     /// </summary>
     public MoneyTransaction AddPendingDeposit(int playerId, decimal amount)
     {
@@ -193,7 +199,7 @@ public sealed class StatisticsTestDataBuilder
     }
 
     /// <summary>
-    /// Неуспешное пополнение после отклонения процессингом
+    /// Failed deposit after a rejection by the processing
     /// </summary>
     public MoneyTransaction AddFailedDeposit(int playerId, decimal amount, DateTime processedAt)
     {

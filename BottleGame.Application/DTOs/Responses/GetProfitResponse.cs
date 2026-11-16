@@ -1,22 +1,22 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ с прибылью за период
+    /// Response with the profit for a period
     /// </summary>
     public class GetProfitResponse
     {
         /// <summary>
-        /// Прибыль
+        /// Profit
         /// </summary>
         public decimal Profit { get; set; }
 
         /// <summary>
-        /// Дата начала периода
+        /// Start date of the period
         /// </summary>
         public DateTime DateFrom { get; set; }
 
         /// <summary>
-        /// Дата конца периода
+        /// End date of the period
         /// </summary>
         public DateTime DateTill { get; set; }
     }

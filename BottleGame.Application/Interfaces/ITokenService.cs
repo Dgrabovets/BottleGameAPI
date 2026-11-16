@@ -3,12 +3,12 @@
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Сервис для генерации JWT токенов
+    /// Service for generating JWT tokens
     /// </summary>
     public interface ITokenService
     {
         /// <summary>
-        /// Генерирует JWT токен
+        /// Generates a JWT token
         /// </summary>
         string GenerateToken(IEnumerable<Claim> claims);
     }

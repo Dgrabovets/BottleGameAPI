@@ -1,22 +1,22 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ о статусе бана
+    /// Response about the ban status
     /// </summary>
     public class IsBannedResponse
     {
         /// <summary>
-        /// Забанен ли игрок
+        /// Whether the player is banned
         /// </summary>
         public bool IsBanned { get; set; }
 
         /// <summary>
-        /// Причина бана (если забанен)
+        /// Reason for the ban (if banned)
         /// </summary>
         public string BanReason { get; set; } = string.Empty;
 
         /// <summary>
-        /// История банов
+        /// Ban history
         /// </summary>
         public List<BanHistoryItem> BanHistory { get; set; } = [];
     }

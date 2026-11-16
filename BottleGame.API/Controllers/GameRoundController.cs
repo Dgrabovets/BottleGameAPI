@@ -1,33 +1,33 @@
-using System.Security.Claims;
-using BottleGame.Domain.Constants;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
+using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using BottleGame.Application.Interfaces;
+using System.Security.Claims;
 
 namespace BottleGame.API.Controllers
 {
     /// <summary>
-    /// Контроллер игровых раундов
+    /// Game round controller
     /// </summary>
     /// <remarks>
-    /// Управление игровыми раундами, завершение игр и получение статистики
+    /// Manages game rounds, finishing games and getting statistics
     /// </remarks>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="GameRoundController"/>.
+    /// Initializes a new instance of <see cref="GameRoundController"/>
     /// </remarks>
-    /// <param name="gameRoundService">Сервис для работы с игровыми раундами.</param>
+    /// <param name="gameRoundService">Service for working with game rounds</param>
     [ApiController]
     [Route("api/[controller]")]
-    [Tags("Игровые раунды")]
+    [Tags("Game rounds")]
     public class GameRoundController(IGameRoundService gameRoundService) : BaseApiController
     {
         #region Fields
 
         /// <summary>
-        /// Сервис для работы с игровыми раундами.
+        /// Service for working with game rounds
         /// </summary>
         private readonly IGameRoundService _gameRoundService = gameRoundService;
 
@@ -36,15 +36,15 @@ namespace BottleGame.API.Controllers
         #region Action Methods
 
         /// <summary>
-        /// Завершить раунд
+        /// Finishes a round
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="request">Запрос для завершения раунда</param>
-        /// <response code="200">Успешное завершение раунда</response>
-        /// <response code="400">Некорректный запрос</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <param name="request">Request to finish a round</param>
+        /// <response code="200">The round was finished</response>
+        /// <response code="400">Invalid request</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -68,13 +68,13 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получить сыгранные раунды игрока
+        /// Gets the rounds played by a player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <response code="200">Список раундов</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <response code="200">List of rounds</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(typeof(GetPlayerPlayedRoundsResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -89,11 +89,11 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получить прибыли за период
+        /// Gets the profit for a period
         /// </summary>
-        /// <response code="200">Прибыль</response>
-        /// <response code="404">Раунды не найдены</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">Profit</response>
+        /// <response code="404">No rounds were found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(typeof(GetProfitResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -111,7 +111,7 @@ namespace BottleGame.API.Controllers
         #region Private Methods
 
         /// <summary>
-        /// Получает ID текущего игрока из claims
+        /// Gets the id of the current player from the claims
         /// </summary>
         private int? GetCurrentPlayerId()
         {
@@ -120,6 +120,7 @@ namespace BottleGame.API.Controllers
             {
                 return playerId;
             }
+
             return null;
         }
 

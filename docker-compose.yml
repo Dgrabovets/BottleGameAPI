@@ -1,0 +1,39 @@
+# Local development stack: PostgreSQL with the schema and demo reference data, plus the API.
+# Start with: docker compose up --build   (API on http://localhost:8080, Swagger at /swagger)
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: bottle
+      POSTGRES_PASSWORD: bottle
+      POSTGRES_DB: bottlegame
+    volumes:
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - ./database/demo.sql:/docker-entrypoint-initdb.d/03-demo.sql:ro
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bottle -d bottlegame"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__PostgresConnection: Host=db;Port=5432;Username=bottle;Password=bottle;Database=bottlegame
+      # Development-only placeholders. Never reuse them anywhere real.
+      JWT__Key: local-development-key-at-least-32-characters-long
+      TelegramBotToken: local-development-bot-token
+      Security__PasswordHashSecretKey: local-development-password-secret
+      Processing__Mode: Simulated
+      Swagger__Enabled: "true"
+      ASPNETCORE_URLS: http://+:8080
+
+volumes:
+  db-data:

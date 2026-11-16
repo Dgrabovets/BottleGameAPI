@@ -4,12 +4,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Модель учетной записи административной роли
+    /// Model of an administrative role account
     /// </summary>
     public class AdministrationRoleUser
     {
         /// <summary>
-        /// Идентификатор пользователя
+        /// User identifier
         /// </summary>
         [Key]
         [Column("Id")]
@@ -17,7 +17,7 @@ namespace BottleGame.Domain.Entities
         public int Id { get; set; }
 
         /// <summary>
-        /// Логин
+        /// Login
         /// </summary>
         [Required]
         [StringLength(50)]
@@ -25,26 +25,26 @@ namespace BottleGame.Domain.Entities
         public string Login { get; set; } = string.Empty;
 
         /// <summary>
-        /// Хэш пароля
+        /// Password hash
         /// </summary>
         [Required]
         [Column("PasswordHash")]
         public string PasswordHash { get; set; } = string.Empty;
 
         /// <summary>
-        /// Соль для дополнительной безопасности
+        /// Salt for extra security
         /// </summary>
         [Column("Salt")]
         public string Salt { get; set; } = string.Empty;
 
         /// <summary>
-        /// Дата создания учетной записи
+        /// Account creation date
         /// </summary>
         [Column("CreatedAt")]
         public DateTime CreatedAt { get; set; }
 
         /// <summary>
-        /// Роль (1 - админ, 2 - модератор)
+        /// Role (1 - admin, 2 - moderator)
         /// </summary>
         [Column("Role")]
         public int Role { get; set; }

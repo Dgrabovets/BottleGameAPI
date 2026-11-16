@@ -1,17 +1,17 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// DTO для статуса или типа транзакции
+    /// DTO for a transaction status or type
     /// </summary>
     public class TransactionStatusOrTypeDTO
     {
         /// <summary>
-        /// Уникальный идентификатор
+        /// Unique identifier
         /// </summary>
         public int Id { get; set; }
 
         /// <summary>
-        /// Название
+        /// Name
         /// </summary>
         public string Name { get; set; } = string.Empty;
     }

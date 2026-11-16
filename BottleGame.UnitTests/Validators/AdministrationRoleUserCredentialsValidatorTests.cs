@@ -1,17 +1,22 @@
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Validators;
-using FluentAssertions;
 using FluentValidation.TestHelper;
 
 namespace BottleGame.UnitTests.Validators;
 
 /// <summary>
-/// Тесты для AuthAdminRequestValidator
+/// Tests for AuthAdminRequestValidator
 /// </summary>
 public class AdministrationRoleUserCredentialsValidatorTests
 {
+    /// <summary>
+    /// The validator under test
+    /// </summary>
     private readonly AdministrationRoleUserCredentialsValidator _validator = new();
 
+    /// <summary>
+    /// A login and a password of allowed length pass the validation
+    /// </summary>
     [Fact]
     public void Validate_ValidRequest_NoErrors()
     {
@@ -25,6 +30,10 @@ public class AdministrationRoleUserCredentialsValidatorTests
         result.ShouldNotHaveAnyValidationErrors();
     }
 
+    /// <summary>
+    /// An empty login is rejected
+    /// </summary>
+    /// <param name="login">Login</param>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
@@ -40,6 +49,10 @@ public class AdministrationRoleUserCredentialsValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.Login);
     }
 
+    /// <summary>
+    /// An empty password is rejected
+    /// </summary>
+    /// <param name="password">Password</param>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
@@ -55,6 +68,9 @@ public class AdministrationRoleUserCredentialsValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.Password);
     }
 
+    /// <summary>
+    /// A password shorter than 6 characters is rejected
+    /// </summary>
     [Fact]
     public void Validate_ShortPassword_HasError()
     {

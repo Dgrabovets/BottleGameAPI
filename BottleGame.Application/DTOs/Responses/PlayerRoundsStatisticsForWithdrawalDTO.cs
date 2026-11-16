@@ -1,22 +1,22 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Статистика раундов игрока для вывода
+    /// Statistics of the rounds a player played for a withdrawal
     /// </summary>
     public class PlayerRoundsStatisticsForWithdrawalDTO
     {
         /// <summary>
-        /// Данные игрока
+        /// Player data
         /// </summary>
         public PlayerDTO Player { get; set; } = null!;
 
         /// <summary>
-        /// Последний депозит
+        /// Last deposit
         /// </summary>
         public TransactionDTO? LastDeposit { get; set; }
 
         /// <summary>
-        /// Общее количество сыгранных раундов
+        /// Total number of rounds played
         /// </summary>
         public int TotalRoundsPlayed { get; set; }
     }

@@ -1,0 +1,8 @@
+**/bin
+**/obj
+**/Logs
+.git
+.github
+.vs
+database
+*.md

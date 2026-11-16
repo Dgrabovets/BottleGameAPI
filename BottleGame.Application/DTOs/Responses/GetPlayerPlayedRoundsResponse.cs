@@ -1,17 +1,17 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ со списком сыгранных раундов игрока
+    /// Response with the list of rounds a player played
     /// </summary>
     public class GetPlayerPlayedRoundsResponse
     {
         /// <summary>
-        /// Данные игрока
+        /// Player data
         /// </summary>
         public PlayerDTO Player { get; set; } = null!;
 
         /// <summary>
-        /// Список раундов
+        /// List of rounds
         /// </summary>
         public List<RoundDTO> Rounds { get; set; } = [];
     }

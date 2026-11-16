@@ -1,43 +1,49 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace BottleGame.Infrastructure.External.Processing
 {
     /// <summary>
-    /// Класс конфигурации для взаимодействия с платёжным процессингом.
+    /// Payment provider settings (YooKassa)
     /// </summary>
     public class ProcessingOptions
     {
         /// <summary>
-        /// Базовый URL API платёжного сервиса.
+        /// Mode of working with the payment provider. Set through Processing__Mode
         /// </summary>
-        /// <example>https://app.payshark.net</example>
-        public string BaseUrl { get; set; } = "https://app.payshark.net";
+        /// <remarks>Default: Simulated. Set Live for real payments</remarks>
+        public ProcessingMode Mode { get; set; } = ProcessingMode.Simulated;
 
         /// <summary>
-        /// Access Token для аутентификации запросов к API.
-        /// Передаётся в заголовке Access-Token. Задаётся через Processing__AccessToken.
+        /// Base URL of the YooKassa API
         /// </summary>
-        [Required(ErrorMessage = "Processing:AccessToken обязателен. Задайте переменную окружения Processing__AccessToken или секрет PAYSHARK_ACCESS_TOKEN.")]
-        public string AccessToken { get; set; } = string.Empty;
+        public string BaseUrl { get; set; } = "https://api.yookassa.ru/v3/";
 
         /// <summary>
-        /// UUID мерчанта в платёжной системе. Задаётся через Processing__MerchantId.
+        /// Shop identifier for accepting payments. Set through Processing__ShopId
         /// </summary>
-        [Required(ErrorMessage = "Processing:MerchantId обязателен. Задайте переменную окружения Processing__MerchantId или секрет PAYSHARK_MERCHANT_ID.")]
-        public string MerchantId { get; set; } = string.Empty;
+        public string ShopId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Базовый URL для callback-уведомлений от платёжной системы.
+        /// Secret key of the shop. Set through Processing__SecretKey
         /// </summary>
-        /// <example>https://your-api.com/api/webhook</example>
-        [Required(ErrorMessage = "Processing:CallbackUrl обязателен. Задайте переменную окружения Processing__CallbackUrl.")]
-        public string CallbackUrl { get; set; } = string.Empty;
+        public string SecretKey { get; set; } = string.Empty;
 
         /// <summary>
-        /// Максимальное время ожидания ответа от API в миллисекундах.
-        /// Используется в заголовке X-Max-Wait-Ms.
+        /// Payout gateway identifier. Set through Processing__PayoutAgentId; payouts are unavailable without it
         /// </summary>
-        /// <remarks>По умолчанию: 30000 (30 секунд).</remarks>
-        public int MaxWaitMs { get; set; } = 30000;
+        public string PayoutAgentId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Secret key of the payout gateway. Set through Processing__PayoutSecretKey
+        /// </summary>
+        public string PayoutSecretKey { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Address of the page YooKassa returns the player to after payment. Set through Processing__ReturnUrl
+        /// </summary>
+        public string ReturnUrl { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Maximum time to wait for an API response, in seconds
+        /// </summary>
+        public int TimeoutSeconds { get; set; } = 30;
     }
 }

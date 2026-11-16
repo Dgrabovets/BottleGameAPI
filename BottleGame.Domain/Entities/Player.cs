@@ -1,18 +1,18 @@
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Сущность игрока/пользователя
+    /// Player/user entity
     /// </summary>
     [Table("Players")]
     [PrimaryKey(nameof(Id))]
     public class Player
     {
         /// <summary>
-        /// Идентификатор игрока
+        /// Player id
         /// </summary>
         [Key]
         [Column("Id")]
@@ -20,14 +20,14 @@ namespace BottleGame.Domain.Entities
         public int Id { get; set; }
 
         /// <summary>
-        /// Идентификатор пользователя в Telegram
+        /// Telegram user identifier
         /// </summary>
         [Required]
         [Column("TelegramId")]
         public long TelegramId { get; set; }
 
         /// <summary>
-        /// Имя игрока
+        /// Player name
         /// </summary>
         [Required]
         [Column("Name")]
@@ -35,21 +35,21 @@ namespace BottleGame.Domain.Entities
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// Ссылка на аватарку
+        /// Link to the avatar
         /// </summary>
         [Required]
         [Column("AvatarUrl")]
         public string AvatarUrl { get; set; } = string.Empty;
 
         /// <summary>
-        /// Дата регистрации в приложении
+        /// Date of registration in the application
         /// </summary>
         [Required]
         [Column("RegisteredInAppAt")]
         public DateTime RegisteredInAppAt { get; set; }
 
         /// <summary>
-        /// Вычисляемый процент выигрышей игрока (не хранится в БД)
+        /// Calculated win percentage of the player (not stored in the database)
         /// </summary>
         [NotMapped]
         public double WinRate
@@ -68,47 +68,47 @@ namespace BottleGame.Domain.Entities
         #region Navigation Properties
 
         /// <summary>
-        /// Информация о бане игрока
+        /// Ban information of the player
         /// </summary>
         public virtual Ban Ban { get; set; } = null!;
 
         /// <summary>
-        /// История банов игрока
+        /// Ban history of the player
         /// </summary>
         public virtual ICollection<BanHistoryEntity> BansHistory { get; set; } = new List<BanHistoryEntity>();
 
         /// <summary>
-        /// Настройки игрока
+        /// Player settings
         /// </summary>
         public virtual PlayerOptions PlayerOptions { get; set; } = null!;
 
         /// <summary>
-        /// Баланс игрока
+        /// Player balance
         /// </summary>
         public virtual Balance Balance { get; set; } = null!;
 
         /// <summary>
-        /// Игровые раунды игрока
+        /// Game rounds of the player
         /// </summary>
         public virtual ICollection<GameRound> GameRounds { get; set; } = new List<GameRound>();
 
         /// <summary>
-        /// Реферальная ссылка игрока
+        /// Referral link of the player
         /// </summary>
         public virtual ReferralLink ReferralLink { get; set; } = null!;
 
         /// <summary>
-        /// Игроки, приглашённые этим игроком
+        /// Players invited by this player
         /// </summary>
         public virtual ICollection<InvitedPlayer> InvitedByMe { get; set; } = new List<InvitedPlayer>();
 
         /// <summary>
-        /// Игрок, пригласивший этого игрока
+        /// Player who invited this player
         /// </summary>
         public virtual InvitedPlayer InvitedMe { get; set; } = null!;
 
         /// <summary>
-        /// Денежные транзакции игрока
+        /// Money transactions of the player
         /// </summary>
         public virtual ICollection<MoneyTransaction> MoneyTransactions { get; set; } = new List<MoneyTransaction>();
 

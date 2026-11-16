@@ -1,17 +1,17 @@
 ﻿namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Запрос на получение прибыли за период
+    /// Request to get the profit for a period
     /// </summary>
     public class GetProfitRequest
     {
         /// <summary>
-        /// Дата начала периода (необязательно)
+        /// Start date of the period (optional)
         /// </summary>
         public DateTime? DateFrom { get; set; }
 
         /// <summary>
-        /// Дата конца периода (необязательно)
+        /// End date of the period (optional)
         /// </summary>
         public DateTime? DateTill { get; set; }
     }

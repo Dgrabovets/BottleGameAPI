@@ -1,12 +1,12 @@
 ﻿namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Запрос на обновление порога баланса приложения
+    /// Request to update the threshold of the application balance
     /// </summary>
     public class UpdateAppBalanceThresholdRequest
     {
         /// <summary>
-        /// Новый нижний порог
+        /// New lower threshold
         /// </summary>
         public decimal LowerThreshold { get; set; }
     }

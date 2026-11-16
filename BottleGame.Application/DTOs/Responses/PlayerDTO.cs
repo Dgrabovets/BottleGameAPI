@@ -1,37 +1,37 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// DTO игрока
+    /// Player DTO
     /// </summary>
     public class PlayerDTO
     {
         /// <summary>
-        /// Уникальный идентификатор игрока
+        /// Unique identifier of the player
         /// </summary>
         public int Id { get; set; }
 
         /// <summary>
-        /// Telegram ID игрока
+        /// Telegram id of the player
         /// </summary>
         public long TelegramId { get; set; }
 
         /// <summary>
-        /// Имя игрока
+        /// Player name
         /// </summary>
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// URL аватара игрока
+        /// Avatar URL of the player
         /// </summary>
         public string AvatarUrl { get; set; } = string.Empty;
 
         /// <summary>
-        /// Дата регистрации в приложении
+        /// Date of registration in the application
         /// </summary>
         public DateTime RegisteredInAppAt { get; set; }
 
         /// <summary>
-        /// Процент побед игрока
+        /// Win percentage of the player
         /// </summary>
         public double WinRate { get; set; }
     }

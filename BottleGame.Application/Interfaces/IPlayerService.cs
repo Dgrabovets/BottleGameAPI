@@ -5,17 +5,17 @@ using BottleGame.Application.DTOs.Responses;
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Интерфейс сервиса для работы с игроками
+    /// Interface of the service for working with players
     /// </summary>
     public interface IPlayerService
     {
         #region Ban Methods
 
         /// <summary>
-        /// Проверить статус бана игрока
+        /// Checks the ban status of a player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <returns>Информация о статусе бана</returns>
+        /// <param name="playerId">Player id</param>
+        /// <returns>Ban status information</returns>
         Task<Result<IsBannedResponse>> IsBanned(int playerId);
 
         #endregion Ban Methods
@@ -23,69 +23,39 @@ namespace BottleGame.Application.Interfaces
         #region Get Methods
 
         /// <summary>
-        /// Получить информацию об игроке по ID
+        /// Gets information about a player by id
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="requestingPlayerId">ID запрашивающего игрока (для проверки прав)</param>
-        /// <param name="isAdmin">Является ли запрашивающий администратором</param>
-        /// <returns>Информация об игроке</returns>
+        /// <param name="playerId">Player id</param>
+        /// <param name="requestingPlayerId">Id of the requesting player (for the access check)</param>
+        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <returns>Player information</returns>
         Task<Result<PlayerInfoByIdResponse>> GetPlayerById(int playerId, int? requestingPlayerId, bool isAdmin);
 
         /// <summary>
-        /// Получить список игроков (без поиска — без активно забаненных)
+        /// Gets the list of players (without a search, actively banned players are left out)
         /// </summary>
-        /// <param name="telegramId">Точный Telegram ID (поиск, включает забаненных)</param>
-        /// <param name="name">Частичное совпадение по нику (поиск, включает забаненных)</param>
-        /// <returns>Список игроков</returns>
+        /// <param name="telegramId">Exact Telegram id (search, includes banned players)</param>
+        /// <param name="name">Partial match on the nickname (search, includes banned players)</param>
+        /// <returns>List of players</returns>
         Task<Result<IEnumerable<PlayerInfoResponse>>> GetAllPlayers(long? telegramId = null, string? name = null);
 
         /// <summary>
-        /// Получить топ-100 игроков по балансу
+        /// Gets the top 100 players by balance
         /// </summary>
-        /// <returns>Список топ-100 игроков</returns>
+        /// <returns>List of the top 100 players</returns>
         Task<Result<IEnumerable<PlayerInfoResponse>>> GetTop100Players();
-
-        /// <summary>
-        /// Получить статистику по всем игрокам
-        /// </summary>
-        /// <returns>Статистика игроков</returns>
-        Task<Result<IEnumerable<PlayerStatisticsResponse>>> GetAllPlayersStatistics();
-
-        /// <summary>
-        /// Получить статистику по конкретному игроку
-        /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="requestingPlayerId">ID запрашивающего</param>
-        /// <param name="isAdmin">Является ли администратором</param>
-        /// <returns>Статистика игрока</returns>
-        Task<Result<PlayerStatisticsResponse>> GetPlayerStatistics(int playerId, int? requestingPlayerId, bool isAdmin);
-
-        /// <summary>
-        /// Получить статистику сыгранных раундов для вывода
-        /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="requestingPlayerId">ID запрашивающего</param>
-        /// <param name="isAdmin">Является ли администратором</param>
-        /// <returns>Статистика раундов для вывода</returns>
-        Task<Result<PlayerRoundsStatisticsForWithdrawalDTO>> GetPlayerRoundsStatisticsForWithdrawal(int playerId, int? requestingPlayerId, bool isAdmin);
-
-        /// <summary>
-        /// Получить статистику сыгранных раундов для вывода по всем игрокам
-        /// </summary>
-        /// <returns>Список статистики</returns>
-        Task<Result<IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>>> GetAllPlayersRoundsStatisticsForWithdrawal();
 
         #endregion Get Methods
 
         #region Update Methods
 
         /// <summary>
-        /// Редактировать данные игрока
+        /// Edits the data of a player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="request">Данные для изменения</param>
-        /// <param name="isAdmin">Является ли запрашивающий администратором</param>
-        /// <returns>Результат операции</returns>
+        /// <param name="playerId">Player id</param>
+        /// <param name="request">Data to change</param>
+        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <returns>Operation result</returns>
         Task<Result> EditPlayer(int playerId, EditPlayerRequest request, bool isAdmin);
 
         #endregion Update Methods

@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Статистика сыгранных раундов для вывода средств
+    /// Statistics of the rounds played for a withdrawal
     /// </summary>
     [Table("PlayersPlayedRoundsStatisticsForWithdrawals")]
     public class PlayerPlayedRoundsStatisticForWithdrawal
     {
         /// <summary>
-        /// Идентификатор записи
+        /// Record identifier
         /// </summary>
         [Key]
         [Column("Id")]
@@ -18,7 +18,7 @@ namespace BottleGame.Domain.Entities
         public int Id { get; set; }
 
         /// <summary>
-        /// Идентификатор игрока
+        /// Player id
         /// </summary>
         [Required]
         [ForeignKey("Player")]
@@ -26,14 +26,14 @@ namespace BottleGame.Domain.Entities
         public int PlayerId { get; set; }
 
         /// <summary>
-        /// Идентификатор транзакции депозита
+        /// Deposit transaction identifier
         /// </summary>
         [ForeignKey("MoneyTransaction")]
         [Column("DepositTransactionId")]
         public int? DepositTransactionId { get; set; }
 
         /// <summary>
-        /// Количество сыгранных раундов
+        /// Number of rounds played
         /// </summary>
         [Required]
         [Column("PlayedRoundsCount")]
@@ -42,12 +42,12 @@ namespace BottleGame.Domain.Entities
         #region Navigation Properties
 
         /// <summary>
-        /// Связанный игрок
+        /// Related player
         /// </summary>
         public virtual Player Player { get; set; } = null!;
 
         /// <summary>
-        /// Связанная транзакция депозита
+        /// Related deposit transaction
         /// </summary>
         public virtual MoneyTransaction? MoneyTransaction { get; set; }
 

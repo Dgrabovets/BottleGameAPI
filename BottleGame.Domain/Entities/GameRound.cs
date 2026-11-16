@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Игровой раунд
+    /// Game round
     /// </summary>
     [Table("GameRounds")]
     public class GameRound
     {
         /// <summary>
-        /// Идентификатор раунда
+        /// Round identifier
         /// </summary>
         [Key]
         [Column("Id")]
@@ -18,7 +18,7 @@ namespace BottleGame.Domain.Entities
         public int Id { get; set; }
 
         /// <summary>
-        /// Идентификатор игрока
+        /// Player id
         /// </summary>
         [Required]
         [ForeignKey("Player")]
@@ -26,21 +26,21 @@ namespace BottleGame.Domain.Entities
         public int PlayerId { get; set; }
 
         /// <summary>
-        /// Размер ставки
+        /// Bet size
         /// </summary>
         [Required]
         [Column("Bet")]
         public decimal Bet { get; set; }
 
         /// <summary>
-        /// Признак выигрыша
+        /// Whether the round was won
         /// </summary>
         [Required]
         [Column("IsWin")]
         public bool IsWin { get; set; }
 
         /// <summary>
-        /// Дата завершения раунда
+        /// Date the round finished
         /// </summary>
         [Required]
         [Column("FinishedAt")]
@@ -49,7 +49,7 @@ namespace BottleGame.Domain.Entities
         #region Navigation Properties
 
         /// <summary>
-        /// Связанный игрок
+        /// Related player
         /// </summary>
         public virtual Player Player { get; set; } = null!;
 

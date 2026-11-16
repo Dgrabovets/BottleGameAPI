@@ -4,15 +4,15 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BottleGame.Application
 {
     /// <summary>
-    /// Расширения для регистрации сервисов Application слоя
+    /// Extensions for registering the services of the Application layer
     /// </summary>
     public static class DependencyInjection
     {
         /// <summary>
-        /// Добавляет сервисы Application слоя в контейнер DI
+        /// Adds the services of the Application layer to the DI container
         /// </summary>
-        /// <param name="services">Коллекция сервисов</param>
-        /// <returns>Коллекция сервисов</returns>
+        /// <param name="services">Service collection</param>
+        /// <returns>Service collection</returns>
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
             // FluentValidation

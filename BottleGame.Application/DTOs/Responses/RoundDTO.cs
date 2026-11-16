@@ -1,27 +1,27 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// DTO игрового раунда
+    /// Game round DTO
     /// </summary>
     public class RoundDTO
     {
         /// <summary>
-        /// Уникальный идентификатор раунда
+        /// Unique identifier of the round
         /// </summary>
         public int Id { get; set; }
 
         /// <summary>
-        /// Ставка в раунде
+        /// Bet in the round
         /// </summary>
         public decimal Bet { get; set; }
 
         /// <summary>
-        /// Выигран ли раунд
+        /// Whether the round was won
         /// </summary>
         public bool IsWin { get; set; }
 
         /// <summary>
-        /// Дата завершения раунда
+        /// Date the round finished
         /// </summary>
         public DateTime FinishedAt { get; set; }
     }

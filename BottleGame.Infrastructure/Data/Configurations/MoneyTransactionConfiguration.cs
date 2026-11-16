@@ -5,22 +5,29 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace BottleGame.Infrastructure.Data.Configurations
 {
     /// <summary>
-    /// Конфигурация сущности MoneyTransaction.
+    /// Configuration of the MoneyTransaction entity
     /// </summary>
     public class MoneyTransactionConfiguration : IEntityTypeConfiguration<MoneyTransaction>
     {
         /// <summary>
-        /// Настраивает сущность MoneyTransaction.
+        /// Configures the MoneyTransaction entity
         /// </summary>
-        /// <param name="builder">Построитель типа сущности.</param>
+        /// <param name="builder">Entity type builder</param>
         public void Configure(EntityTypeBuilder<MoneyTransaction> builder)
         {
             builder.ToTable("MoneyTransactions");
             builder.HasKey(t => t.Id);
 
-            // Основные поля
+            // Main fields
             builder.Property(t => t.PlayerId)
                 .HasColumnName("PlayerId");
+
+            // Two concurrent handlers of the same transaction must not both apply it.
+            builder.Property(t => t.Version)
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
 
             builder.Property(t => t.Amount)
                 .HasColumnName("Amount")
@@ -34,7 +41,7 @@ namespace BottleGame.Infrastructure.Data.Configurations
                 .HasColumnName("TransactionTypeId")
                 .IsRequired();
 
-            // Поля процессинга
+            // Processing fields
             builder.Property(t => t.ProcessingOrderId)
                 .HasColumnName("ProcessingOrderId")
                 .HasMaxLength(100);
@@ -61,7 +68,7 @@ namespace BottleGame.Infrastructure.Data.Configurations
                 .HasColumnName("ProcessingError")
                 .HasMaxLength(500);
 
-            // Временные поля
+            // Time fields
             builder.Property(t => t.CreatedAt)
                 .HasColumnName("CreatedAt")
                 .IsRequired();
@@ -69,7 +76,7 @@ namespace BottleGame.Infrastructure.Data.Configurations
             builder.Property(t => t.ProcessedAt)
                 .HasColumnName("ProcessedAt");
 
-            // Связи
+            // Relations
             builder.HasOne(t => t.Player)
                 .WithMany(p => p.MoneyTransactions)
                 .HasForeignKey(b => b.PlayerId)
@@ -83,7 +90,7 @@ namespace BottleGame.Infrastructure.Data.Configurations
                 .WithMany(s => s.MoneyTransactions)
                 .HasForeignKey(t => t.TransactionStatusId);
 
-            // Индексы
+            // Indexes
             builder.HasIndex(t => t.ProcessingOrderId);
             builder.HasIndex(t => t.CreatedAt);
         }

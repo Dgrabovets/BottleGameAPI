@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// История банов игрока
+    /// Ban history of the player
     /// </summary>
     [Table("BansHistory")]
     public class BanHistoryEntity
     {
         /// <summary>
-        /// Идентификатор записи
+        /// Record identifier
         /// </summary>
         [Key]
         [Column("Id")]
@@ -18,7 +18,7 @@ namespace BottleGame.Domain.Entities
         public int Id { get; set; }
 
         /// <summary>
-        /// Идентификатор игрока
+        /// Player id
         /// </summary>
         [Required]
         [ForeignKey("Player")]
@@ -26,21 +26,21 @@ namespace BottleGame.Domain.Entities
         public int PlayerId { get; set; }
 
         /// <summary>
-        /// Причина бана
+        /// Reason for the ban
         /// </summary>
         [Required]
         [Column("BanReason")]
         public string BanReason { get; set; } = string.Empty;
 
         /// <summary>
-        /// Дата бана
+        /// Ban date
         /// </summary>
         [Required]
         [Column("BannedAt")]
         public DateTime BannedAt { get; set; }
 
         /// <summary>
-        /// Дата разбана
+        /// Unban date
         /// </summary>
         [Column("UnbannedAt")]
         public DateTime? UnbannedAt { get; set; }
@@ -48,7 +48,7 @@ namespace BottleGame.Domain.Entities
         #region Navigation Properties
 
         /// <summary>
-        /// Связанный игрок
+        /// Related player
         /// </summary>
         public virtual Player Player { get; set; } = null!;
 

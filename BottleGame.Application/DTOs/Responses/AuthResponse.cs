@@ -1,17 +1,17 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ авторизации
+    /// Authorization response
     /// </summary>
     public class AuthResponse
     {
         /// <summary>
-        /// Идентификатор игрока
+        /// Player id
         /// </summary>
         public int PlayerId { get; set; }
 
         /// <summary>
-        /// JWT токен доступа
+        /// JWT access token
         /// </summary>
         public string Token { get; set; } = string.Empty;
     }

@@ -5,10 +5,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace BottleGame.Infrastructure.Data.Configurations
 {
     /// <summary>
-    /// Конфигурация сущности PlayerPlayedRoundsStatisticForWithdrawal
+    /// Configuration of the PlayerPlayedRoundsStatisticForWithdrawal entity
     /// </summary>
     public class PlayerPlayedRoundsStatisticConfiguration : IEntityTypeConfiguration<PlayerPlayedRoundsStatisticForWithdrawal>
     {
+        /// <summary>
+        /// Configures the PlayerPlayedRoundsStatisticForWithdrawal entity
+        /// </summary>
+        /// <param name="builder">Entity type builder</param>
         public void Configure(EntityTypeBuilder<PlayerPlayedRoundsStatisticForWithdrawal> builder)
         {
             builder.ToTable("PlayersPlayedRoundsStatisticsForWithdrawals");
