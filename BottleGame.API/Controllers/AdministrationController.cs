@@ -18,18 +18,33 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Инициализирует новый экземпляр <see cref="AdministrationController"/>.
     /// </remarks>
-    /// <param name="administrationService">Сервис для административных операций.</param>
+    /// <param name="appBalanceService">Сервис баланса приложения.</param>
+    /// <param name="statisticsService">Сервис статистики.</param>
+    /// <param name="moderatorService">Сервис управления модераторами.</param>
     [ApiController]
     [Route("api/admin")]
     [Tags("Администрирование")]
-    public class AdministrationController(IAdministrationService administrationService) : BaseApiController
+    public class AdministrationController(
+        IAppBalanceService appBalanceService,
+        IStatisticsService statisticsService,
+        IModeratorService moderatorService) : BaseApiController
     {
         #region Fields
 
         /// <summary>
-        /// Сервис для административных операций.
+        /// Сервис баланса приложения.
         /// </summary>
-        private readonly IAdministrationService _administrationService = administrationService;
+        private readonly IAppBalanceService _appBalanceService = appBalanceService;
+
+        /// <summary>
+        /// Сервис статистики.
+        /// </summary>
+        private readonly IStatisticsService _statisticsService = statisticsService;
+
+        /// <summary>
+        /// Сервис управления модераторами.
+        /// </summary>
+        private readonly IModeratorService _moderatorService = moderatorService;
 
         #endregion Fields
 
@@ -45,7 +60,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<AppBalanceDTO>> GetAppBalance()
         {
-            var result = await _administrationService.GetAppBalance();
+            var result = await _appBalanceService.GetAppBalance();
             return ToActionResult(result);
         }
 
@@ -76,7 +91,7 @@ namespace BottleGame.API.Controllers
                 return Unauthorized();
             }
 
-            var result = await _administrationService.UpdateAppBalanceThreshold(request, adminId.Value);
+            var result = await _appBalanceService.UpdateAppBalanceThreshold(request, adminId.Value);
 
             if (result.IsSuccess)
             {
@@ -113,7 +128,7 @@ namespace BottleGame.API.Controllers
                 return Unauthorized();
             }
 
-            var result = await _administrationService.TopUpAppBalance(request, adminId.Value);
+            var result = await _appBalanceService.TopUpAppBalance(request, adminId.Value);
 
             if (result.IsSuccess)
             {
@@ -151,7 +166,7 @@ namespace BottleGame.API.Controllers
                 DateTill = dateTill
             };
 
-            var result = await _administrationService.GetStatistics(request);
+            var result = await _statisticsService.GetStatistics(request);
             return ToActionResult(result);
         }
 
@@ -173,7 +188,7 @@ namespace BottleGame.API.Controllers
                 DateTill = dateTill
             };
 
-            var result = await _administrationService.GetStatisticsTimeline(request);
+            var result = await _statisticsService.GetStatisticsTimeline(request);
             return ToActionResult(result);
         }
 
@@ -205,7 +220,7 @@ namespace BottleGame.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _administrationService.RegisterModerator(authRequest);
+            var result = await _moderatorService.RegisterModerator(authRequest);
 
             if (result.IsSuccess)
             {
@@ -233,7 +248,7 @@ namespace BottleGame.API.Controllers
             [FromQuery] int? moderatorId = null
         )
         {
-            var result = await _administrationService.GetModerators(moderatorId);
+            var result = await _moderatorService.GetModerators(moderatorId);
             return ToActionResultObject(result);
         }
 
@@ -254,7 +269,7 @@ namespace BottleGame.API.Controllers
             [FromRoute] int moderatorId
         )
         {
-            var result = await _administrationService.DeleteModerator(moderatorId);
+            var result = await _moderatorService.DeleteModerator(moderatorId);
 
             if (result.IsSuccess)
             {

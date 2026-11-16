@@ -21,11 +21,12 @@ namespace BottleGame.API.Controllers
     /// Инициализирует новый экземпляр <see cref="PlayerController"/>.
     /// </remarks>
     /// <param name="playerService">Сервис для работы с игроками.</param>
+    /// <param name="playerStatisticsService">Сервис статистики игроков.</param>
     /// <param name="banService">Сервис для работы с банами.</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Управление игроками")]
-    public class PlayerController(IPlayerService playerService, IBanService banService) : BaseApiController
+    public class PlayerController(IPlayerService playerService, IPlayerStatisticsService playerStatisticsService, IBanService banService) : BaseApiController
     {
         #region Fields
 
@@ -33,6 +34,11 @@ namespace BottleGame.API.Controllers
         /// Сервис для работы с игроками.
         /// </summary>
         private readonly IPlayerService _playerService = playerService;
+
+        /// <summary>
+        /// Сервис статистики игроков.
+        /// </summary>
+        private readonly IPlayerStatisticsService _playerStatisticsService = playerStatisticsService;
 
         /// <summary>
         /// Сервис для работы с банами игроков.
@@ -236,7 +242,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<PlayerStatisticsResponse>>> GetAllPlayersStatistics()
         {
-            var result = await _playerService.GetAllPlayersStatistics();
+            var result = await _playerStatisticsService.GetAllPlayersStatistics();
             return ToActionResult(result);
         }
 
@@ -258,7 +264,7 @@ namespace BottleGame.API.Controllers
             var requestingPlayerId = GetCurrentPlayerId();
             var isAdmin = User.IsInRole(RoleNames.Admin);
 
-            var result = await _playerService.GetPlayerStatistics(playerId, requestingPlayerId, isAdmin);
+            var result = await _playerStatisticsService.GetPlayerStatistics(playerId, requestingPlayerId, isAdmin);
             return ToActionResult(result);
         }
 
@@ -286,7 +292,7 @@ namespace BottleGame.API.Controllers
             var requestingPlayerId = GetCurrentPlayerId();
             var isAdmin = User.IsInRole(RoleNames.Admin);
 
-            var result = await _playerService.GetPlayerRoundsStatisticsForWithdrawal(playerId, requestingPlayerId, isAdmin);
+            var result = await _playerStatisticsService.GetPlayerRoundsStatisticsForWithdrawal(playerId, requestingPlayerId, isAdmin);
             return ToActionResult(result);
         }
 
@@ -303,7 +309,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>>> GetAllPlayersRoundsStatisticsForWithdrawal()
         {
-            var result = await _playerService.GetAllPlayersRoundsStatisticsForWithdrawal();
+            var result = await _playerStatisticsService.GetAllPlayersRoundsStatisticsForWithdrawal();
             return ToActionResult(result);
         }
 
