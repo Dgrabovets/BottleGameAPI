@@ -1,17 +1,17 @@
 namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Модель учетных данных для административных ролей
+    /// Credentials model for administration roles
     /// </summary>
     public class AdministrationRoleUserCredentials
     {
         /// <summary>
-        /// Логин
+        /// Login
         /// </summary>
         public string Login { get; set; } = string.Empty;
 
         /// <summary>
-        /// Пароль
+        /// Password
         /// </summary>
         public string Password { get; set; } = string.Empty;
     }

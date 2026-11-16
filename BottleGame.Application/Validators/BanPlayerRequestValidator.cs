@@ -4,18 +4,21 @@ using FluentValidation;
 namespace BottleGame.Application.Validators
 {
     /// <summary>
-    /// Валидатор для запроса бана игрока
+    /// Validator for the ban player request
     /// </summary>
     public class BanPlayerRequestValidator : AbstractValidator<BanPlayerRequest>
     {
+        /// <summary>
+        /// Sets up the validation rules
+        /// </summary>
         public BanPlayerRequestValidator()
         {
             RuleFor(x => x.PlayerId)
-                .GreaterThan(0).WithMessage("ID игрока должен быть положительным числом");
+                .GreaterThan(0).WithMessage("Player id must be a positive number");
 
             RuleFor(x => x.BanReason)
-                .NotEmpty().WithMessage("Причина бана обязательна")
-                .MaximumLength(255).WithMessage("Причина бана не должна превышать 255 символов");
+                .NotEmpty().WithMessage("Ban reason is required")
+                .MaximumLength(255).WithMessage("Ban reason must not exceed 255 characters");
         }
     }
 }

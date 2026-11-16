@@ -1,38 +1,38 @@
 namespace BottleGame.Application.DTOs.Processing
 {
     /// <summary>
-    /// Информация о валюте.
+    /// Currency information
     /// </summary>
     public class CurrencyInfo
     {
         /// <summary>
-        /// Код валюты (например, "rub").
+        /// Currency code (for example, "rub")
         /// </summary>
         public string Code { get; set; } = string.Empty;
 
         /// <summary>
-        /// Название валюты.
+        /// Currency name
         /// </summary>
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// Активна ли валюта.
+        /// Whether the currency is active
         /// </summary>
         public bool IsActive { get; set; }
 
         /// <summary>
-        /// Инициализирует новый экземпляр <see cref="CurrencyInfo"/>.
+        /// Initializes a new instance of <see cref="CurrencyInfo"/>
         /// </summary>
         public CurrencyInfo()
         {
         }
 
         /// <summary>
-        /// Инициализирует новый экземпляр <see cref="CurrencyInfo"/>.
+        /// Initializes a new instance of <see cref="CurrencyInfo"/>
         /// </summary>
-        /// <param name="code">Код валюты.</param>
-        /// <param name="name">Название валюты.</param>
-        /// <param name="isActive">Активна ли валюта.</param>
+        /// <param name="code">Currency code</param>
+        /// <param name="name">Currency name</param>
+        /// <param name="isActive">Whether the currency is active</param>
         public CurrencyInfo(string code, string name, bool isActive)
         {
             Code = code;

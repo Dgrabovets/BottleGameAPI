@@ -5,10 +5,13 @@ using FluentAssertions;
 namespace BottleGame.UnitTests;
 
 /// <summary>
-/// Проверяет, как EF сохраняет связь «приглашённый, пригласивший»
+/// Checks how EF saves the "invited, inviting" link
 /// </summary>
 public class InvitedPlayerMappingTests
 {
+    /// <summary>
+    /// Assigning the Inviter and Invitee navigations stores the right foreign keys
+    /// </summary>
     [Fact]
     public void NavigationAssignment_StoresInvitedAndInviterIds()
     {
@@ -22,6 +25,7 @@ public class InvitedPlayerMappingTests
             Invitee = invited,
             InvitedAt = DateTime.UtcNow
         });
+
         context.SaveChanges();
 
         var row = context.InvitedPlayers.Single();

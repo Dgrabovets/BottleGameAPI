@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Настройки игрока
+    /// Player settings
     /// </summary>
     [Table("PlayersOptions")]
     public class PlayerOptions
     {
         /// <summary>
-        /// Идентификатор игрока (первичный ключ)
+        /// Player identifier (primary key)
         /// </summary>
         [Key]
         [ForeignKey("Player")]
@@ -18,30 +18,30 @@ namespace BottleGame.Domain.Entities
         public int PlayerId { get; set; }
 
         /// <summary>
-        /// Персональный шанс выигрыша
+        /// Personal win chance
         /// </summary>
         [Required]
         [Column("WinChance")]
         public float WinChance { get; set; }
 
         /// <summary>
-        /// Кошелёк для выплат
+        /// Wallet for payouts
         /// </summary>
         [Column("Wallet")]
         [MaxLength(100)]
         public string? Wallet { get; set; }
 
         /// <summary>
-        /// Код валюты (например, "rub", "kzt").
-        /// Значения загружаются динамически из процессинга.
+        /// Currency code (for example, "rub", "kzt").
+        /// Values are loaded dynamically from the processing
         /// </summary>
         [Column("Currency")]
         [MaxLength(10)]
         public string? Currency { get; set; }
 
         /// <summary>
-        /// Код метода выплаты (например, "sbp_rub", "bankcard_rub").
-        /// Значения загружаются динамически из процессинга.
+        /// Payout method code (for example, "sbp_rub", "bankcard_rub").
+        /// Values are loaded dynamically from the processing
         /// </summary>
         [Required]
         [Column("PayoutMethod")]
@@ -49,8 +49,8 @@ namespace BottleGame.Domain.Entities
         public string PayoutMethod { get; set; } = string.Empty;
 
         /// <summary>
-        /// Код метода оплаты (например, "sbp_rub", "bankcard_rub").
-        /// Значения загружаются динамически из процессинга.
+        /// Payment method code (for example, "sbp_rub", "bankcard_rub").
+        /// Values are loaded dynamically from the processing
         /// </summary>
         [Required]
         [Column("PaymentMethod")]
@@ -58,8 +58,8 @@ namespace BottleGame.Domain.Entities
         public string PaymentMethod { get; set; } = string.Empty;
 
         /// <summary>
-        /// Тип платёжных реквизитов (например, "card", "phone", "sbp").
-        /// Доступные значения зависят от выбранного PaymentMethod.
+        /// Type of payment details (for example, "card", "phone", "sbp").
+        /// Available values depend on the selected PaymentMethod
         /// </summary>
         [Required]
         [Column("PaymentDetailType")]
@@ -69,7 +69,7 @@ namespace BottleGame.Domain.Entities
         #region Navigation Properties
 
         /// <summary>
-        /// Связанный игрок
+        /// Related player
         /// </summary>
         public virtual Player Player { get; set; } = null!;
 

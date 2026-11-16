@@ -3,40 +3,40 @@
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Интерфейс сервиса кэширования справочных данных
+    /// Interface of the service that caches reference data
     /// </summary>
     public interface ICacheService
     {
         /// <summary>
-        /// Получить игровые параметры из кэша
+        /// Gets the game parameters from the cache
         /// </summary>
-        /// <returns>Игровые параметры</returns>
+        /// <returns>Game parameters</returns>
         Task<GameParams?> GetGameParamsAsync();
 
         /// <summary>
-        /// Получить все типы транзакций из кэша
+        /// Gets all transaction types from the cache
         /// </summary>
-        /// <returns>Словарь типов транзакций (Id -> Name)</returns>
+        /// <returns>Dictionary of transaction types (Id -> Name)</returns>
         Task<Dictionary<int, string>> GetTransactionTypesAsync();
 
         /// <summary>
-        /// Получить все статусы транзакций из кэша
+        /// Gets all transaction statuses from the cache
         /// </summary>
-        /// <returns>Словарь статусов транзакций (Id -> Name)</returns>
+        /// <returns>Dictionary of transaction statuses (Id -> Name)</returns>
         Task<Dictionary<int, string>> GetTransactionStatusesAsync();
 
         /// <summary>
-        /// Инвалидировать кэш игровых параметров
+        /// Invalidates the cache of the game parameters
         /// </summary>
         void InvalidateGameParams();
 
         /// <summary>
-        /// Инвалидировать кэш типов транзакций
+        /// Invalidates the cache of the transaction types
         /// </summary>
         void InvalidateTransactionTypes();
 
         /// <summary>
-        /// Инвалидировать кэш статусов транзакций
+        /// Invalidates the cache of the transaction statuses
         /// </summary>
         void InvalidateTransactionStatuses();
     }

@@ -5,14 +5,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace BottleGame.Infrastructure.Data.Configurations
 {
     /// <summary>
-    /// Конфигурация сущности ProcessingWebhookLog.
+    /// Configuration of the ProcessingWebhookLog entity
     /// </summary>
     public class ProcessingWebhookLogConfiguration : IEntityTypeConfiguration<ProcessingWebhookLog>
     {
         /// <summary>
-        /// Настраивает сущность ProcessingWebhookLog.
+        /// Configures the ProcessingWebhookLog entity
         /// </summary>
-        /// <param name="builder">Построитель типа сущности.</param>
+        /// <param name="builder">Entity type builder</param>
         public void Configure(EntityTypeBuilder<ProcessingWebhookLog> builder)
         {
             builder.ToTable("ProcessingWebhookLogs");
@@ -84,7 +84,7 @@ namespace BottleGame.Infrastructure.Data.Configurations
             builder.Property(l => l.ProcessedAt)
                 .HasColumnName("ProcessedAt");
 
-            // Индексы для быстрого поиска
+            // Indexes for fast lookup
             builder.HasIndex(l => l.TransactionId);
             builder.HasIndex(l => l.OrderId);
             builder.HasIndex(l => l.ReceivedAt);

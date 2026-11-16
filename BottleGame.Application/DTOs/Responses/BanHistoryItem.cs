@@ -1,22 +1,22 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Элемент истории банов
+    /// Ban history item
     /// </summary>
     public class BanHistoryItem
     {
         /// <summary>
-        /// Причина бана
+        /// Reason for the ban
         /// </summary>
         public string BanReason { get; set; } = string.Empty;
 
         /// <summary>
-        /// Дата бана
+        /// Ban date
         /// </summary>
         public DateTime BannedAt { get; set; }
 
         /// <summary>
-        /// Дата разбана
+        /// Unban date
         /// </summary>
         public DateTime? UnbannedAt { get; set; }
     }

@@ -1,13 +1,13 @@
 namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Входящий webhook-запрос от платёжной системы: тело и метаданные HTTP
+    /// Incoming webhook request from the payment system: body and HTTP metadata
     /// </summary>
-    /// <param name="Body">Сырое тело запроса</param>
-    /// <param name="HttpMethod">HTTP-метод</param>
-    /// <param name="ContentType">Заголовок Content-Type</param>
-    /// <param name="IpAddress">IP-адрес отправителя</param>
-    /// <param name="UserAgent">Заголовок User-Agent</param>
+    /// <param name="Body">Raw request body</param>
+    /// <param name="HttpMethod">HTTP method</param>
+    /// <param name="ContentType">Content-Type header</param>
+    /// <param name="IpAddress">IP address of the sender</param>
+    /// <param name="UserAgent">User-Agent header</param>
     public record WebhookRequestInfo(
         string Body,
         string HttpMethod,

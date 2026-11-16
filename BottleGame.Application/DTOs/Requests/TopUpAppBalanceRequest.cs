@@ -1,12 +1,12 @@
 ﻿namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Запрос на пополнение баланса приложения
+    /// Request to top up the application balance
     /// </summary>
     public class TopUpAppBalanceRequest
     {
         /// <summary>
-        /// Сумма пополнения
+        /// Top-up amount
         /// </summary>
         public decimal Amount { get; set; }
     }

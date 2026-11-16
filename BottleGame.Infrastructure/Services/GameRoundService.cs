@@ -1,44 +1,44 @@
-using Microsoft.Extensions.Logging;
 using BottleGame.Application.Common;
-using BottleGame.Infrastructure.Data;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
-using BottleGame.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Entities;
+using BottleGame.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
-    /// Сервис для работы с игровыми раундами
+    /// Service for working with game rounds
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="GameRoundService"/>
+    /// Initializes a new instance of <see cref="GameRoundService"/>
     /// </remarks>
-    /// <param name="context">Контекст базы данных</param>
-    /// <param name="logger">Логгер</param>
-    /// <param name="cacheService">Сервис кэширования</param>
+    /// <param name="context">Database context</param>
+    /// <param name="logger">Logger</param>
+    /// <param name="cacheService">Cache service</param>
     public class GameRoundService(ApplicationDbContext context, ILogger<GameRoundService> logger, ICacheService cacheService) : IGameRoundService
     {
         #region Fields
 
         /// <summary>
-        /// Контекст базы данных
+        /// Database context
         /// </summary>
         private readonly ApplicationDbContext _context = context;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<GameRoundService> _logger = logger;
 
         /// <summary>
-        /// Сервис кэширования
+        /// Cache service
         /// </summary>
         private readonly ICacheService _cacheService = cacheService;
 
         /// <summary>
-        /// Префикс для логов
+        /// Log prefix
         /// </summary>
         private const string Prefix = "[GameRoundService]";
 
@@ -49,7 +49,7 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public async Task<Result> FinishGameRound(int playerId, FinishRoundRequest request, int? requestingPlayerId, bool isAdmin)
         {
-            // Проверка прав доступа
+            // Access check
             if (!isAdmin && requestingPlayerId != playerId)
             {
                 return Result.Unauthorized();
@@ -63,20 +63,20 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} Пользователь забанен", Prefix);
-                return Result.Forbidden("Пользователь в бане");
+                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                return Result.Forbidden("User is banned");
             }
 
             if (player.Balance.Amount < request.Bet && !request.IsWin)
             {
-                _logger.LogWarning("{Prefix} Недостаточно средств на балансе для снятия у игрока {PlayerId}", Prefix, playerId);
-                return Result.Failure("Недостаточно средств!");
+                _logger.LogWarning("{Prefix} Insufficient balance for withdrawal for player {PlayerId}", Prefix, playerId);
+                return Result.Failure("Insufficient funds!");
             }
 
             var roundsPlayedStat = await _context.PlayersPlayedRoundsStatisticForWithdrawals
@@ -84,13 +84,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (roundsPlayedStat is null)
             {
-                _logger.LogWarning("{Prefix} Не найдены данные статистики сыгранных раундов для игрока {PlayerId}", Prefix, playerId);
-                return Result.Failure("Не найдены данные статистики сыгранных раундов игрока");
+                _logger.LogWarning("{Prefix} Statistics of the played rounds not found for player {PlayerId}", Prefix, playerId);
+                return Result.Failure("Statistics of the played rounds of the player not found");
             }
 
             roundsPlayedStat.PlayedRoundsCount++;
 
-            // Создание записи о раунде
+            // Create the round record
             var round = new GameRound
             {
                 Player = player,
@@ -102,16 +102,16 @@ namespace BottleGame.Infrastructure.Services
 
             _context.GameRounds.Add(round);
 
-            // Обновление баланса игрока
+            // Update the player balance
             player.Balance.Amount += request.IsWin ? request.Bet : -request.Bet;
 
             await _context.SaveChangesAsync();
 
             _logger.LogInformation(
-                "{Prefix} Раунд завершен для игрока {PlayerId}. Статус: {Status}, Сумма: {Bet}",
+                "{Prefix} Round finished for player {PlayerId}. Status: {Status}, Amount: {Bet}",
                 Prefix,
                 playerId,
-                request.IsWin ? "Победа" : "Проигрыш",
+                request.IsWin ? "Win" : "Loss",
                 request.Bet);
 
             return Result.Success();
@@ -128,8 +128,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result<GetPlayerPlayedRoundsResponse>.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result<GetPlayerPlayedRoundsResponse>.NotFound($"Player with id {playerId} not found");
             }
 
             var response = new GetPlayerPlayedRoundsResponse
@@ -152,7 +152,7 @@ namespace BottleGame.Infrastructure.Services
                 })]
             };
 
-            _logger.LogInformation("{Prefix} Получен список сыгранных раундов игрока {PlayerId}", Prefix, playerId);
+            _logger.LogInformation("{Prefix} Got the list of rounds played by player {PlayerId}", Prefix, playerId);
 
             return Result<GetPlayerPlayedRoundsResponse>.Success(response);
         }
@@ -172,16 +172,16 @@ namespace BottleGame.Infrastructure.Services
                 query = query.Where(r => r.FinishedAt < request.DateTill.Value);
             }
 
-            // Проверяем наличие данных без загрузки всех записей
+            // Check that data exists without loading all the records
             var hasRounds = await query.AnyAsync();
 
             if (!hasRounds)
             {
-                _logger.LogWarning("{Prefix} Раунды игроков не найдены", Prefix);
-                return Result<GetProfitResponse>.NotFound("Раунды игроков не найдены, нет возможности посчитать прибыль");
+                _logger.LogWarning("{Prefix} Rounds of the players not found", Prefix);
+                return Result<GetProfitResponse>.NotFound("Rounds of the players not found, the profit cannot be calculated");
             }
 
-            // Используем агрегатные функции SQL вместо загрузки всех записей в память
+            // Use SQL aggregate functions instead of loading all the records into memory
             var profit = await query
                 .Where(r => !r.IsWin)
                 .SumAsync(r => r.Bet);
@@ -189,7 +189,7 @@ namespace BottleGame.Infrastructure.Services
             var dateFrom = await query.MinAsync(r => r.FinishedAt);
             var dateTill = await query.MaxAsync(r => r.FinishedAt);
 
-            _logger.LogInformation("{Prefix} Прибыль рассчитана за период {DateFrom} - {DateTill}",
+            _logger.LogInformation("{Prefix} Profit calculated for the period {DateFrom} - {DateTill}",
                 Prefix, dateFrom, dateTill);
 
             var response = new GetProfitResponse

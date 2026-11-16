@@ -1,22 +1,22 @@
 namespace BottleGame.Application.DTOs.Processing
 {
     /// <summary>
-    /// Состояние платежа или выплаты у провайдера
+    /// State of a payment or payout at the provider
     /// </summary>
     public enum ProviderOperationStatus
     {
         /// <summary>
-        /// Операция ещё не завершена
+        /// The operation is not finished yet
         /// </summary>
         Pending,
 
         /// <summary>
-        /// Операция успешно завершена
+        /// The operation finished successfully
         /// </summary>
         Succeeded,
 
         /// <summary>
-        /// Операция отменена или отклонена
+        /// The operation was canceled or rejected
         /// </summary>
         Canceled
     }

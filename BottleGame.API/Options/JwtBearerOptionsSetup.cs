@@ -6,29 +6,29 @@ using System.Text;
 namespace BottleGame.API.Options
 {
     /// <summary>
-    /// Настраивает JwtBearerOptions из валидированных JwtOptions (вызывается при старте приложения).
+    /// Configures JwtBearerOptions from the validated JwtOptions (called when the application starts)
     /// </summary>
     public class JwtBearerOptionsSetup(IOptions<JwtOptions> jwtOptions) : IConfigureNamedOptions<JwtBearerOptions>
     {
-        #region Поля
+        #region Fields
 
         /// <inheritdoc/>
         private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
-        #endregion Поля
+        #endregion Fields
 
-        #region Методы
+        #region Methods
 
         /// <inheritdoc/>
         public void Configure(string? name, JwtBearerOptions options)
         {
-            // Настраиваем и когда name == null (общий Configure), и когда name == "Bearer"
+            // Configure both when name == null (the general Configure) and when name == "Bearer"
             if (!string.IsNullOrEmpty(name) && name != JwtBearerDefaults.AuthenticationScheme)
                 return;
 
             var key = _jwtOptions.Key;
             if (string.IsNullOrEmpty(key))
-                throw new InvalidOperationException("JWT:Key не задан. Укажите переменную окружения JWT__Key или добавьте ключ в appsettings.Production.json.");
+                throw new InvalidOperationException("JWT:Key is not set. Set the JWT__Key environment variable or add the key to appsettings.Production.json.");
 
             options.TokenValidationParameters = new TokenValidationParameters
             {
@@ -45,6 +45,6 @@ namespace BottleGame.API.Options
         /// <inheritdoc/>
         public void Configure(JwtBearerOptions options) => Configure(JwtBearerDefaults.AuthenticationScheme, options);
 
-        #endregion Методы
+        #endregion Methods
     }
 }

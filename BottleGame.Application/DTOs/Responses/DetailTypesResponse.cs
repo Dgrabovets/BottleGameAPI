@@ -1,22 +1,22 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ со списком доступных типов платёжных реквизитов для шлюза.
+    /// Response with the list of payment detail types available for a gateway
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="DetailTypesResponse"/>.
+    /// Initializes a new instance of <see cref="DetailTypesResponse"/>
     /// </remarks>
-    /// <param name="gatewayCode">Код шлюза.</param>
-    /// <param name="detailTypes">Список доступных типов реквизитов.</param>
+    /// <param name="gatewayCode">Gateway code</param>
+    /// <param name="detailTypes">List of available detail types</param>
     public class DetailTypesResponse(string gatewayCode, List<string> detailTypes)
     {
         /// <summary>
-        /// Код платёжного шлюза.
+        /// Payment gateway code
         /// </summary>
         public string GatewayCode { get; set; } = gatewayCode;
 
         /// <summary>
-        /// Список доступных типов платёжных реквизитов (например, "card", "phone", "sbp").
+        /// List of available payment detail types (for example, "card", "phone", "sbp")
         /// </summary>
         public List<string> DetailTypes { get; set; } = detailTypes;
     }

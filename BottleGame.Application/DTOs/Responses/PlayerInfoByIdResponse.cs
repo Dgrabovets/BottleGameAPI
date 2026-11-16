@@ -1,37 +1,37 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Информация об игроке по ID
+    /// Information about a player by id
     /// </summary>
     public class PlayerInfoByIdResponse
     {
         /// <summary>
-        /// Данные игрока
+        /// Player data
         /// </summary>
         public PlayerDTO Player { get; set; } = null!;
 
         /// <summary>
-        /// Баланс игрока
+        /// Player balance
         /// </summary>
         public decimal Balance { get; set; }
 
         /// <summary>
-        /// Раунды игрока
+        /// Rounds of the player
         /// </summary>
         public IEnumerable<RoundDTO> Rounds { get; set; } = [];
 
         /// <summary>
-        /// Дата бана (если забанен)
+        /// Ban date (if banned)
         /// </summary>
         public DateTime? BannedAt { get; set; }
 
         /// <summary>
-        /// Настройки игрока
+        /// Player settings
         /// </summary>
         public PlayerOptionsDTO Options { get; set; } = null!;
 
         /// <summary>
-        /// Приглашённые игроки
+        /// Invited players
         /// </summary>
         public IEnumerable<PlayerDTO> PlayersInvited { get; set; } = [];
     }

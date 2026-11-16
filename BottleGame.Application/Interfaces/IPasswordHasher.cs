@@ -1,22 +1,22 @@
 ﻿namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Сервис для хэширования паролей
+    /// Service for hashing passwords
     /// </summary>
     public interface IPasswordHasher
     {
         /// <summary>
-        /// Создаёт соль и хэширует пароль с ней
+        /// Creates a salt and hashes the password with it
         /// </summary>
         (string Hash, string Salt) HashWithSalt(string password);
 
         /// <summary>
-        /// Хэширует строку
+        /// Hashes a string
         /// </summary>
         string Hash(string input);
 
         /// <summary>
-        /// Верифицирует пароль
+        /// Verifies a password
         /// </summary>
         bool Verify(string hashedPassword, string providedPassword, string salt);
     }

@@ -1,17 +1,22 @@
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Validators;
-using FluentAssertions;
 using FluentValidation.TestHelper;
 
 namespace BottleGame.UnitTests.Validators;
 
 /// <summary>
-/// Тесты для FinishRoundRequestValidator
+/// Tests for FinishRoundRequestValidator
 /// </summary>
 public class FinishRoundRequestValidatorTests
 {
+    /// <summary>
+    /// The validator under test
+    /// </summary>
     private readonly FinishRoundRequestValidator _validator = new();
 
+    /// <summary>
+    /// Validate: valid request; no errors
+    /// </summary>
     [Fact]
     public void Validate_ValidRequest_NoErrors()
     {
@@ -25,6 +30,10 @@ public class FinishRoundRequestValidatorTests
         result.ShouldNotHaveAnyValidationErrors();
     }
 
+    /// <summary>
+    /// Validate: invalid bet; has error
+    /// </summary>
+    /// <param name="bet">Bet</param>
     [Theory]
     [InlineData(0)]
     [InlineData(-100)]
@@ -40,6 +49,9 @@ public class FinishRoundRequestValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.Bet);
     }
 
+    /// <summary>
+    /// Validate: valid bet; no error
+    /// </summary>
     [Fact]
     public void Validate_ValidBet_NoError()
     {

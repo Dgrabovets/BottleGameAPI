@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Баланс приложения
+    /// Application balance
     /// </summary>
     [Table("AppBalance")]
     public class AppBalance
     {
         /// <summary>
-        /// Идентификатор записи
+        /// Record identifier
         /// </summary>
         [Key]
         [Column("Id")]
@@ -18,39 +18,39 @@ namespace BottleGame.Domain.Entities
         public int Id { get; set; }
 
         /// <summary>
-        /// Сумма на балансе приложения
+        /// Amount on the application balance
         /// </summary>
         [Required]
         [Column("Amount")]
         public decimal Amount { get; set; }
 
         /// <summary>
-        /// Нижний порог баланса
+        /// Lower threshold of the balance
         /// </summary>
         [Required]
         [Column("LowerThreshold")]
         public decimal LowerThreshold { get; set; }
 
         /// <summary>
-        /// Дата обновления нижнего порога
+        /// Date the lower threshold was updated
         /// </summary>
         [Column("LowerThresholdUpdatedAt")]
         public DateTime? LowerThresholdUpdatedAt { get; set; }
 
         /// <summary>
-        /// Идентификатор админа, обновившего нижний порог
+        /// Identifier of the admin who updated the lower threshold
         /// </summary>
         [Column("LowerThresholdAdminIdUpdatedBy")]
         public int? LowerThresholdAdminIdUpdatedBy { get; set; }
 
         /// <summary>
-        /// Дата обновления суммы баланса
+        /// Date the balance amount was updated
         /// </summary>
         [Column("BalanceAmountUpdatedAt")]
         public DateTime? BalanceAmountUpdatedAt { get; set; }
 
         /// <summary>
-        /// Идентификатор админа, обновившего сумму баланса
+        /// Identifier of the admin who updated the balance amount
         /// </summary>
         [Column("BalanceAmountAdminIdUpdatedBy")]
         public int? BalanceAmountAdminIdUpdatedBy { get; set; }

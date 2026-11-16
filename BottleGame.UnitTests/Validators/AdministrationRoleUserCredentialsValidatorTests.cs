@@ -1,17 +1,22 @@
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Validators;
-using FluentAssertions;
 using FluentValidation.TestHelper;
 
 namespace BottleGame.UnitTests.Validators;
 
 /// <summary>
-/// Тесты для AuthAdminRequestValidator
+/// Tests for AuthAdminRequestValidator
 /// </summary>
 public class AdministrationRoleUserCredentialsValidatorTests
 {
+    /// <summary>
+    /// The validator under test
+    /// </summary>
     private readonly AdministrationRoleUserCredentialsValidator _validator = new();
 
+    /// <summary>
+    /// Validate: valid request; no errors
+    /// </summary>
     [Fact]
     public void Validate_ValidRequest_NoErrors()
     {
@@ -25,6 +30,10 @@ public class AdministrationRoleUserCredentialsValidatorTests
         result.ShouldNotHaveAnyValidationErrors();
     }
 
+    /// <summary>
+    /// Validate: empty login; has error
+    /// </summary>
+    /// <param name="login">Login</param>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
@@ -40,6 +49,10 @@ public class AdministrationRoleUserCredentialsValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.Login);
     }
 
+    /// <summary>
+    /// Validate: empty password; has error
+    /// </summary>
+    /// <param name="password">Password</param>
     [Theory]
     [InlineData("")]
     [InlineData(null)]
@@ -55,6 +68,9 @@ public class AdministrationRoleUserCredentialsValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.Password);
     }
 
+    /// <summary>
+    /// Validate: short password; has error
+    /// </summary>
     [Fact]
     public void Validate_ShortPassword_HasError()
     {

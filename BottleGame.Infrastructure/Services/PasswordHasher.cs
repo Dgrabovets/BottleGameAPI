@@ -1,7 +1,7 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using BottleGame.Application.Interfaces;
+﻿using BottleGame.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace BottleGame.Infrastructure.Services
 {
@@ -12,6 +12,9 @@ namespace BottleGame.Infrastructure.Services
     {
         #region Fields
 
+        /// <summary>
+        /// Secret key mixed into every password hash
+        /// </summary>
         private readonly byte[] _secretKey = Encoding.UTF8.GetBytes(config["Security:PasswordHashSecretKey"]!);
 
         #endregion Fields

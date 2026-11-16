@@ -1,35 +1,34 @@
 using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Requests;
-using BottleGame.Application.DTOs.Responses;
 
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Управление модераторами
+    /// Moderator management
     /// </summary>
     public interface IModeratorService
     {
         #region Moderator Methods
 
         /// <summary>
-        /// Зарегистрировать нового модератора
+        /// Registers a new moderator
         /// </summary>
-        /// <param name="request">Данные модератора</param>
-        /// <returns>Результат операции</returns>
+        /// <param name="request">Moderator data</param>
+        /// <returns>Operation result</returns>
         Task<Result> RegisterModerator(AdministrationRoleUserCredentials request);
 
         /// <summary>
-        /// Получить список модераторов или конкретного модератора
+        /// Gets the list of moderators or a single moderator
         /// </summary>
-        /// <param name="moderatorId">ID модератора (опционально)</param>
-        /// <returns>Список или один модератор</returns>
+        /// <param name="moderatorId">Moderator id (optional)</param>
+        /// <returns>List or a single moderator</returns>
         Task<Result<object>> GetModerators(int? moderatorId);
 
         /// <summary>
-        /// Удалить модератора
+        /// Deletes a moderator
         /// </summary>
-        /// <param name="moderatorId">ID модератора</param>
-        /// <returns>Результат операции</returns>
+        /// <param name="moderatorId">Moderator id</param>
+        /// <returns>Operation result</returns>
         Task<Result> DeleteModerator(int moderatorId);
 
         #endregion Moderator Methods

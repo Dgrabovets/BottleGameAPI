@@ -1,17 +1,17 @@
 namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Запрос админской статистики с опциональным периодом
+    /// Administration statistics request with an optional period
     /// </summary>
     public class GetAppGeneralStatisticsRequest
     {
         /// <summary>
-        /// Начало периода (включительно, UTC)
+        /// Start of the period (inclusive, UTC)
         /// </summary>
         public DateTime? DateFrom { get; set; }
 
         /// <summary>
-        /// Конец периода (включительно, UTC)
+        /// End of the period (inclusive, UTC)
         /// </summary>
         public DateTime? DateTill { get; set; }
     }

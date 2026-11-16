@@ -1,28 +1,28 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ о валидации суммы для платёжного шлюза.
+    /// Response about the validation of an amount for a payment gateway
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="AmountValidationResponse"/>.
+    /// Initializes a new instance of <see cref="AmountValidationResponse"/>
     /// </remarks>
-    /// <param name="gatewayCode">Код шлюза.</param>
-    /// <param name="amount">Проверяемая сумма.</param>
-    /// <param name="isValid">Допустима ли сумма.</param>
+    /// <param name="gatewayCode">Gateway code</param>
+    /// <param name="amount">Amount that was checked</param>
+    /// <param name="isValid">Whether the amount is valid</param>
     public class AmountValidationResponse(string gatewayCode, decimal amount, bool isValid)
     {
         /// <summary>
-        /// Код платёжного шлюза.
+        /// Payment gateway code
         /// </summary>
         public string GatewayCode { get; set; } = gatewayCode;
 
         /// <summary>
-        /// Проверяемая сумма.
+        /// Amount that was checked
         /// </summary>
         public decimal Amount { get; set; } = amount;
 
         /// <summary>
-        /// Допустима ли сумма для данного шлюза.
+        /// Whether the amount is valid for this gateway
         /// </summary>
         public bool IsValid { get; set; } = isValid;
     }

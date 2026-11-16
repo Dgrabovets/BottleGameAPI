@@ -9,15 +9,30 @@ using Moq;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Тесты для GameRoundService
+/// Tests for GameRoundService
 /// </summary>
 public class GameRoundServiceTests : IDisposable
 {
+    /// <summary>
+    /// Database context of the test
+    /// </summary>
     private readonly Infrastructure.Data.ApplicationDbContext _context;
+    /// <summary>
+    /// The service under test
+    /// </summary>
     private readonly GameRoundService _service;
+    /// <summary>
+    /// Mock of the logger
+    /// </summary>
     private readonly Mock<ILogger<GameRoundService>> _loggerMock;
+    /// <summary>
+    /// Mock of the cache service
+    /// </summary>
     private readonly Mock<Application.Interfaces.ICacheService> _cacheServiceMock;
 
+    /// <summary>
+    /// Creates the test fixture: the database, the mocks and the object under test
+    /// </summary>
     public GameRoundServiceTests()
     {
         _context = TestDbContextFactory.CreateWithReferenceData();
@@ -30,6 +45,9 @@ public class GameRoundServiceTests : IDisposable
         _service = new GameRoundService(_context, _loggerMock.Object, _cacheServiceMock.Object);
     }
 
+    /// <summary>
+    /// Releases the database context used by the tests
+    /// </summary>
     public void Dispose()
     {
         _context.Dispose();
@@ -38,6 +56,9 @@ public class GameRoundServiceTests : IDisposable
 
     #region FinishGameRound Tests
 
+    /// <summary>
+    /// Finish game round: player not found; returns not found
+    /// </summary>
     [Fact]
     public async Task FinishGameRound_PlayerNotFound_ReturnsNotFound()
     {
@@ -52,6 +73,9 @@ public class GameRoundServiceTests : IDisposable
         result.StatusCode.Should().Be(404);
     }
 
+    /// <summary>
+    /// Finish game round: as player; other player, unauthorized
+    /// </summary>
     [Fact]
     public async Task FinishGameRound_AsPlayer_OtherPlayer_Unauthorized()
     {
@@ -68,6 +92,9 @@ public class GameRoundServiceTests : IDisposable
         result.StatusCode.Should().Be(401);
     }
 
+    /// <summary>
+    /// Finish game round: player banned; returns forbidden
+    /// </summary>
     [Fact]
     public async Task FinishGameRound_PlayerBanned_ReturnsForbidden()
     {
@@ -80,6 +107,7 @@ public class GameRoundServiceTests : IDisposable
             BanReason = "Test",
             BannedAt = DateTime.UtcNow
         });
+
         await _context.SaveChangesAsync();
 
         var request = new FinishRoundRequest { Bet = 100, IsWin = true };
@@ -92,6 +120,9 @@ public class GameRoundServiceTests : IDisposable
         result.StatusCode.Should().Be(403);
     }
 
+    /// <summary>
+    /// Finish game round: win; increases balance
+    /// </summary>
     [Fact]
     public async Task FinishGameRound_Win_IncreasesBalance()
     {
@@ -109,6 +140,9 @@ public class GameRoundServiceTests : IDisposable
         newBalance.Should().BeGreaterThan(initialBalance);
     }
 
+    /// <summary>
+    /// Finish game round: loss; decreases balance
+    /// </summary>
     [Fact]
     public async Task FinishGameRound_Loss_DecreasesBalance()
     {
@@ -126,6 +160,9 @@ public class GameRoundServiceTests : IDisposable
         newBalance.Should().BeLessThan(initialBalance);
     }
 
+    /// <summary>
+    /// Finish game round: insufficient balance; returns failure
+    /// </summary>
     [Fact]
     public async Task FinishGameRound_InsufficientBalance_ReturnsFailure()
     {
@@ -148,6 +185,9 @@ public class GameRoundServiceTests : IDisposable
 
     #region GetPlayerPlayedRounds Tests
 
+    /// <summary>
+    /// Get player played rounds: player not found; returns not found
+    /// </summary>
     [Fact]
     public async Task GetPlayerPlayedRounds_PlayerNotFound_ReturnsNotFound()
     {
@@ -159,6 +199,9 @@ public class GameRoundServiceTests : IDisposable
         result.StatusCode.Should().Be(404);
     }
 
+    /// <summary>
+    /// Get player played rounds: success; returns rounds
+    /// </summary>
     [Fact]
     public async Task GetPlayerPlayedRounds_Success_ReturnsRounds()
     {
@@ -171,6 +214,7 @@ public class GameRoundServiceTests : IDisposable
             IsWin = true,
             FinishedAt = DateTime.UtcNow
         });
+
         await _context.SaveChangesAsync();
 
         // Act
@@ -185,6 +229,9 @@ public class GameRoundServiceTests : IDisposable
 
     #region GetProfit Tests
 
+    /// <summary>
+    /// Get profit: no rounds; returns not found
+    /// </summary>
     [Fact]
     public async Task GetProfit_NoRounds_ReturnsNotFound()
     {
@@ -199,6 +246,9 @@ public class GameRoundServiceTests : IDisposable
         result.StatusCode.Should().Be(404);
     }
 
+    /// <summary>
+    /// Get profit: with rounds; calculates profit
+    /// </summary>
     [Fact]
     public async Task GetProfit_WithRounds_CalculatesProfit()
     {
@@ -208,6 +258,7 @@ public class GameRoundServiceTests : IDisposable
             new GameRound { PlayerId = player.Id, Bet = 100, IsWin = false, FinishedAt = DateTime.UtcNow },
             new GameRound { PlayerId = player.Id, Bet = 50, IsWin = true, FinishedAt = DateTime.UtcNow }
         );
+
         await _context.SaveChangesAsync();
 
         var request = new GetProfitRequest();

@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Игровые параметры
+    /// Game parameters
     /// </summary>
     [Table("GameParams")]
     public class GameParams
     {
         /// <summary>
-        /// Идентификатор параметров
+        /// Parameters identifier
         /// </summary>
         [Key]
         [Column("Id")]
@@ -18,7 +18,7 @@ namespace BottleGame.Domain.Entities
         public int Id { get; set; }
 
         /// <summary>
-        /// Базовый шанс выигрыша
+        /// Base win chance
         /// </summary>
         [Column("BaseWinChance")]
         [Range(0, 1)]
@@ -26,7 +26,7 @@ namespace BottleGame.Domain.Entities
         public float BaseWinChance { get; set; }
 
         /// <summary>
-        /// Минимальная сумма депозита
+        /// Minimum deposit amount
         /// </summary>
         [Column("MinDepositAmount")]
         [Range(0, int.MaxValue)]
@@ -34,7 +34,7 @@ namespace BottleGame.Domain.Entities
         public int MinDepositAmount { get; set; }
 
         /// <summary>
-        /// Минимальное количество раундов, необходимых для вывода средств
+        /// Minimum number of rounds required to withdraw funds
         /// </summary>
         [Column("MinRoundsCountForWithdrawal")]
         [Range(0, int.MaxValue)]
@@ -42,7 +42,7 @@ namespace BottleGame.Domain.Entities
         public int MinRoundsCountForWithdrawal { get; set; }
 
         /// <summary>
-        /// Минимальный шанс выигрыша
+        /// Minimum win chance
         /// </summary>
         [Column("MinWinChance")]
         [Range(0, 1)]
@@ -50,7 +50,7 @@ namespace BottleGame.Domain.Entities
         public float MinWinChance { get; set; }
 
         /// <summary>
-        /// Максимальный шанс выигрыша
+        /// Maximum win chance
         /// </summary>
         [Column("MaxWinChance")]
         [Range(0, 1)]
@@ -58,7 +58,7 @@ namespace BottleGame.Domain.Entities
         public float MaxWinChance { get; set; }
 
         /// <summary>
-        /// Минимальное уменьшение шанса за бросок
+        /// Minimum chance decrease per throw
         /// </summary>
         [Column("ChanceDecPerThrowMin")]
         [Range(0.01, 1)]
@@ -66,7 +66,7 @@ namespace BottleGame.Domain.Entities
         public float ChanceDecPerThrowMin { get; set; }
 
         /// <summary>
-        /// Максимальное уменьшение шанса за бросок
+        /// Maximum chance decrease per throw
         /// </summary>
         [Column("ChanceDecPerThrowMax")]
         [Range(0.01, 1)]
@@ -74,7 +74,7 @@ namespace BottleGame.Domain.Entities
         public float ChanceDecPerThrowMax { get; set; }
 
         /// <summary>
-        /// Уменьшение шанса за вращение
+        /// Chance decrease per spin
         /// </summary>
         [Column("ChanceDecPerRotation")]
         [Range(0.01, 0.2)]
@@ -82,7 +82,7 @@ namespace BottleGame.Domain.Entities
         public float ChanceDecPerRotation { get; set; }
 
         /// <summary>
-        /// Минимальный шанс после вращения
+        /// Minimum chance after a spin
         /// </summary>
         [Column("MinRotationWinChance")]
         [Range(0, 0.5)]
@@ -90,7 +90,7 @@ namespace BottleGame.Domain.Entities
         public float MinRotationWinChance { get; set; }
 
         /// <summary>
-        /// Минимальный множитель
+        /// Minimum multiplier
         /// </summary>
         [Column("MinMultiplier")]
         [Range(1, float.MaxValue)]
@@ -98,7 +98,7 @@ namespace BottleGame.Domain.Entities
         public float MinMultiplier { get; set; }
 
         /// <summary>
-        /// Максимальный множитель
+        /// Maximum multiplier
         /// </summary>
         [Column("MaxMultiplier")]
         [Range(1, float.MaxValue)]
@@ -106,7 +106,7 @@ namespace BottleGame.Domain.Entities
         public float MaxMultiplier { get; set; }
 
         /// <summary>
-        /// Начальная потеря баланса
+        /// Initial balance loss
         /// </summary>
         [Column("InitialBalanceLoss")]
         [Range(0.1, 0.15)]
@@ -114,7 +114,7 @@ namespace BottleGame.Domain.Entities
         public float InitialBalanceLoss { get; set; }
 
         /// <summary>
-        /// Шанс отклонения
+        /// Deviation chance
         /// </summary>
         [Column("DeviationChance")]
         [Range(0, 1)]
@@ -122,7 +122,7 @@ namespace BottleGame.Domain.Entities
         public float DeviationChance { get; set; }
 
         /// <summary>
-        /// Максимальный % отклонения
+        /// Maximum deviation %
         /// </summary>
         [Column("MaxDeviationPercent")]
         [Range(0.5, 0.9)]
@@ -130,7 +130,7 @@ namespace BottleGame.Domain.Entities
         public float MaxDeviationPercent { get; set; }
 
         /// <summary>
-        /// Мин-раз игр для буста
+        /// Minimum games for a boost
         /// </summary>
         [Column("MinGamesForBoost")]
         [Range(0, int.MaxValue)]
@@ -138,7 +138,7 @@ namespace BottleGame.Domain.Entities
         public int MinGamesForBoost { get; set; }
 
         /// <summary>
-        /// Шанс буста
+        /// Boost chance
         /// </summary>
         [Column("WinBoostChance")]
         [Range(0, 1)]
@@ -146,7 +146,7 @@ namespace BottleGame.Domain.Entities
         public float WinBoostChance { get; set; }
 
         /// <summary>
-        /// Множитель при бусте
+        /// Multiplier on a boost
         /// </summary>
         [Column("WinBoostMultiplier")]
         [Range(1, float.MaxValue)]
@@ -154,7 +154,7 @@ namespace BottleGame.Domain.Entities
         public float WinBoostMultiplier { get; set; }
 
         /// <summary>
-        /// Шанс хард-ресета
+        /// Hard reset chance
         /// </summary>
         [Column("HardResetChance")]
         [Range(0, 1)]
@@ -162,7 +162,7 @@ namespace BottleGame.Domain.Entities
         public float HardResetChance { get; set; }
 
         /// <summary>
-        /// Цель контроля
+        /// Control target
         /// </summary>
         [Column("ControlGoal")]
         [Range(0, float.MaxValue)]
@@ -170,56 +170,56 @@ namespace BottleGame.Domain.Entities
         public float ControlGoal { get; set; }
 
         /// <summary>
-        /// Скорость вращения барабана
+        /// Drum spin speed
         /// </summary>
         [Column("ReelSpeed")]
         [Required]
         public float ReelSpeed { get; set; }
 
         /// <summary>
-        /// Порог для вертикальной линии
+        /// Threshold for the vertical line
         /// </summary>
         [Column("UprightThresholdForLine")]
         [Required]
         public float UprightThresholdForLine { get; set; }
 
         /// <summary>
-        /// Шанс (0-1) получения множителя больше 10x
+        /// Chance (0-1) of getting a multiplier above 10x
         /// </summary>
         [Column("ProbabilityFor10")]
         [Range(0, 1)]
         public float? ProbabilityFor10 { get; set; }
 
         /// <summary>
-        /// Шанс (0-1) получения множителя 5-10x
+        /// Chance (0-1) of getting a multiplier of 5-10x
         /// </summary>
         [Column("ProbabilityFor5")]
         [Range(0, 1)]
         public float? ProbabilityFor5 { get; set; }
 
         /// <summary>
-        /// Шанс (0-1) получения множителя 3-5x
+        /// Chance (0-1) of getting a multiplier of 3-5x
         /// </summary>
         [Column("ProbabilityFor3")]
         [Range(0, 1)]
         public float? ProbabilityFor3 { get; set; }
 
         /// <summary>
-        /// Шанс (0-1) получения множителя 2-3x
+        /// Chance (0-1) of getting a multiplier of 2-3x
         /// </summary>
         [Column("ProbabilityFor2")]
         [Range(0, 1)]
         public float? ProbabilityFor2 { get; set; }
 
         /// <summary>
-        /// Шанс (0-1) получения множителя 1.5-2x
+        /// Chance (0-1) of getting a multiplier of 1.5-2x
         /// </summary>
         [Column("ProbabilityFor1_5")]
         [Range(0, 1)]
         public float? ProbabilityFor1_5 { get; set; }
 
         /// <summary>
-        /// Шанс (0-1) получения множителя 1.2-1.5x
+        /// Chance (0-1) of getting a multiplier of 1.2-1.5x
         /// </summary>
         [Column("BaseMultiplierProbability")]
         [Range(0, 1)]

@@ -8,22 +8,22 @@ using Moq;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Тесты для AppBalanceService
+/// Tests for AppBalanceService
 /// </summary>
 public class AppBalanceServiceTests : IDisposable
 {
     /// <summary>
-    /// Database context of the test.
+    /// Database context of the test
     /// </summary>
     private readonly Infrastructure.Data.ApplicationDbContext _context;
 
     /// <summary>
-    /// The application balance service under test.
+    /// The application balance service under test
     /// </summary>
     private readonly AppBalanceService _balanceService;
 
     /// <summary>
-    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// Creates the test fixture: the database, the mocks and the object under test
     /// </summary>
     public AppBalanceServiceTests()
     {
@@ -32,7 +32,7 @@ public class AppBalanceServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Releases the database context used by the tests.
+    /// Releases the database context used by the tests
     /// </summary>
     public void Dispose()
     {
@@ -43,7 +43,7 @@ public class AppBalanceServiceTests : IDisposable
     #region GetAppBalance Tests
 
     /// <summary>
-    /// Get app balance: exists; returns balance.
+    /// Get app balance: exists; returns balance
     /// </summary>
     [Fact]
     public async Task GetAppBalance_Exists_ReturnsBalance()
@@ -61,7 +61,7 @@ public class AppBalanceServiceTests : IDisposable
     #region UpdateAppBalanceThreshold Tests
 
     /// <summary>
-    /// Update app balance threshold: success.
+    /// Update app balance threshold: success
     /// </summary>
     [Fact]
     public async Task UpdateAppBalanceThreshold_Success()
@@ -83,7 +83,7 @@ public class AppBalanceServiceTests : IDisposable
     #region TopUpAppBalance Tests
 
     /// <summary>
-    /// Top up app balance: success.
+    /// Top up app balance: success
     /// </summary>
     [Fact]
     public async Task TopUpAppBalance_Success()

@@ -1,12 +1,12 @@
 namespace BottleGame.Application.Common
 {
     /// <summary>
-    /// Разбор параметров поиска игроков
+    /// Parsing of the player search parameters
     /// </summary>
     public static class PlayerSearchQuery
     {
         /// <summary>
-        /// Нормализует telegramId, name и единый параметр q в критерии поиска
+        /// Normalizes telegramId, name and the single q parameter into search criteria
         /// </summary>
         public static (long? TelegramId, string? Name) Resolve(
             long? telegramId,

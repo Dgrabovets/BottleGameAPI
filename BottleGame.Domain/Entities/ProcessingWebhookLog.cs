@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Лог вебхуков от платёжного процессинга.
+    /// Log of webhooks from the payment processing
     /// </summary>
     [Table("ProcessingWebhookLogs")]
     public class ProcessingWebhookLog
     {
         /// <summary>
-        /// Идентификатор записи.
+        /// Record identifier
         /// </summary>
         [Key]
         [Column("Id")]
@@ -18,14 +18,14 @@ namespace BottleGame.Domain.Entities
         public int Id { get; set; }
 
         /// <summary>
-        /// Сырой запрос (JSON body).
+        /// Raw request (JSON body)
         /// </summary>
         [Required]
         [Column("RawRequest")]
         public string RawRequest { get; set; } = string.Empty;
 
         /// <summary>
-        /// HTTP метод запроса.
+        /// HTTP method of the request
         /// </summary>
         [Required]
         [Column("HttpMethod")]
@@ -33,35 +33,35 @@ namespace BottleGame.Domain.Entities
         public string HttpMethod { get; set; } = string.Empty;
 
         /// <summary>
-        /// Content-Type запроса.
+        /// Content-Type of the request
         /// </summary>
         [Column("ContentType")]
         [MaxLength(100)]
         public string? ContentType { get; set; }
 
         /// <summary>
-        /// IP-адрес клиента.
+        /// Client IP address
         /// </summary>
         [Column("IpAddress")]
         [MaxLength(45)]
         public string? IpAddress { get; set; }
 
         /// <summary>
-        /// User-Agent клиента.
+        /// Client User-Agent
         /// </summary>
         [Column("UserAgent")]
         [MaxLength(500)]
         public string? UserAgent { get; set; }
 
         /// <summary>
-        /// Валидна ли подпись (если применимо).
+        /// Whether the signature is valid (if applicable)
         /// </summary>
         [Required]
         [Column("IsSignatureValid")]
         public bool IsSignatureValid { get; set; }
 
         /// <summary>
-        /// Статус обработки вебхука (Processing, Success, Error).
+        /// Webhook handling status (Processing, Success, Error)
         /// </summary>
         [Required]
         [Column("ProcessingStatus")]
@@ -69,55 +69,55 @@ namespace BottleGame.Domain.Entities
         public string ProcessingStatus { get; set; } = string.Empty;
 
         /// <summary>
-        /// Сообщение об ошибке (если есть).
+        /// Error message (if any)
         /// </summary>
         [Column("ErrorMessage")]
         public string? ErrorMessage { get; set; }
 
         /// <summary>
-        /// Внешний идентификатор транзакции (ExternalId).
+        /// External transaction identifier (ExternalId)
         /// </summary>
         [Column("TransactionId")]
         [MaxLength(100)]
         public string? TransactionId { get; set; }
 
         /// <summary>
-        /// Тип вебхука (order-status, payout-status).
+        /// Webhook type (order-status, payout-status)
         /// </summary>
         [Column("WebhookType")]
         [MaxLength(50)]
         public string? WebhookType { get; set; }
 
         /// <summary>
-        /// Результат обработки (status/sub_status).
+        /// Handling result (status/sub_status)
         /// </summary>
         [Column("Result")]
         [MaxLength(100)]
         public string? Result { get; set; }
 
         /// <summary>
-        /// UUID ордера/выплаты в процессинге.
+        /// UUID of the order/payout in the processing
         /// </summary>
         [Column("OrderId")]
         [MaxLength(100)]
         public string? OrderId { get; set; }
 
         /// <summary>
-        /// UUID мерчанта.
+        /// Merchant UUID
         /// </summary>
         [Column("MerchantId")]
         [MaxLength(100)]
         public string? MerchantId { get; set; }
 
         /// <summary>
-        /// Дата получения вебхука.
+        /// Webhook receipt date
         /// </summary>
         [Required]
         [Column("ReceivedAt")]
         public DateTime ReceivedAt { get; set; }
 
         /// <summary>
-        /// Дата обработки вебхука.
+        /// Webhook handling date
         /// </summary>
         [Column("ProcessedAt")]
         public DateTime? ProcessedAt { get; set; }

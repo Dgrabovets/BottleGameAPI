@@ -1,10 +1,10 @@
-﻿using System.Collections.Specialized;
+﻿using BottleGame.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System.Collections.Specialized;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
-using BottleGame.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace BottleGame.Infrastructure.Services
 {
@@ -15,7 +15,13 @@ namespace BottleGame.Infrastructure.Services
     {
         #region Fields
 
+        /// <summary>
+        /// Token of the Telegram bot used to verify initData
+        /// </summary>
         private readonly string _botToken = config["TelegramBotToken"]!;
+        /// <summary>
+        /// Logger
+        /// </summary>
         private readonly ILogger<TelegramAuthService> _logger = logger;
 
         #endregion Fields

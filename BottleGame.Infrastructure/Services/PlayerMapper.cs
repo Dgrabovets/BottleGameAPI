@@ -4,12 +4,12 @@ using BottleGame.Domain.Entities;
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
-    /// Преобразование сущностей игрока в DTO ответов
+    /// Conversion of player entities into response DTOs
     /// </summary>
     internal static class PlayerMapper
     {
         /// <summary>
-        /// Маппинг Player в PlayerInfoResponse
+        /// Mapping of Player to PlayerInfoResponse
         /// </summary>
         internal static PlayerInfoResponse MapToPlayerInfoResponse(Player player) =>
             new()
@@ -22,7 +22,7 @@ namespace BottleGame.Infrastructure.Services
             };
 
         /// <summary>
-        /// Маппинг Player в PlayerDTO
+        /// Mapping of Player to PlayerDTO
         /// </summary>
         internal static PlayerDTO MapToPlayerDTO(Player player)
         {
@@ -38,7 +38,7 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <summary>
-        /// Маппинг GameRound в RoundDTO
+        /// Mapping of GameRound to RoundDTO
         /// </summary>
         internal static RoundDTO MapToRoundDTO(GameRound round)
         {

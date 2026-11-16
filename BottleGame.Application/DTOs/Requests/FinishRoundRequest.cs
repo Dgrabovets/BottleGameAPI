@@ -1,17 +1,17 @@
 ﻿namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Запрос на завершение раунда
+    /// Request to finish a round
     /// </summary>
     public class FinishRoundRequest
     {
         /// <summary>
-        /// Размер ставки
+        /// Bet size
         /// </summary>
         public decimal Bet { get; set; }
 
         /// <summary>
-        /// Признак выигрыша
+        /// Whether the round was won
         /// </summary>
         public bool IsWin { get; set; }
     }

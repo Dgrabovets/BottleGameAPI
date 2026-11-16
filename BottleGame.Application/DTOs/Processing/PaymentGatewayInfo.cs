@@ -1,68 +1,68 @@
 namespace BottleGame.Application.DTOs.Processing
 {
     /// <summary>
-    /// Информация о платёжном шлюзе.
+    /// Payment gateway information
     /// </summary>
     public class PaymentGatewayInfo
     {
         /// <summary>
-        /// Код шлюза.
+        /// Gateway code
         /// </summary>
         public string Code { get; set; } = string.Empty;
 
         /// <summary>
-        /// Название шлюза.
+        /// Gateway name
         /// </summary>
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// Код валюты.
+        /// Currency code
         /// </summary>
         public string Currency { get; set; } = string.Empty;
 
         /// <summary>
-        /// Поддерживает ли платежи.
+        /// Whether payments are supported
         /// </summary>
         public bool SupportsPayments { get; set; }
 
         /// <summary>
-        /// Поддерживает ли выплаты.
+        /// Whether payouts are supported
         /// </summary>
         public bool SupportsPayouts { get; set; }
 
         /// <summary>
-        /// Минимальная сумма.
+        /// Minimum amount
         /// </summary>
         public decimal? MinAmount { get; set; }
 
         /// <summary>
-        /// Максимальная сумма.
+        /// Maximum amount
         /// </summary>
         public decimal? MaxAmount { get; set; }
 
         /// <summary>
-        /// Типы платёжных реквизитов, доступные для этого шлюза (например, "card", "phone", "account_number").
+        /// Types of payment details available for this gateway (for example, "card", "phone", "account_number")
         /// </summary>
         public List<string> DetailTypes { get; set; } = [];
 
         /// <summary>
-        /// Инициализирует новый экземпляр <see cref="PaymentGatewayInfo"/>.
+        /// Initializes a new instance of <see cref="PaymentGatewayInfo"/>
         /// </summary>
         public PaymentGatewayInfo()
         {
         }
 
         /// <summary>
-        /// Инициализирует новый экземпляр <see cref="PaymentGatewayInfo"/>.
+        /// Initializes a new instance of <see cref="PaymentGatewayInfo"/>
         /// </summary>
-        /// <param name="code">Код шлюза.</param>
-        /// <param name="name">Название шлюза.</param>
-        /// <param name="currency">Код валюты.</param>
-        /// <param name="supportsPayments">Поддерживает ли платежи.</param>
-        /// <param name="supportsPayouts">Поддерживает ли выплаты.</param>
-        /// <param name="minAmount">Минимальная сумма.</param>
-        /// <param name="maxAmount">Максимальная сумма.</param>
-        /// <param name="detailTypes">Типы платёжных реквизитов.</param>
+        /// <param name="code">Gateway code</param>
+        /// <param name="name">Gateway name</param>
+        /// <param name="currency">Currency code</param>
+        /// <param name="supportsPayments">Whether payments are supported</param>
+        /// <param name="supportsPayouts">Whether payouts are supported</param>
+        /// <param name="minAmount">Minimum amount</param>
+        /// <param name="maxAmount">Maximum amount</param>
+        /// <param name="detailTypes">Types of payment details</param>
         public PaymentGatewayInfo(string code, string name, string currency, bool supportsPayments, bool supportsPayouts, decimal? minAmount, decimal? maxAmount, List<string>? detailTypes = null)
         {
             Code = code;

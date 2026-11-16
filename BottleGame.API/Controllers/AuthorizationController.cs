@@ -16,22 +16,22 @@ using System.Web;
 namespace BottleGame.API.Controllers
 {
     /// <summary>
-    /// Контроллер авторизации
+    /// Authorization controller
     /// </summary>
     /// <remarks>
-    /// Обеспечивает авторизацию администраторов и игроков через Telegram
+    /// Authorizes administrators and players through Telegram
     /// </remarks>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="AuthorizationController"/>.
+    /// Initializes a new instance of <see cref="AuthorizationController"/>
     /// </remarks>
-    /// <param name="tokenService">Сервис для работы с JWT токенами.</param>
-    /// <param name="context">Контекст базы данных.</param>
-    /// <param name="passwordHasher">Сервис для хеширования паролей.</param>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="telegramAuthService">Сервис для авторизации через Telegram.</param>
+    /// <param name="tokenService">Service for working with JWT tokens</param>
+    /// <param name="context">Database context</param>
+    /// <param name="passwordHasher">Password hashing service</param>
+    /// <param name="logger">Logger</param>
+    /// <param name="telegramAuthService">Service for authorization through Telegram</param>
     [ApiController]
     [Route("api/auth")]
-    [Tags("Авторизация")]
+    [Tags("Authorization")]
     public class AuthorizationController(ITokenService tokenService, ApplicationDbContext context, IPasswordHasher passwordHasher, ILogger<AuthorizationController> logger, ITelegramAuthService telegramAuthService) : Controller
     {
         #region Fields
@@ -46,13 +46,16 @@ namespace BottleGame.API.Controllers
         private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<AuthorizationController> _logger = logger;
 
         /// <inheritdoc cref="ITelegramAuthService"/>
         private readonly ITelegramAuthService _telegramAuthService = telegramAuthService;
 
+        /// <summary>
+        /// Prefix of the log messages
+        /// </summary>
         const string prefix = "[Authorization Controller]";
 
         #endregion Fields
@@ -60,13 +63,13 @@ namespace BottleGame.API.Controllers
         #region ActionMethods
 
         /// <summary>
-        /// Авторизация администратора
+        /// Authorizes an administrator
         /// </summary>
-        /// <param name="authRequest">Данные для входа (логин и пароль)</param>
-        /// <response code="200">Успешная авторизация, возвращает JWT токен</response>
-        /// <response code="400">Некорректные данные запроса</response>
-        /// <response code="401">Неверные данные входа</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="authRequest">Sign-in data (login and password)</param>
+        /// <response code="200">Authorization succeeded, returns a JWT token</response>
+        /// <response code="400">Invalid request data</response>
+        /// <response code="401">Invalid sign-in data</response>
+        /// <response code="500">Internal server error</response>
         [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -77,25 +80,25 @@ namespace BottleGame.API.Controllers
         {
             try
             {
-                // Проверка валидности модели
+                // Check that the model is valid
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("{Prefix} Некорректные данные для входа администратора", prefix);
+                    _logger.LogWarning("{Prefix} Invalid administrator sign-in data", prefix);
                     return BadRequest(ModelState);
                 }
 
-                // Поиск администратора в базе
+                // Look up the administrator in the database
                 var admin = await _context.AdminCreds
                     .FirstOrDefaultAsync(a => a.Login == authRequest.Login);
 
-                // Проверка пароля администратора
+                // Check the administrator's password
                 if (admin is null || !_passwordHasher.Verify(admin.PasswordHash, authRequest.Password, admin.Salt))
                 {
-                    _logger.LogWarning("{Prefix} Неверные данные входа для администратора: {Login}", prefix, authRequest.Login);
-                    return Unauthorized("Неверный логин или пароль");
+                    _logger.LogWarning("{Prefix} Invalid sign-in data for administrator: {Login}", prefix, authRequest.Login);
+                    return Unauthorized("Invalid login or password");
                 }
 
-                // Формирование claims для токена
+                // Build the claims for the token
                 var claims = new List<Claim>
                 {
                     new(ClaimTypes.NameIdentifier, admin.Id.ToString()),
@@ -104,29 +107,29 @@ namespace BottleGame.API.Controllers
                     new("LoginTime", DateTime.UtcNow.ToString())
                 };
 
-                // Генерация JWT токена
+                // Generate the JWT token
                 var token = _tokenService.GenerateToken(claims);
 
-                _logger.LogInformation("{Prefix} Успешный вход администратора: {Login}", prefix, admin.Login);
+                _logger.LogInformation("{Prefix} Administrator signed in: {Login}", prefix, admin.Login);
 
-                // Возврат токена и данных администратора
+                // Return the token and the administrator data
                 return Ok(new { AdminId = admin.Id, Token = token });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Ошибка при авторизации администратора", prefix);
-                return StatusCode(500, "Внутренняя ошибка сервера");
+                _logger.LogError(ex, "{Prefix} Error while authorizing the administrator", prefix);
+                return StatusCode(500, "Internal server error");
             }
         }
 
         /// <summary>
-        /// Регистрация нового администратора
+        /// Registers a new administrator
         /// </summary>
-        /// <param name="authRequest">Данные для регистрации (логин и пароль)</param>
-        /// <response code="200">Администратор успешно зарегистрирован</response>
-        /// <response code="400">Некорректные данные запроса</response>
-        /// <response code="409">Администратор уже есть</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="authRequest">Registration data (login and password)</param>
+        /// <response code="200">The administrator was registered</response>
+        /// <response code="400">Invalid request data</response>
+        /// <response code="409">The administrator already exists</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [ApiExplorerSettings(IgnoreApi = true)]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -141,14 +144,14 @@ namespace BottleGame.API.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("{Prefix} Некорректные данные для регистрации администратора", prefix);
+                    _logger.LogWarning("{Prefix} Invalid administrator registration data", prefix);
                     return BadRequest(ModelState);
                 }
 
                 if (await _context.AdminCreds.AnyAsync(a => a.Login == authRequest.Login))
                 {
-                    _logger.LogWarning("{Prefix} Администратор уже есть", prefix);
-                    return Conflict("Администратор уже существует");
+                    _logger.LogWarning("{Prefix} The administrator already exists", prefix);
+                    return Conflict("The administrator already exists");
                 }
 
                 var (hash, salt) = _passwordHasher.HashWithSalt(authRequest.Password);
@@ -165,26 +168,26 @@ namespace BottleGame.API.Controllers
                 _context.AdminCreds.Add(admin);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("{Prefix} Зарегистрирован новый администратор: {Login}", prefix, authRequest.Login);
+                _logger.LogInformation("{Prefix} A new administrator was registered: {Login}", prefix, authRequest.Login);
 
-                return Ok(new { Message = "Администратор успешно зарегистрирован" });
+                return Ok(new { Message = "The administrator was registered" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Ошибка при регистрации администратора", prefix);
-                return StatusCode(500, "Внутренняя ошибка сервера");
+                _logger.LogError(ex, "{Prefix} Error while registering the administrator", prefix);
+                return StatusCode(500, "Internal server error");
             }
         }
 
         /// <summary>
-        /// Авторизация игрока через Telegram Mini App
+        /// Authorizes a player through the Telegram Mini App
         /// </summary>
-        /// <param name="initData">Данные инициализации Telegram WebApp</param>
-        /// <response code="200">Успешная авторизация, возвращает JWT токен</response>
-        /// <response code="400">Некорректные данные запроса</response>
-        /// <response code="401">Неверные данные Telegram</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="initData">Telegram WebApp initialization data</param>
+        /// <response code="200">Authorization succeeded, returns a JWT token</response>
+        /// <response code="400">Invalid request data</response>
+        /// <response code="401">Invalid Telegram data</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="500">Internal server error</response>
         [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -196,11 +199,11 @@ namespace BottleGame.API.Controllers
         {
             try
             {
-                // Проверка валидности модели
+                // Check that the model is valid
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("{Prefix} Пустые данные Telegram InitData", prefix);
-                    return BadRequest("Некорректные данные инициализации Telegram");
+                    _logger.LogWarning("{Prefix} Empty Telegram InitData", prefix);
+                    return BadRequest("Invalid Telegram initialization data");
                 }
 
                 var playerData = Parse(initData);
@@ -215,27 +218,27 @@ namespace BottleGame.API.Controllers
                     initData = query.ToString()!;
                 }
 
-                // Проверка подлинности данных Telegram
+                // Check that the Telegram data is authentic
                 if (!_telegramAuthService.ValidateInitData(initData))
                 {
-                    _logger.LogWarning("{Prefix} Неподтверждённые данные Telegram", prefix);
-                    return Unauthorized("Неверные данные авторизации Telegram");
+                    _logger.LogWarning("{Prefix} Unverified Telegram data", prefix);
+                    return Unauthorized("Invalid Telegram authorization data");
                 }
 
-                // Поиск или создание игрока в БД
+                // Find or create the player in the database
                 var player = await _context.Players.Include(p => p.Ban).FirstOrDefaultAsync(p => p.TelegramId == playerData.TelegramId);
 
                 if (player?.Ban is not null && player?.Ban.IsActive is true)
                 {
-                    _logger.LogWarning("{Prefix} Игрок забанен", prefix);
-                    return Forbid("Игрок находится в бане");
+                    _logger.LogWarning("{Prefix} The player is banned", prefix);
+                    return Forbid("The player is banned");
                 }
 
                 if (player is null)
                 {
                     var gameParams = await _context.GameParams.FirstOrDefaultAsync();
 
-                    // Создание нового игрока
+                    // Create a new player
                     player = new Player
                     {
                         TelegramId = playerData.TelegramId,
@@ -287,8 +290,8 @@ namespace BottleGame.API.Controllers
 
                             if (playerInvitedBy is null)
                             {
-                                _logger.LogWarning("{Prefix} Игрок (пригласивший) с ID {PlayerId} не найден", prefix, playerData.InvitingPlayerId);
-                                return NotFound($"Игрок (пригласивший) с ID {playerData.InvitingPlayerId} не найден");
+                                _logger.LogWarning("{Prefix} The inviting player with id {PlayerId} was not found", prefix, playerData.InvitingPlayerId);
+                                return NotFound($"The inviting player with id {playerData.InvitingPlayerId} was not found");
                             }
 
                             if (playerInvitedBy.Id != player.Id && (playerInvitedBy.Ban is null || !playerInvitedBy.Ban.IsActive))
@@ -311,7 +314,7 @@ namespace BottleGame.API.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                // Генерация JWT токена
+                // Generate the JWT token
                 var claims = new List<Claim>
                 {
                     new(ClaimTypes.NameIdentifier, player.Id.ToString()),
@@ -323,15 +326,15 @@ namespace BottleGame.API.Controllers
 
                 var token = _tokenService.GenerateToken(claims);
 
-                _logger.LogInformation("{Prefix} Успешная авторизация Telegram игрока: {TelegramId}", prefix, player.TelegramId);
+                _logger.LogInformation("{Prefix} Telegram player authorized: {TelegramId}", prefix, player.TelegramId);
 
-                // Возврат результата
+                // Return the result
                 return Ok(new AuthResponse { PlayerId = player.Id, Token = token });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Ошибка авторизации Telegram игрока", prefix);
-                return StatusCode(500, "Внутренняя ошибка сервера");
+                _logger.LogError(ex, "{Prefix} Error while authorizing the Telegram player", prefix);
+                return StatusCode(500, "Internal server error");
             }
         }
 
@@ -340,16 +343,16 @@ namespace BottleGame.API.Controllers
         #region Methods
 
         /// <summary>
-        /// Парсит данные пользователя Telegram из initData
+        /// Parses the Telegram user data from initData
         /// </summary>
-        /// <param name="initData">Строка инициализации Telegram WebApp</param>
-        /// <returns>Распарсенные данные пользователя Telegram</returns>
+        /// <param name="initData">Telegram WebApp initialization string</param>
+        /// <returns>Parsed Telegram user data</returns>
         private static ParsedTelegramUser Parse(string initData)
         {
             var result = new ParsedTelegramUser();
             var query = HttpUtility.ParseQueryString(initData);
 
-            // Извлечение данных пользователя из query string
+            // Extract the user data from the query string
             result.TelegramId = long.Parse(GetJsonValue(query["user"]!, "id")!);
             result.Username = GetJsonValue(query["user"]!, "username") ?? GetJsonValue(query["user"]!, "first_name")!;
             result.PhotoUrl = GetJsonValue(query["user"]!, "photo_url") ?? string.Empty;
@@ -360,7 +363,7 @@ namespace BottleGame.API.Controllers
                 result.InvitingPlayerId = Convert.ToInt32(startParam);
             }
 
-            // Парсинг даты (Unix timestamp)
+            // Parse the date (Unix timestamp)
             result.RegisteredAt = DateTimeOffset.FromUnixTimeSeconds(
                 long.Parse(query["auth_date"]!)
             ).UtcDateTime;
@@ -369,11 +372,11 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Вспомогательный метод для извлечения значений из JSON-строки
+        /// Helper method that extracts values from a JSON string
         /// </summary>
-        /// <param name="json">JSON-строка</param>
-        /// <param name="propertyName">Имя свойства</param>
-        /// <returns>Значение свойства или null</returns>
+        /// <param name="json">JSON string</param>
+        /// <param name="propertyName">Property name</param>
+        /// <returns>The property value or null</returns>
         private static string? GetJsonValue(string json, string propertyName)
         {
             using JsonDocument doc = JsonDocument.Parse(json);
@@ -388,6 +391,7 @@ namespace BottleGame.API.Controllers
                     _ => null
                 };
             }
+
             return null;
         }
 

@@ -1,22 +1,22 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ с курсом обмена валюты.
+    /// Response with the exchange rate of a currency
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="ExchangeRateResponse"/>.
+    /// Initializes a new instance of <see cref="ExchangeRateResponse"/>
     /// </remarks>
-    /// <param name="currencyCode">Код валюты.</param>
-    /// <param name="rate">Курс обмена.</param>
+    /// <param name="currencyCode">Currency code</param>
+    /// <param name="rate">Exchange rate</param>
     public class ExchangeRateResponse(string currencyCode, decimal rate)
     {
         /// <summary>
-        /// Код валюты.
+        /// Currency code
         /// </summary>
         public string CurrencyCode { get; set; } = currencyCode;
 
         /// <summary>
-        /// Курс обмена.
+        /// Exchange rate
         /// </summary>
         public decimal Rate { get; set; } = rate;
     }

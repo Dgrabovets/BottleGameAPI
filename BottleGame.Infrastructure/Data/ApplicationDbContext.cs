@@ -5,93 +5,93 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BottleGame.Infrastructure.Data
 {
     /// <summary>
-    /// Контекст базы данных приложения
+    /// Application database context
     /// </summary>
     /// <remarks>
-    /// Инициализирует контекст базы данных
+    /// Initializes the database context
     /// </remarks>
-    /// <param name="options">Опции контекста</param>
+    /// <param name="options">Context options</param>
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
     {
         #region DbSets
 
         /// <summary>
-        /// Игроки
+        /// Players
         /// </summary>
         public DbSet<Player> Players { get; set; } = null!;
 
         /// <summary>
-        /// Баны игроков
+        /// Player bans
         /// </summary>
         public DbSet<Ban> Bans { get; set; } = null!;
 
         /// <summary>
-        /// История банов
+        /// Ban history
         /// </summary>
         public DbSet<BanHistoryEntity> BansHistory { get; set; } = null!;
 
         /// <summary>
-        /// Игровые параметры
+        /// Game parameters
         /// </summary>
         public DbSet<GameParams> GameParams { get; set; } = null!;
 
         /// <summary>
-        /// Игровые раунды
+        /// Game rounds
         /// </summary>
         public DbSet<GameRound> GameRounds { get; set; } = null!;
 
         /// <summary>
-        /// Балансы игроков
+        /// Player balances
         /// </summary>
         public DbSet<Balance> PlayersBalances { get; set; } = null!;
 
         /// <summary>
-        /// Администраторы
+        /// Administrators
         /// </summary>
         public DbSet<AdministrationRoleUser> AdminCreds { get; set; } = null!;
 
         /// <summary>
-        /// Реферальные ссылки
+        /// Referral links
         /// </summary>
         public DbSet<ReferralLink> ReferralLinks { get; set; } = null!;
 
         /// <summary>
-        /// Приглашённые игроки
+        /// Invited players
         /// </summary>
         public DbSet<InvitedPlayer> InvitedPlayers { get; set; } = null!;
 
         /// <summary>
-        /// Типы транзакций
+        /// Transaction types
         /// </summary>
         public DbSet<TransactionType> TransactionTypes { get; set; } = null!;
 
         /// <summary>
-        /// Статусы транзакций
+        /// Transaction statuses
         /// </summary>
         public DbSet<TransactionStatus> TransactionStatuses { get; set; } = null!;
 
         /// <summary>
-        /// Денежные транзакции
+        /// Money transactions
         /// </summary>
         public DbSet<MoneyTransaction> MoneyTransactions { get; set; } = null!;
 
         /// <summary>
-        /// Опции игроков
+        /// Player options
         /// </summary>
         public DbSet<PlayerOptions> PlayersOptions { get; set; } = null!;
 
         /// <summary>
-        /// Баланс приложения
+        /// Application balance
         /// </summary>
         public DbSet<AppBalance> AppBalance { get; set; } = null!;
 
         /// <summary>
-        /// Статистика сыгранных раундов для вывода
+        /// Statistics of the rounds played for a withdrawal
         /// </summary>
         public DbSet<PlayerPlayedRoundsStatisticForWithdrawal> PlayersPlayedRoundsStatisticForWithdrawals { get; set; } = null!;
 
         /// <summary>
-        /// Логи вебхуков платёжного процессинга.
+        /// Logs of payment processing webhooks
         /// </summary>
         public DbSet<ProcessingWebhookLog> ProcessingWebhookLogs { get; set; } = null!;
 
@@ -100,19 +100,19 @@ namespace BottleGame.Infrastructure.Data
         #region Configuration
 
         /// <summary>
-        /// Настраивает модель данных
+        /// Configures the data model
         /// </summary>
-        /// <param name="modelBuilder">Построитель модели</param>
+        /// <param name="modelBuilder">Model builder</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Применяем все конфигурации из текущей сборки
+            // Apply all configurations from the current assembly
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
-            // MSK TimeZone Converter: MSK ↔ UTC для всех DateTime полей
+            // MSK TimeZone Converter: MSK ↔ UTC for all DateTime fields
             var mskConverter = new ValueConverter<DateTime, DateTime>(
-                // Сохраняем в БД как UTC
+                // Save to the database as UTC
                 v => DateTime.SpecifyKind(v, DateTimeKind.Unspecified).ToUniversalTime(),
-                // Читаем из БД как MSK
+                // Read from the database as MSK
                 v => TimeZoneInfo.ConvertTimeFromUtc(v, TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time"))
             );
 
@@ -121,7 +121,7 @@ namespace BottleGame.Infrastructure.Data
                 v => v.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(v.Value, TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time")) : null
             );
 
-            // Применить ко всем DateTime полям во всех сущностях
+            // Apply to all DateTime fields in all entities
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
                 foreach (var property in entityType.GetProperties())

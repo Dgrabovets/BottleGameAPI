@@ -5,24 +5,24 @@ using BottleGame.Application.DTOs.Responses;
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Статистика приложения
+    /// Application statistics
     /// </summary>
     public interface IStatisticsService
     {
         #region Statistics Methods
 
         /// <summary>
-        /// Получить статистику для администратора
+        /// Gets the statistics for the administrator
         /// </summary>
-        /// <param name="request">Опциональный период</param>
-        /// <returns>Административная статистика</returns>
+        /// <param name="request">Optional period</param>
+        /// <returns>Administration statistics</returns>
         Task<Result<GetAppGeneralStatisticsResponse>> GetStatistics(GetAppGeneralStatisticsRequest? request = null);
 
         /// <summary>
-        /// Получить временную шкалу статистики для графиков
+        /// Gets the statistics timeline for charts
         /// </summary>
-        /// <param name="request">Период</param>
-        /// <returns>Точки шкалы</returns>
+        /// <param name="request">Period</param>
+        /// <returns>Points of the timeline</returns>
         Task<Result<GetAppStatisticsTimelineResponse>> GetStatisticsTimeline(GetAppStatisticsTimelineRequest request);
 
         #endregion Statistics Methods

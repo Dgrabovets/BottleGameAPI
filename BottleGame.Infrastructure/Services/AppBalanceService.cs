@@ -1,39 +1,37 @@
-using Microsoft.Extensions.Logging;
 using BottleGame.Application.Common;
-using BottleGame.Domain.Entities;
-using BottleGame.Domain.Constants;
-using BottleGame.Infrastructure.Data;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
-using Microsoft.EntityFrameworkCore;
 using BottleGame.Application.Interfaces;
+using BottleGame.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
-    /// Сервис баланса приложения
+    /// Application balance service
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="AppBalanceService"/>
+    /// Initializes a new instance of <see cref="AppBalanceService"/>
     /// </remarks>
-    /// <param name="context">Контекст базы данных</param>
-    /// <param name="logger">Логгер</param>
+    /// <param name="context">Database context</param>
+    /// <param name="logger">Logger</param>
     public class AppBalanceService(ApplicationDbContext context, ILogger<AppBalanceService> logger) : IAppBalanceService
     {
         #region Fields
 
         /// <summary>
-        /// Контекст базы данных
+        /// Database context
         /// </summary>
         private readonly ApplicationDbContext _context = context;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<AppBalanceService> _logger = logger;
 
         /// <summary>
-        /// Префикс для логов
+        /// Log prefix
         /// </summary>
         private const string Prefix = "[AppBalanceService]";
 
@@ -48,8 +46,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (balance is null)
             {
-                _logger.LogWarning("{Prefix} Запись баланса приложения не найдена", Prefix);
-                return Result<AppBalanceDTO>.NotFound("Баланс приложения не инициализирован");
+                _logger.LogWarning("{Prefix} Application balance record not found", Prefix);
+                return Result<AppBalanceDTO>.NotFound("Application balance is not initialized");
             }
 
             var admins = await _context.AdminCreds.ToDictionaryAsync(m => m.Id, m => m.Login);
@@ -81,8 +79,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} Не найдены данные для обновления, скорее всего нарушена целостность данных", Prefix);
-                return Result.Failure("Не найдены данные для обновления, скорее всего нарушена целостность данных");
+                _logger.LogWarning("{Prefix} No data found to update, the data integrity is probably broken", Prefix);
+                return Result.Failure("No data found to update, the data integrity is probably broken");
             }
 
             appBalance.LowerThreshold = request.LowerThreshold;
@@ -91,7 +89,7 @@ namespace BottleGame.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Обновлен нижний порог для баланса приложения: {LowerThreshold}", Prefix, request.LowerThreshold);
+            _logger.LogInformation("{Prefix} Lower threshold of the application balance updated: {LowerThreshold}", Prefix, request.LowerThreshold);
 
             return Result.Success();
         }
@@ -101,16 +99,16 @@ namespace BottleGame.Infrastructure.Services
         {
             if (request.Amount <= 0)
             {
-                _logger.LogWarning("{Prefix} Сумма пополнения должна быть положительной: {Amount}", Prefix, request.Amount);
-                return Result<decimal>.Failure("Сумма пополнения должна быть положительной");
+                _logger.LogWarning("{Prefix} Top-up amount must be positive: {Amount}", Prefix, request.Amount);
+                return Result<decimal>.Failure("Top-up amount must be positive");
             }
 
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
 
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} Не найдены данные баланса приложения", Prefix);
-                return Result<decimal>.Failure("Не найдены данные баланса приложения");
+                _logger.LogWarning("{Prefix} Application balance data not found", Prefix);
+                return Result<decimal>.Failure("Application balance data not found");
             }
 
             appBalance.Amount += request.Amount;
@@ -119,7 +117,7 @@ namespace BottleGame.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Баланс приложения пополнен на {Amount}. Новый баланс: {NewBalance}",
+            _logger.LogInformation("{Prefix} Application balance topped up by {Amount}. New balance: {NewBalance}",
                 Prefix, request.Amount, appBalance.Amount);
 
             return Result<decimal>.Success(appBalance.Amount);

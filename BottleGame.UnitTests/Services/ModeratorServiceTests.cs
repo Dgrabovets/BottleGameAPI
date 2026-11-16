@@ -10,22 +10,22 @@ using Moq;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Тесты для ModeratorService
+/// Tests for ModeratorService
 /// </summary>
 public class ModeratorServiceTests : IDisposable
 {
     /// <summary>
-    /// Database context of the test.
+    /// Database context of the test
     /// </summary>
     private readonly Infrastructure.Data.ApplicationDbContext _context;
 
     /// <summary>
-    /// The moderator service under test.
+    /// The moderator service under test
     /// </summary>
     private readonly ModeratorService _moderatorService;
 
     /// <summary>
-    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// Creates the test fixture: the database, the mocks and the object under test
     /// </summary>
     public ModeratorServiceTests()
     {
@@ -34,6 +34,7 @@ public class ModeratorServiceTests : IDisposable
 
         passwordHasherMock.Setup(x => x.HashWithSalt(It.IsAny<string>()))
             .Returns((string pwd) => ($"hashed_{pwd}", "salt"));
+
         passwordHasherMock.Setup(x => x.Verify(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns((string hash, string pwd, string salt) => hash == $"hashed_{pwd}");
 
@@ -41,7 +42,7 @@ public class ModeratorServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Releases the database context used by the tests.
+    /// Releases the database context used by the tests
     /// </summary>
     public void Dispose()
     {
@@ -52,7 +53,7 @@ public class ModeratorServiceTests : IDisposable
     #region RegisterModerator Tests
 
     /// <summary>
-    /// Register moderator: success.
+    /// Register moderator: success
     /// </summary>
     [Fact]
     public async Task RegisterModerator_Success()
@@ -71,7 +72,7 @@ public class ModeratorServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Register moderator: already exists; returns conflict.
+    /// Register moderator: already exists; returns conflict
     /// </summary>
     [Fact]
     public async Task RegisterModerator_AlreadyExists_ReturnsConflict()
@@ -85,6 +86,7 @@ public class ModeratorServiceTests : IDisposable
             Role = AdministrationRoles.Moderator,
             CreatedAt = DateTime.UtcNow
         });
+
         await _context.SaveChangesAsync();
 
         var request = new AdministrationRoleUserCredentials { Login = "existing", Password = "password123" };
@@ -102,7 +104,7 @@ public class ModeratorServiceTests : IDisposable
     #region GetModerators Tests
 
     /// <summary>
-    /// Get moderators: returns all moderators.
+    /// Get moderators: returns all moderators
     /// </summary>
     [Fact]
     public async Task GetModerators_ReturnsAllModerators()
@@ -113,6 +115,7 @@ public class ModeratorServiceTests : IDisposable
             new AdministrationRoleUser { Login = "mod2", PasswordHash = "h2", Salt = "s2", Role = AdministrationRoles.Moderator, CreatedAt = DateTime.UtcNow },
             new AdministrationRoleUser { Login = "admin", PasswordHash = "h3", Salt = "s3", Role = AdministrationRoles.Admin, CreatedAt = DateTime.UtcNow }
         );
+
         await _context.SaveChangesAsync();
 
         // Act
@@ -129,7 +132,7 @@ public class ModeratorServiceTests : IDisposable
     #region DeleteModerator Tests
 
     /// <summary>
-    /// Delete moderator: not found; returns not found.
+    /// Delete moderator: not found; returns not found
     /// </summary>
     [Fact]
     public async Task DeleteModerator_NotFound_ReturnsNotFound()
@@ -143,7 +146,7 @@ public class ModeratorServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Delete moderator: success.
+    /// Delete moderator: success
     /// </summary>
     [Fact]
     public async Task DeleteModerator_Success()
@@ -157,6 +160,7 @@ public class ModeratorServiceTests : IDisposable
             Role = AdministrationRoles.Moderator,
             CreatedAt = DateTime.UtcNow
         };
+
         _context.AdminCreds.Add(moderator);
         await _context.SaveChangesAsync();
 

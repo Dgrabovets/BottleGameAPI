@@ -4,35 +4,35 @@ using BottleGame.Domain.Entities;
 namespace BottleGame.Infrastructure.Services.Payments
 {
     /// <summary>
-    /// Обработка пополнений и выводов. Реализация выбирается по режиму процессинга:
-    /// Simulated завершает операции локально, Live работает через платёжного провайдера
+    /// Handling of deposits and withdrawals. The implementation is chosen by the processing mode:
+    /// Simulated completes operations locally, Live works through the payment provider
     /// </summary>
     public interface ITransactionProcessor
     {
         /// <summary>
-        /// Проверяет условия, при которых игрок может создать пополнение или вывод
+        /// Checks the conditions under which a player can create a deposit or a withdrawal
         /// </summary>
-        /// <param name="player">Игрок</param>
-        /// <param name="isDeposit">true для пополнения, false для вывода</param>
-        /// <param name="gameParams">Игровые параметры</param>
-        /// <returns>Успех или причина отказа</returns>
+        /// <param name="player">Player</param>
+        /// <param name="isDeposit">true for a deposit, false for a withdrawal</param>
+        /// <param name="gameParams">Game parameters</param>
+        /// <returns>Success or the reason for the refusal</returns>
         Task<Result> CheckRequestAsync(Player player, bool isDeposit, GameParams gameParams);
 
         /// <summary>
-        /// Запускает пополнение для уже созданной транзакции
+        /// Starts a deposit for an already created transaction
         /// </summary>
-        /// <param name="transaction">Транзакция пополнения</param>
-        /// <param name="player">Игрок с загруженными настройками и балансом</param>
-        /// <returns>Данные для ответа клиенту (ссылка на оплату и идентификатор ордера) или ошибка</returns>
+        /// <param name="transaction">Deposit transaction</param>
+        /// <param name="player">Player with loaded settings and balance</param>
+        /// <returns>Data for the client response (payment link and order identifier) or an error</returns>
         Task<Result<object?>> StartDepositAsync(MoneyTransaction transaction, Player player);
 
         /// <summary>
-        /// Одобряет вывод: проверяет условия и отправляет выплату
+        /// Approves a withdrawal: checks the conditions and sends the payout
         /// </summary>
-        /// <param name="transaction">Транзакция вывода с игроком, его балансом и настройками</param>
-        /// <param name="gameParams">Игровые параметры</param>
-        /// <param name="appBalance">Баланс приложения</param>
-        /// <returns>Успех или причина отказа</returns>
+        /// <param name="transaction">Withdrawal transaction with the player, their balance and settings</param>
+        /// <param name="gameParams">Game parameters</param>
+        /// <param name="appBalance">Application balance</param>
+        /// <returns>Success or the reason for the refusal</returns>
         Task<Result> ApproveWithdrawalAsync(MoneyTransaction transaction, GameParams gameParams, AppBalance appBalance);
     }
 }

@@ -1,22 +1,22 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ о статусе активности валюты.
+    /// Response about the activity status of a currency
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="CurrencyActiveResponse"/>.
+    /// Initializes a new instance of <see cref="CurrencyActiveResponse"/>
     /// </remarks>
-    /// <param name="currencyCode">Код валюты.</param>
-    /// <param name="isActive">Активна ли валюта.</param>
+    /// <param name="currencyCode">Currency code</param>
+    /// <param name="isActive">Whether the currency is active</param>
     public class CurrencyActiveResponse(string currencyCode, bool isActive)
     {
         /// <summary>
-        /// Код валюты.
+        /// Currency code
         /// </summary>
         public string CurrencyCode { get; set; } = currencyCode;
 
         /// <summary>
-        /// Активна ли валюта.
+        /// Whether the currency is active
         /// </summary>
         public bool IsActive { get; set; } = isActive;
     }

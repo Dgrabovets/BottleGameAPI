@@ -8,15 +8,15 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BottleGame.UnitTests;
 
 /// <summary>
-/// Checks that the infrastructure registrations build and choose the processor by processing mode.
+/// Checks that the infrastructure registrations build and choose the processor by processing mode
 /// </summary>
 public class DependencyInjectionTests
 {
     /// <summary>
-    /// Builds a service provider with the given processing mode.
+    /// Builds a service provider with the given processing mode
     /// </summary>
-    /// <param name="mode">Mode.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="mode">Mode</param>
+    /// <returns>The created value</returns>
     private static ServiceProvider BuildProvider(string mode)
     {
         var configuration = new ConfigurationBuilder()
@@ -40,10 +40,10 @@ public class DependencyInjectionTests
     }
 
     /// <summary>
-    /// The processing mode selects the matching transaction processor.
+    /// The processing mode selects the matching transaction processor
     /// </summary>
-    /// <param name="mode">Mode.</param>
-    /// <param name="expected">Expected.</param>
+    /// <param name="mode">Mode</param>
+    /// <param name="expected">Expected</param>
     [Theory]
     [InlineData("Simulated", typeof(SimulatedTransactionProcessor))]
     [InlineData("Live", typeof(LiveTransactionProcessor))]
@@ -56,9 +56,9 @@ public class DependencyInjectionTests
     }
 
     /// <summary>
-    /// The application services can be resolved from the container.
+    /// The application services can be resolved from the container
     /// </summary>
-    /// <param name="serviceType">Service type.</param>
+    /// <param name="serviceType">Service type</param>
     [Theory]
     [InlineData(typeof(ITransactionService))]
     [InlineData(typeof(IPlayerService))]

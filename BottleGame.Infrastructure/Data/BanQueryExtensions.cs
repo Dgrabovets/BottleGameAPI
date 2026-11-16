@@ -4,12 +4,12 @@ using Microsoft.EntityFrameworkCore;
 namespace BottleGame.Infrastructure.Data
 {
     /// <summary>
-    /// Расширения запросов для фильтрации по активному бану
+    /// Query extensions for filtering by an active ban
     /// </summary>
     public static class BanQueryExtensions
     {
         /// <summary>
-        /// Возвращает ID игроков с активным баном
+        /// Returns the ids of players with an active ban
         /// </summary>
         public static Task<List<int>> GetActivelyBannedPlayerIdsAsync(
             this ApplicationDbContext context) =>
@@ -20,7 +20,7 @@ namespace BottleGame.Infrastructure.Data
                 .ToListAsync();
 
         /// <summary>
-        /// Исключает игроков с активным баном
+        /// Excludes players with an active ban
         /// </summary>
         public static IQueryable<Player> WhereNotActivelyBanned(
             this IQueryable<Player> query,
@@ -35,7 +35,7 @@ namespace BottleGame.Infrastructure.Data
         }
 
         /// <summary>
-        /// Исключает транзакции игроков с активным баном
+        /// Excludes transactions of players with an active ban
         /// </summary>
         public static IQueryable<MoneyTransaction> WherePlayerNotActivelyBanned(
             this IQueryable<MoneyTransaction> query,
@@ -50,7 +50,7 @@ namespace BottleGame.Infrastructure.Data
         }
 
         /// <summary>
-        /// Исключает балансы игроков с активным баном
+        /// Excludes balances of players with an active ban
         /// </summary>
         public static IQueryable<Balance> WherePlayerNotActivelyBanned(
             this IQueryable<Balance> query,

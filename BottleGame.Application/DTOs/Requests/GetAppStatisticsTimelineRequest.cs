@@ -1,17 +1,17 @@
 namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Запрос временной шкалы статистики
+    /// Statistics timeline request
     /// </summary>
     public class GetAppStatisticsTimelineRequest
     {
         /// <summary>
-        /// Начало периода (включительно, UTC)
+        /// Start of the period (inclusive, UTC)
         /// </summary>
         public DateTime DateFrom { get; set; }
 
         /// <summary>
-        /// Конец периода (включительно, UTC)
+        /// End of the period (inclusive, UTC)
         /// </summary>
         public DateTime DateTill { get; set; }
     }

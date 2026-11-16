@@ -1,26 +1,26 @@
-using System.Globalization;
-using System.Net;
-using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using BottleGame.Application.DTOs.Processing;
 using BottleGame.Application.Interfaces;
 using BottleGame.Infrastructure.External.Processing;
 using BottleGame.Infrastructure.External.YooKassa.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Globalization;
+using System.Net;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 
 namespace BottleGame.Infrastructure.External.YooKassa
 {
     /// <summary>
-    /// Платёжный провайдер на базе API ЮKassa v3.
+    /// Payment provider based on the YooKassa API v3
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="YooKassaPaymentProvider"/>.
+    /// Initializes a new instance of <see cref="YooKassaPaymentProvider"/>
     /// </remarks>
-    /// <param name="httpClient">HTTP-клиент с базовым адресом API.</param>
-    /// <param name="options">Настройки провайдера.</param>
-    /// <param name="logger">Логгер.</param>
+    /// <param name="httpClient">HTTP client with the API base address</param>
+    /// <param name="options">Provider settings</param>
+    /// <param name="logger">Logger</param>
     public class YooKassaPaymentProvider(
         HttpClient httpClient,
         IOptions<ProcessingOptions> options,
@@ -29,52 +29,52 @@ namespace BottleGame.Infrastructure.External.YooKassa
         #region Fields
 
         /// <summary>
-        /// HTTP-клиент.
+        /// HTTP client
         /// </summary>
         private readonly HttpClient _httpClient = httpClient;
 
         /// <summary>
-        /// Настройки провайдера.
+        /// Provider settings
         /// </summary>
         private readonly ProcessingOptions _options = options.Value;
 
         /// <summary>
-        /// Логгер.
+        /// Logger
         /// </summary>
         private readonly ILogger<YooKassaPaymentProvider> _logger = logger;
 
         /// <summary>
-        /// Префикс для логов.
+        /// Log prefix
         /// </summary>
         private const string Prefix = "[YooKassa]";
 
         /// <summary>
-        /// Код единственной поддерживаемой валюты.
+        /// Code of the only supported currency
         /// </summary>
         private const string RubCode = "rub";
 
         /// <summary>
-        /// Код способа приёма платежей: игрок выбирает способ на странице ЮKassa.
+        /// Code of the way of accepting payments: the player chooses the method on the YooKassa page
         /// </summary>
         private const string PaymentGatewayCode = "yookassa";
 
         /// <summary>
-        /// Код способа выплаты через СБП.
+        /// Code of the payout method through SBP
         /// </summary>
         private const string SbpGatewayCode = "sbp";
 
         /// <summary>
-        /// Максимальная длина описания платежа в ЮKassa.
+        /// Maximum length of a payment description in YooKassa
         /// </summary>
         private const int MaxDescriptionLength = 128;
 
         /// <summary>
-        /// Ключ метаданных с идентификатором транзакции приложения.
+        /// Metadata key with the application transaction identifier
         /// </summary>
         private const string TransactionIdKey = "transaction_id";
 
         /// <summary>
-        /// Настройки JSON.
+        /// JSON settings
         /// </summary>
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -84,7 +84,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
 
         /// <inheritdoc/>
         public Task<IEnumerable<CurrencyInfo>> GetCurrenciesAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IEnumerable<CurrencyInfo>>([new CurrencyInfo(RubCode, "Российский рубль", isActive: true)]);
+            Task.FromResult<IEnumerable<CurrencyInfo>>([new CurrencyInfo(RubCode, "Russian ruble", isActive: true)]);
 
         /// <inheritdoc/>
         public Task<IEnumerable<PaymentGatewayInfo>> GetPaymentGatewaysAsync(CancellationToken cancellationToken = default) =>
@@ -92,7 +92,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
             [
                 new PaymentGatewayInfo(
                     code: PaymentGatewayCode,
-                    name: "ЮKassa",
+                    name: "YooKassa",
                     currency: RubCode,
                     supportsPayments: true,
                     supportsPayouts: false,
@@ -100,7 +100,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
                     maxAmount: null),
                 new PaymentGatewayInfo(
                     code: SbpGatewayCode,
-                    name: "СБП",
+                    name: "SBP",
                     currency: RubCode,
                     supportsPayments: false,
                     supportsPayouts: true,
@@ -141,7 +141,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
             var url = payment?.Confirmation?.ConfirmationUrl;
             if (payment is null || string.IsNullOrEmpty(url))
             {
-                return new CreatePaymentResult(false, payment?.Id, null, "ЮKassa не вернула ссылку на оплату");
+                return new CreatePaymentResult(false, payment?.Id, null, "YooKassa did not return a payment link");
             }
 
             return new CreatePaymentResult(true, payment.Id, url, null);
@@ -152,17 +152,17 @@ namespace BottleGame.Infrastructure.External.YooKassa
         {
             if (string.IsNullOrWhiteSpace(_options.PayoutAgentId) || string.IsNullOrWhiteSpace(_options.PayoutSecretKey))
             {
-                return new CreatePayoutResult(false, null, "Выплаты не настроены: задайте Processing:PayoutAgentId и Processing:PayoutSecretKey");
+                return new CreatePayoutResult(false, null, "Payouts are not configured: set Processing:PayoutAgentId and Processing:PayoutSecretKey");
             }
 
             if (!request.Gateway.Equals(SbpGatewayCode, StringComparison.OrdinalIgnoreCase))
             {
-                return new CreatePayoutResult(false, null, $"Способ выплаты '{request.Gateway}' не поддерживается");
+                return new CreatePayoutResult(false, null, $"Payout method '{request.Gateway}' is not supported");
             }
 
             if (!TryParseSbpDestination(request.Destination, out var destination))
             {
-                return new CreatePayoutResult(false, null, "Реквизиты для СБП должны быть в формате «телефон:идентификатор банка»");
+                return new CreatePayoutResult(false, null, "SBP details must be in the format 'phone:bank id'");
             }
 
             var body = new YooKassaCreateRequest
@@ -183,7 +183,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
 
             var payout = JsonSerializer.Deserialize<YooKassaOperation>(json, JsonOptions);
             return payout is null || string.IsNullOrEmpty(payout.Id)
-                ? new CreatePayoutResult(false, null, "ЮKassa вернула пустой ответ")
+                ? new CreatePayoutResult(false, null, "YooKassa returned an empty response")
                 : new CreatePayoutResult(true, payout.Id, null);
         }
 
@@ -200,28 +200,28 @@ namespace BottleGame.Infrastructure.External.YooKassa
             GetOperationAsync("payouts", payoutId, _options.PayoutAgentId, _options.PayoutSecretKey, cancellationToken);
 
         /// <summary>
-        /// Запрашивает платёж или выплату по идентификатору.
+        /// Requests a payment or payout by identifier
         /// </summary>
-        /// <param name="collection">Раздел API: payments или payouts.</param>
-        /// <param name="id">Идентификатор у провайдера.</param>
-        /// <param name="login">Идентификатор магазина или шлюза.</param>
-        /// <param name="secret">Секретный ключ.</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
-        /// <returns>Операция или null, если провайдер её не знает.</returns>
-        /// <exception cref="HttpRequestException">Провайдер ответил ошибкой, отличной от «не найдено».</exception>
+        /// <param name="collection">API section: payments or payouts</param>
+        /// <param name="id">Identifier at the provider</param>
+        /// <param name="login">Shop or gateway identifier</param>
+        /// <param name="secret">Secret key</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>The operation or null if the provider does not know it</returns>
+        /// <exception cref="HttpRequestException">The provider responded with an error other than "not found"</exception>
         private async Task<ProviderOperation?> GetOperationAsync(string collection, string id, string login, string secret, CancellationToken cancellationToken)
         {
             var (status, json) = await SendAsync(HttpMethod.Get, $"{collection}/{Uri.EscapeDataString(id)}", login, secret, null, null, cancellationToken);
 
             if (status is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
             {
-                _logger.LogWarning("{Prefix} Объект {Collection}/{Id} не найден: {Error}", Prefix, collection, id, ReadError(json));
+                _logger.LogWarning("{Prefix} Object {Collection}/{Id} not found: {Error}", Prefix, collection, id, ReadError(json));
                 return null;
             }
 
             if (!IsSuccess(status))
             {
-                throw new HttpRequestException($"ЮKassa ответила {(int)status}: {ReadError(json)}");
+                throw new HttpRequestException($"YooKassa responded {(int)status}: {ReadError(json)}");
             }
 
             var operation = JsonSerializer.Deserialize<YooKassaOperation>(json, JsonOptions);
@@ -229,10 +229,10 @@ namespace BottleGame.Infrastructure.External.YooKassa
         }
 
         /// <summary>
-        /// Преобразует ответ ЮKassa в операцию провайдера.
+        /// Converts a YooKassa response into a provider operation
         /// </summary>
-        /// <param name="operation">Платёж или выплата в формате ЮKassa.</param>
-        /// <returns>Операция провайдера.</returns>
+        /// <param name="operation">Payment or payout in the YooKassa format</param>
+        /// <returns>Provider operation</returns>
         private static ProviderOperation ToProviderOperation(YooKassaOperation operation)
         {
             var status = operation.Status switch
@@ -249,8 +249,8 @@ namespace BottleGame.Infrastructure.External.YooKassa
                     : null;
 
             var reason = operation.CancellationDetails is { } details
-                ? $"{details.Party}/{details.Reason}"
-                : null;
+                           ? $"{details.Party}/{details.Reason}"
+                           : null;
 
             var amount = decimal.TryParse(operation.Amount?.Value, NumberStyles.Number, CultureInfo.InvariantCulture, out var value) ? value : 0m;
 
@@ -262,16 +262,16 @@ namespace BottleGame.Infrastructure.External.YooKassa
         #region HTTP
 
         /// <summary>
-        /// Отправляет запрос в ЮKassa с Basic-авторизацией.
+        /// Sends a request to YooKassa with Basic authorization
         /// </summary>
-        /// <param name="method">HTTP-метод.</param>
-        /// <param name="path">Путь относительно базового адреса.</param>
-        /// <param name="login">Идентификатор магазина или шлюза.</param>
-        /// <param name="secret">Секретный ключ.</param>
-        /// <param name="body">Тело запроса или null.</param>
-        /// <param name="idempotenceKey">Ключ идемпотентности для POST.</param>
-        /// <param name="cancellationToken">Токен отмены.</param>
-        /// <returns>Код ответа и тело ответа.</returns>
+        /// <param name="method">HTTP method</param>
+        /// <param name="path">Path relative to the base address</param>
+        /// <param name="login">Shop or gateway identifier</param>
+        /// <param name="secret">Secret key</param>
+        /// <param name="body">Request body or null</param>
+        /// <param name="idempotenceKey">Idempotence key for POST</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Response code and response body</returns>
         private async Task<(HttpStatusCode Status, string Body)> SendAsync(
             HttpMethod method,
             string path,
@@ -306,27 +306,27 @@ namespace BottleGame.Infrastructure.External.YooKassa
         }
 
         /// <summary>
-        /// Проверяет, что код ответа успешный.
+        /// Checks that the response code is successful
         /// </summary>
-        /// <param name="status">Код ответа.</param>
-        /// <returns>true для кодов 2xx.</returns>
+        /// <param name="status">Response code</param>
+        /// <returns>true for 2xx codes</returns>
         private static bool IsSuccess(HttpStatusCode status) => (int)status is >= 200 and < 300;
 
         /// <summary>
-        /// Достаёт описание ошибки из тела ответа.
+        /// Extracts the error description from the response body
         /// </summary>
-        /// <param name="json">Тело ответа.</param>
-        /// <returns>Описание ошибки.</returns>
+        /// <param name="json">Response body</param>
+        /// <returns>Error description</returns>
         private static string ReadError(string json)
         {
             try
             {
                 var error = JsonSerializer.Deserialize<YooKassaError>(json, JsonOptions);
-                return error?.Description ?? error?.Code ?? "Неизвестная ошибка ЮKassa";
+                return error?.Description ?? error?.Code ?? "Unknown YooKassa error";
             }
             catch (JsonException)
             {
-                return "Неизвестная ошибка ЮKassa";
+                return "Unknown YooKassa error";
             }
         }
 
@@ -335,11 +335,11 @@ namespace BottleGame.Infrastructure.External.YooKassa
         #region Helpers
 
         /// <summary>
-        /// Формирует сумму в формате ЮKassa.
+        /// Builds the amount in the YooKassa format
         /// </summary>
-        /// <param name="amount">Сумма.</param>
-        /// <param name="currency">Код валюты.</param>
-        /// <returns>Сумма с копейками и валютой в верхнем регистре.</returns>
+        /// <param name="amount">Amount</param>
+        /// <param name="currency">Currency code</param>
+        /// <returns>Amount with kopecks and the currency in upper case</returns>
         private static YooKassaAmount ToYooKassaAmount(decimal amount, string currency) => new()
         {
             Value = amount.ToString("0.00", CultureInfo.InvariantCulture),
@@ -347,20 +347,20 @@ namespace BottleGame.Infrastructure.External.YooKassa
         };
 
         /// <summary>
-        /// Обрезает строку до допустимой длины.
+        /// Truncates the string to the allowed length
         /// </summary>
-        /// <param name="value">Строка.</param>
-        /// <param name="maxLength">Максимальная длина.</param>
-        /// <returns>Строка не длиннее maxLength.</returns>
+        /// <param name="value">String</param>
+        /// <param name="maxLength">Maximum length</param>
+        /// <returns>String no longer than maxLength</returns>
         private static string Truncate(string value, int maxLength) =>
             value.Length <= maxLength ? value : value[..maxLength];
 
         /// <summary>
-        /// Разбирает реквизиты СБП в формате «телефон:идентификатор банка».
+        /// Parses SBP details in the format "phone:bank identifier"
         /// </summary>
-        /// <param name="destination">Реквизиты из настроек игрока.</param>
-        /// <param name="result">Получатель выплаты.</param>
-        /// <returns>true, если формат верный.</returns>
+        /// <param name="destination">Details from the player settings</param>
+        /// <param name="result">Payout recipient</param>
+        /// <returns>true if the format is correct</returns>
         private static bool TryParseSbpDestination(string destination, out YooKassaPayoutDestination result)
         {
             result = new YooKassaPayoutDestination();

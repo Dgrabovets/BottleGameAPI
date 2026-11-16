@@ -1,48 +1,48 @@
 namespace BottleGame.Infrastructure.External.Processing
 {
     /// <summary>
-    /// Настройки платёжного провайдера (ЮKassa).
+    /// Payment provider settings (YooKassa)
     /// </summary>
     public class ProcessingOptions
     {
         /// <summary>
-        /// Режим работы с платёжным провайдером. Задаётся через Processing__Mode.
+        /// Mode of working with the payment provider. Set through Processing__Mode
         /// </summary>
-        /// <remarks>По умолчанию: Simulated. Для реальных платежей укажите Live.</remarks>
+        /// <remarks>Default: Simulated. Set Live for real payments</remarks>
         public ProcessingMode Mode { get; set; } = ProcessingMode.Simulated;
 
         /// <summary>
-        /// Базовый URL API ЮKassa.
+        /// Base URL of the YooKassa API
         /// </summary>
         public string BaseUrl { get; set; } = "https://api.yookassa.ru/v3/";
 
         /// <summary>
-        /// Идентификатор магазина для приёма платежей. Задаётся через Processing__ShopId.
+        /// Shop identifier for accepting payments. Set through Processing__ShopId
         /// </summary>
         public string ShopId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Секретный ключ магазина. Задаётся через Processing__SecretKey.
+        /// Secret key of the shop. Set through Processing__SecretKey
         /// </summary>
         public string SecretKey { get; set; } = string.Empty;
 
         /// <summary>
-        /// Идентификатор шлюза выплат. Задаётся через Processing__PayoutAgentId; без него выплаты недоступны.
+        /// Payout gateway identifier. Set through Processing__PayoutAgentId; payouts are unavailable without it
         /// </summary>
         public string PayoutAgentId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Секретный ключ шлюза выплат. Задаётся через Processing__PayoutSecretKey.
+        /// Secret key of the payout gateway. Set through Processing__PayoutSecretKey
         /// </summary>
         public string PayoutSecretKey { get; set; } = string.Empty;
 
         /// <summary>
-        /// Адрес страницы, на которую ЮKassa возвращает игрока после оплаты. Задаётся через Processing__ReturnUrl.
+        /// Address of the page YooKassa returns the player to after payment. Set through Processing__ReturnUrl
         /// </summary>
         public string ReturnUrl { get; set; } = string.Empty;
 
         /// <summary>
-        /// Максимальное время ожидания ответа от API в секундах.
+        /// Maximum time to wait for an API response, in seconds
         /// </summary>
         public int TimeoutSeconds { get; set; } = 30;
     }

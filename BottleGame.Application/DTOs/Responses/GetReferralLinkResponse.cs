@@ -1,12 +1,12 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ с реферальной ссылкой
+    /// Response with a referral link
     /// </summary>
     public class GetReferralLinkResponse
     {
         /// <summary>
-        /// Реферальная ссылка
+        /// Referral link
         /// </summary>
         public string ReferralLink { get; set; } = string.Empty;
     }

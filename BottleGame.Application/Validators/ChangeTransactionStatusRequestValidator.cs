@@ -1,19 +1,22 @@
-﻿using BottleGame.Domain.Constants;
-using BottleGame.Application.DTOs.Requests;
+﻿using BottleGame.Application.DTOs.Requests;
+using BottleGame.Domain.Constants;
 using FluentValidation;
 
 namespace BottleGame.Application.Validators
 {
     /// <summary>
-    /// Валидатор для запроса изменения статуса транзакции
+    /// Validator for the transaction status change request
     /// </summary>
     public class ChangeTransactionStatusRequestValidator : AbstractValidator<ChangeTransactionStatusRequest>
     {
+        /// <summary>
+        /// Sets up the validation rules
+        /// </summary>
         public ChangeTransactionStatusRequestValidator()
         {
             RuleFor(x => x.TransactionStatusId)
                 .Must(status => status == TransactionStatuses.Approved || status == TransactionStatuses.Rejected)
-                .WithMessage($"Допустимые статусы: {TransactionStatuses.Approved} (Одобрено), {TransactionStatuses.Rejected} (Отклонено)");
+                .WithMessage($"Allowed statuses: {TransactionStatuses.Approved} (Approved), {TransactionStatuses.Rejected} (Rejected)");
         }
     }
 }

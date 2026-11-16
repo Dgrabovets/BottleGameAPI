@@ -10,37 +10,37 @@ using Moq;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Тесты для PlayerService
+/// Tests for PlayerService
 /// </summary>
 public class PlayerServiceTests : IDisposable
 {
     /// <summary>
-    /// Database context of the test.
+    /// Database context of the test
     /// </summary>
     private readonly Infrastructure.Data.ApplicationDbContext _context;
 
     /// <summary>
-    /// The service under test.
+    /// The service under test
     /// </summary>
     private readonly PlayerService _service;
 
     /// <summary>
-    /// Mock of the logger.
+    /// Mock of the logger
     /// </summary>
     private readonly Mock<ILogger<PlayerService>> _loggerMock;
 
     /// <summary>
-    /// Mock of the currency service.
+    /// Mock of the currency service
     /// </summary>
     private readonly Mock<ICurrencyService> _currencyServiceMock;
 
     /// <summary>
-    /// The statistics service under test.
+    /// The statistics service under test
     /// </summary>
     private readonly PlayerStatisticsService _statisticsService;
 
     /// <summary>
-    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// Creates the test fixture: the database, the mocks and the object under test
     /// </summary>
     public PlayerServiceTests()
     {
@@ -53,7 +53,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Releases the database context used by the tests.
+    /// Releases the database context used by the tests
     /// </summary>
     public void Dispose()
     {
@@ -64,7 +64,7 @@ public class PlayerServiceTests : IDisposable
     #region IsBanned Tests
 
     /// <summary>
-    /// Is banned: player not found; returns not found.
+    /// Is banned: player not found; returns not found
     /// </summary>
     [Fact]
     public async Task IsBanned_PlayerNotFound_ReturnsNotFound()
@@ -78,7 +78,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is banned: player not banned; returns false.
+    /// Is banned: player not banned; returns false
     /// </summary>
     [Fact]
     public async Task IsBanned_PlayerNotBanned_ReturnsFalse()
@@ -95,7 +95,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is banned: player banned; returns true.
+    /// Is banned: player banned; returns true
     /// </summary>
     [Fact]
     public async Task IsBanned_PlayerBanned_ReturnsTrue()
@@ -109,6 +109,7 @@ public class PlayerServiceTests : IDisposable
             BanReason = "Test ban",
             BannedAt = DateTime.UtcNow
         };
+
         _context.Bans.Add(ban);
         await _context.SaveChangesAsync();
 
@@ -126,7 +127,7 @@ public class PlayerServiceTests : IDisposable
     #region GetPlayerById Tests
 
     /// <summary>
-    /// Get player by id: player not found; returns not found.
+    /// Get player by id: player not found; returns not found
     /// </summary>
     [Fact]
     public async Task GetPlayerById_PlayerNotFound_ReturnsNotFound()
@@ -140,7 +141,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get player by id: as admin; returns player.
+    /// Get player by id: as admin; returns player
     /// </summary>
     [Fact]
     public async Task GetPlayerById_AsAdmin_ReturnsPlayer()
@@ -158,7 +159,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get player by id: as player requesting own data; returns player.
+    /// Get player by id: as player requesting own data; returns player
     /// </summary>
     [Fact]
     public async Task GetPlayerById_AsPlayerRequestingOwnData_ReturnsPlayer()
@@ -175,7 +176,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get player by id: as player requesting other data; returns unauthorized.
+    /// Get player by id: as player requesting other data; returns unauthorized
     /// </summary>
     [Fact]
     public async Task GetPlayerById_AsPlayerRequestingOtherData_ReturnsUnauthorized()
@@ -197,7 +198,7 @@ public class PlayerServiceTests : IDisposable
     #region GetAllPlayers Tests
 
     /// <summary>
-    /// Get all players: no players; returns not found.
+    /// Get all players: no players; returns not found
     /// </summary>
     [Fact]
     public async Task GetAllPlayers_NoPlayers_ReturnsNotFound()
@@ -211,7 +212,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get all players: with players; returns all.
+    /// Get all players: with players; returns all
     /// </summary>
     [Fact]
     public async Task GetAllPlayers_WithPlayers_ReturnsAll()
@@ -229,7 +230,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get all players: excludes actively banned.
+    /// Get all players: excludes actively banned
     /// </summary>
     [Fact]
     public async Task GetAllPlayers_ExcludesActivelyBanned()
@@ -246,7 +247,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get all players: search by telegram id; includes banned.
+    /// Get all players: search by telegram id; includes banned
     /// </summary>
     [Fact]
     public async Task GetAllPlayers_SearchByTelegramId_IncludesBanned()
@@ -264,7 +265,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get all players: search no results; returns empty list.
+    /// Get all players: search no results; returns empty list
     /// </summary>
     [Fact]
     public async Task GetAllPlayers_SearchNoResults_ReturnsEmptyList()
@@ -278,7 +279,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get all players: search by name; includes banned.
+    /// Get all players: search by name; includes banned
     /// </summary>
     [Fact]
     public async Task GetAllPlayers_SearchByName_IncludesBanned()
@@ -300,7 +301,7 @@ public class PlayerServiceTests : IDisposable
     #region EditPlayer Tests
 
     /// <summary>
-    /// Edit player: player not found; returns not found.
+    /// Edit player: player not found; returns not found
     /// </summary>
     [Fact]
     public async Task EditPlayer_PlayerNotFound_ReturnsNotFound()
@@ -317,7 +318,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Edit player: update name; success.
+    /// Edit player: update name; success
     /// </summary>
     [Fact]
     public async Task EditPlayer_UpdateName_Success()
@@ -336,7 +337,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Edit player: update balance; as admin, success.
+    /// Edit player: update balance; as admin, success
     /// </summary>
     [Fact]
     public async Task EditPlayer_UpdateBalance_AsAdmin_Success()
@@ -357,7 +358,7 @@ public class PlayerServiceTests : IDisposable
     #region GetPlayerStatistics Tests
 
     /// <summary>
-    /// Get player statistics: player not found; returns not found.
+    /// Get player statistics: player not found; returns not found
     /// </summary>
     [Fact]
     public async Task GetPlayerStatistics_PlayerNotFound_ReturnsNotFound()
@@ -371,7 +372,7 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get player statistics: valid player; returns statistics.
+    /// Get player statistics: valid player; returns statistics
     /// </summary>
     [Fact]
     public async Task GetPlayerStatistics_ValidPlayer_ReturnsStatistics()

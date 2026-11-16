@@ -4,19 +4,19 @@ using FluentAssertions;
 namespace BottleGame.UnitTests.External;
 
 /// <summary>
-/// Tests for the processing options validator.
+/// Tests for the processing options validator
 /// </summary>
 public class ProcessingOptionsValidatorTests
 {
     /// <summary>
-    /// The validator under test.
+    /// The validator under test
     /// </summary>
     private readonly ProcessingOptionsValidator _validator = new();
 
     /// <summary>
-    /// Creates valid Live-mode options.
+    /// Creates valid Live-mode options
     /// </summary>
-    /// <returns>The created value.</returns>
+    /// <returns>The created value</returns>
     private static ProcessingOptions ValidLive() => new()
     {
         Mode = ProcessingMode.Live,
@@ -26,7 +26,7 @@ public class ProcessingOptionsValidatorTests
     };
 
     /// <summary>
-    /// Simulated mode needs no provider credentials.
+    /// Simulated mode needs no provider credentials
     /// </summary>
     [Fact]
     public void Simulated_DoesNotRequireCredentials()
@@ -37,7 +37,7 @@ public class ProcessingOptionsValidatorTests
     }
 
     /// <summary>
-    /// Live mode passes when the shop, key and return address are set.
+    /// Live mode passes when the shop, key and return address are set
     /// </summary>
     [Fact]
     public void Live_WithAllRequiredSettings_Succeeds()
@@ -46,7 +46,7 @@ public class ProcessingOptionsValidatorTests
     }
 
     /// <summary>
-    /// Live mode reports every missing setting.
+    /// Live mode reports every missing setting
     /// </summary>
     [Fact]
     public void Live_WithoutCredentialsAndReturnUrl_ReportsEachMissingSetting()
@@ -58,7 +58,7 @@ public class ProcessingOptionsValidatorTests
     }
 
     /// <summary>
-    /// Live mode rejects a relative return address.
+    /// Live mode rejects a relative return address
     /// </summary>
     [Fact]
     public void Live_WithRelativeReturnUrl_Fails()

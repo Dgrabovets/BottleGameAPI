@@ -5,12 +5,18 @@ using Microsoft.Extensions.Configuration;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Тесты для PasswordHasher
+/// Tests for PasswordHasher
 /// </summary>
 public class PasswordHasherTests
 {
+    /// <summary>
+    /// Hasher
+    /// </summary>
     private readonly PasswordHasher _hasher;
 
+    /// <summary>
+    /// Creates the test fixture: the database, the mocks and the object under test
+    /// </summary>
     public PasswordHasherTests()
     {
         var configData = new Dictionary<string, string?>
@@ -25,6 +31,9 @@ public class PasswordHasherTests
         _hasher = new PasswordHasher(config);
     }
 
+    /// <summary>
+    /// Hash: returns non empty string
+    /// </summary>
     [Fact]
     public void Hash_ReturnsNonEmptyString()
     {
@@ -38,6 +47,9 @@ public class PasswordHasherTests
         hash.Should().NotBeNullOrEmpty();
     }
 
+    /// <summary>
+    /// Hash: same input; returns same hash
+    /// </summary>
     [Fact]
     public void Hash_SameInput_ReturnsSameHash()
     {
@@ -52,6 +64,9 @@ public class PasswordHasherTests
         hash1.Should().Be(hash2);
     }
 
+    /// <summary>
+    /// Hash: different inputs; returns different hashes
+    /// </summary>
     [Fact]
     public void Hash_DifferentInputs_ReturnsDifferentHashes()
     {
@@ -67,6 +82,9 @@ public class PasswordHasherTests
         hash1.Should().NotBe(hash2);
     }
 
+    /// <summary>
+    /// Hash with salt: returns hash and salt
+    /// </summary>
     [Fact]
     public void HashWithSalt_ReturnsHashAndSalt()
     {
@@ -81,6 +99,9 @@ public class PasswordHasherTests
         salt.Should().NotBeNullOrEmpty();
     }
 
+    /// <summary>
+    /// Verify: correct password; returns true
+    /// </summary>
     [Fact]
     public void Verify_CorrectPassword_ReturnsTrue()
     {
@@ -95,6 +116,9 @@ public class PasswordHasherTests
         result.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verify: incorrect password; returns false
+    /// </summary>
     [Fact]
     public void Verify_IncorrectPassword_ReturnsFalse()
     {

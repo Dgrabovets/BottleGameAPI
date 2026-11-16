@@ -1,34 +1,34 @@
 ﻿namespace BottleGame.Domain.Constants
 {
     /// <summary>
-    /// Статусы денежных транзакций
+    /// Statuses of money transactions
     /// </summary>
     public static class TransactionStatuses
     {
         /// <summary>
-        /// Ожидает обработки
+        /// Waiting to be processed
         /// </summary>
         public const int Pending = 1;
 
         /// <summary>
-        /// Одобрено / Успешно
+        /// Approved / Successful
         /// </summary>
         public const int Approved = 2;
 
         /// <summary>
-        /// Отклонено / Ошибка
+        /// Rejected / Failed
         /// </summary>
         public const int Rejected = 3;
 
         /// <summary>
-        /// Названия статусов для логирования
+        /// Status names for logging
         /// </summary>
         public static string GetName(int statusId) => statusId switch
         {
-            Pending => "Ожидание",
-            Approved => "Одобрено",
-            Rejected => "Отклонено",
-            _ => "Неизвестный статус"
+            Pending => "Pending",
+            Approved => "Approved",
+            Rejected => "Rejected",
+            _ => "Unknown status"
         };
     }
 }

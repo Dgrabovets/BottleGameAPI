@@ -1,45 +1,45 @@
-using Microsoft.Extensions.Logging;
 using BottleGame.Application.Common;
-using BottleGame.Domain.Entities;
-using BottleGame.Domain.Constants;
-using BottleGame.Infrastructure.Data;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
-using Microsoft.EntityFrameworkCore;
 using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Constants;
+using BottleGame.Domain.Entities;
+using BottleGame.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
-    /// Сервис управления модераторами
+    /// Moderator management service
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="ModeratorService"/>
+    /// Initializes a new instance of <see cref="ModeratorService"/>
     /// </remarks>
-    /// <param name="context">Контекст базы данных</param>
-    /// <param name="logger">Логгер</param>
-    /// <param name="passwordHasher">Сервис хеширования паролей</param>
+    /// <param name="context">Database context</param>
+    /// <param name="logger">Logger</param>
+    /// <param name="passwordHasher">Password hashing service</param>
     public class ModeratorService(ApplicationDbContext context, ILogger<ModeratorService> logger, IPasswordHasher passwordHasher) : IModeratorService
     {
         #region Fields
 
         /// <summary>
-        /// Контекст базы данных
+        /// Database context
         /// </summary>
         private readonly ApplicationDbContext _context = context;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<ModeratorService> _logger = logger;
 
         /// <summary>
-        /// Сервис хеширования паролей
+        /// Password hashing service
         /// </summary>
         private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
         /// <summary>
-        /// Префикс для логов
+        /// Log prefix
         /// </summary>
         private const string Prefix = "[ModeratorService]";
 
@@ -52,8 +52,8 @@ namespace BottleGame.Infrastructure.Services
         {
             if (await _context.AdminCreds.AnyAsync(a => a.Login == request.Login))
             {
-                _logger.LogWarning("{Prefix} Модератор уже есть", Prefix);
-                return Result.Conflict("Модератор уже существует");
+                _logger.LogWarning("{Prefix} Moderator already exists", Prefix);
+                return Result.Conflict("Moderator already exists");
             }
 
             var (hash, salt) = _passwordHasher.HashWithSalt(request.Password);
@@ -70,7 +70,7 @@ namespace BottleGame.Infrastructure.Services
             _context.AdminCreds.Add(moderator);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Зарегистрирован новый модератор: {Login}", Prefix, request.Login);
+            _logger.LogInformation("{Prefix} New moderator registered: {Login}", Prefix, request.Login);
 
             return Result.Success();
         }
@@ -92,8 +92,8 @@ namespace BottleGame.Infrastructure.Services
 
                 if (moderator is null)
                 {
-                    _logger.LogWarning("{Prefix} Модератор с ID {Id} не найден", Prefix, moderatorId.Value);
-                    return Result<object>.NotFound("Модератор не найден");
+                    _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", Prefix, moderatorId.Value);
+                    return Result<object>.NotFound("Moderator not found");
                 }
 
                 return Result<object>.Success(moderator);
@@ -120,14 +120,14 @@ namespace BottleGame.Infrastructure.Services
 
             if (moderator is null)
             {
-                _logger.LogWarning("{Prefix} Модератор с ID {Id} не найден", Prefix, moderatorId);
-                return Result.NotFound("Модератор не найден");
+                _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", Prefix, moderatorId);
+                return Result.NotFound("Moderator not found");
             }
 
             _context.AdminCreds.Remove(moderator);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Модератор с ID {Id} удален", Prefix, moderatorId);
+            _logger.LogInformation("{Prefix} Moderator with ID {Id} deleted", Prefix, moderatorId);
 
             return Result.Success();
         }

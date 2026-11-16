@@ -1,28 +1,28 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ о валидации типа платёжных реквизитов для шлюза.
+    /// Response about the validation of a payment detail type for a gateway
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="DetailTypeValidationResponse"/>.
+    /// Initializes a new instance of <see cref="DetailTypeValidationResponse"/>
     /// </remarks>
-    /// <param name="gatewayCode">Код шлюза.</param>
-    /// <param name="detailType">Проверяемый тип реквизитов.</param>
-    /// <param name="isValid">Поддерживается ли тип.</param>
+    /// <param name="gatewayCode">Gateway code</param>
+    /// <param name="detailType">Detail type that was checked</param>
+    /// <param name="isValid">Whether the type is supported</param>
     public class DetailTypeValidationResponse(string gatewayCode, string detailType, bool isValid)
     {
         /// <summary>
-        /// Код платёжного шлюза.
+        /// Payment gateway code
         /// </summary>
         public string GatewayCode { get; set; } = gatewayCode;
 
         /// <summary>
-        /// Проверяемый тип платёжных реквизитов.
+        /// Payment detail type that was checked
         /// </summary>
         public string DetailType { get; set; } = detailType;
 
         /// <summary>
-        /// Поддерживается ли тип реквизитов данным шлюзом.
+        /// Whether the gateway supports the detail type
         /// </summary>
         public bool IsValid { get; set; } = isValid;
     }

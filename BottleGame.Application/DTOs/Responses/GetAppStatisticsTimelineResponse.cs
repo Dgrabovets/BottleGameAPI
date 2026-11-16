@@ -1,27 +1,27 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Временная шкала статистики для графиков
+    /// Statistics timeline for charts
     /// </summary>
     public class GetAppStatisticsTimelineResponse
     {
         /// <summary>
-        /// Начало запрошенного периода
+        /// Start of the requested period
         /// </summary>
         public DateTime DateFrom { get; set; }
 
         /// <summary>
-        /// Конец запрошенного периода
+        /// End of the requested period
         /// </summary>
         public DateTime DateTill { get; set; }
 
         /// <summary>
-        /// Размер бакета: day, week или month
+        /// Bucket size: day, week or month
         /// </summary>
         public string Bucket { get; set; } = "day";
 
         /// <summary>
-        /// Точки шкалы
+        /// Points of the timeline
         /// </summary>
         public List<StatisticsTimelinePoint> Points { get; set; } = [];
     }

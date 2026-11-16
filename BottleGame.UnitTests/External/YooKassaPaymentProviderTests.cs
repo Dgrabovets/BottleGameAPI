@@ -1,30 +1,30 @@
-using System.Net;
-using System.Text;
-using System.Text.Json;
 using BottleGame.Application.DTOs.Processing;
 using BottleGame.Infrastructure.External.Processing;
 using BottleGame.Infrastructure.External.YooKassa;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using System.Net;
+using System.Text;
+using System.Text.Json;
 
 namespace BottleGame.UnitTests.External;
 
 /// <summary>
-/// Tests for the YooKassa payment provider against a fake HTTP handler.
+/// Tests for the YooKassa payment provider against a fake HTTP handler
 /// </summary>
 public class YooKassaPaymentProviderTests
 {
     /// <summary>
-    /// Recording HTTP handler that stands in for the YooKassa API.
+    /// Recording HTTP handler that stands in for the YooKassa API
     /// </summary>
     private readonly RecordingHttpHandler _handler = new();
 
     /// <summary>
-    /// Creates the provider on top of the recording handler, with optional changes to the options.
+    /// Creates the provider on top of the recording handler, with optional changes to the options
     /// </summary>
-    /// <param name="configure">Configure.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="configure">Configure</param>
+    /// <returns>The created value</returns>
     private YooKassaPaymentProvider CreateProvider(Action<ProcessingOptions>? configure = null)
     {
         var options = new ProcessingOptions
@@ -36,6 +36,7 @@ public class YooKassaPaymentProviderTests
             PayoutSecretKey = "agent-secret-1",
             ReturnUrl = "https://example.com/return"
         };
+
         configure?.Invoke(options);
 
         var client = new HttpClient(_handler) { BaseAddress = new Uri(options.BaseUrl) };
@@ -43,18 +44,18 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// Builds the expected Basic authorization header value.
+    /// Builds the expected Basic authorization header value
     /// </summary>
-    /// <param name="login">Login.</param>
-    /// <param name="secret">Secret.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="login">Login</param>
+    /// <param name="secret">Secret</param>
+    /// <returns>The created value</returns>
     private static string Basic(string login, string secret) =>
         "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{login}:{secret}"));
 
     #region CreatePayment Tests
 
     /// <summary>
-    /// Creating a payment sends the shop credentials, an idempotence key built from the transaction id, the amount and the transaction id in the metadata.
+    /// Creating a payment sends the shop credentials, an idempotence key built from the transaction id, the amount and the transaction id in the metadata
     /// </summary>
     [Fact]
     public async Task CreatePayment_SendsShopCredentialsIdempotenceKeyAndMetadata()
@@ -82,7 +83,7 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// An API error response becomes a failed result that carries the provider's description.
+    /// An API error response becomes a failed result that carries the provider's description
     /// </summary>
     [Fact]
     public async Task CreatePayment_ApiError_ReturnsFailureWithDescription()
@@ -96,7 +97,7 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// A description longer than 128 characters is cut to the length YooKassa accepts.
+    /// A description longer than 128 characters is cut to the length YooKassa accepts
     /// </summary>
     [Fact]
     public async Task CreatePayment_TruncatesLongDescriptionTo128Characters()
@@ -114,7 +115,7 @@ public class YooKassaPaymentProviderTests
     #region CreatePayout Tests
 
     /// <summary>
-    /// An SBP payout uses the payout gateway credentials and sends the normalized phone number and the bank id.
+    /// An SBP payout uses the payout gateway credentials and sends the normalized phone number and the bank id
     /// </summary>
     [Fact]
     public async Task CreatePayout_Sbp_SendsGatewayCredentialsAndDestination()
@@ -139,7 +140,7 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// Without payout gateway credentials the payout fails and the API is not called.
+    /// Without payout gateway credentials the payout fails and the API is not called
     /// </summary>
     [Fact]
     public async Task CreatePayout_PayoutsNotConfigured_FailsWithoutCallingApi()
@@ -153,9 +154,9 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// A malformed payout destination fails before any request is made.
+    /// A malformed payout destination fails before any request is made
     /// </summary>
-    /// <param name="destination">Destination.</param>
+    /// <param name="destination">Destination</param>
     [Theory]
     [InlineData("79001234567")]
     [InlineData("123:100000000111")]
@@ -169,7 +170,7 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// A payout method other than SBP fails before any request is made.
+    /// A payout method other than SBP fails before any request is made
     /// </summary>
     [Fact]
     public async Task CreatePayout_UnsupportedGateway_FailsWithoutCallingApi()
@@ -185,10 +186,10 @@ public class YooKassaPaymentProviderTests
     #region Lookup Tests
 
     /// <summary>
-    /// A payment from the API is mapped to the provider's status, amount, currency and transaction id.
+    /// A payment from the API is mapped to the provider's status, amount, currency and transaction id
     /// </summary>
-    /// <param name="status">Status.</param>
-    /// <param name="expected">Expected.</param>
+    /// <param name="status">Status</param>
+    /// <param name="expected">Expected</param>
     [Theory]
     [InlineData("succeeded", ProviderOperationStatus.Succeeded)]
     [InlineData("canceled", ProviderOperationStatus.Canceled)]
@@ -208,7 +209,7 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// A canceled payout carries its cancellation reason and is requested with the payout gateway credentials.
+    /// A canceled payout carries its cancellation reason and is requested with the payout gateway credentials
     /// </summary>
     [Fact]
     public async Task GetPayout_ReadsCancellationReasonAndUsesGatewayCredentials()
@@ -227,7 +228,7 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// A payment whose metadata has no transaction id is returned with a null transaction id.
+    /// A payment whose metadata has no transaction id is returned with a null transaction id
     /// </summary>
     [Fact]
     public async Task GetPayment_MetadataWithoutTransactionId_ReturnsNullTransactionId()
@@ -240,7 +241,7 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// A payment the API does not know is returned as null.
+    /// A payment the API does not know is returned as null
     /// </summary>
     [Fact]
     public async Task GetPayment_NotFound_ReturnsNull()
@@ -253,7 +254,7 @@ public class YooKassaPaymentProviderTests
     }
 
     /// <summary>
-    /// A server error is raised as an exception, so that the caller can retry.
+    /// A server error is raised as an exception, so that the caller can retry
     /// </summary>
     [Fact]
     public async Task GetPayment_ServerError_Throws()
@@ -270,7 +271,7 @@ public class YooKassaPaymentProviderTests
     #region Catalog Tests
 
     /// <summary>
-    /// The catalog offers only rubles, one payment gateway and SBP payouts.
+    /// The catalog offers only rubles, one payment gateway and SBP payouts
     /// </summary>
     [Fact]
     public async Task Catalog_OnlyRubWithPaymentGatewayAndSbpPayouts()

@@ -1,17 +1,22 @@
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Validators;
-using FluentAssertions;
 using FluentValidation.TestHelper;
 
 namespace BottleGame.UnitTests.Validators;
 
 /// <summary>
-/// Тесты для BanPlayerRequestValidator
+/// Tests for BanPlayerRequestValidator
 /// </summary>
 public class BanPlayerRequestValidatorTests
 {
+    /// <summary>
+    /// The validator under test
+    /// </summary>
     private readonly BanPlayerRequestValidator _validator = new();
 
+    /// <summary>
+    /// Validate: valid request; no errors
+    /// </summary>
     [Fact]
     public void Validate_ValidRequest_NoErrors()
     {
@@ -25,6 +30,10 @@ public class BanPlayerRequestValidatorTests
         result.ShouldNotHaveAnyValidationErrors();
     }
 
+    /// <summary>
+    /// Validate: invalid player id; has error
+    /// </summary>
+    /// <param name="playerId">Player id</param>
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -40,6 +49,10 @@ public class BanPlayerRequestValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.PlayerId);
     }
 
+    /// <summary>
+    /// Validate: empty ban reason; has error
+    /// </summary>
+    /// <param name="reason">Reason</param>
     [Theory]
     [InlineData("")]
     [InlineData(null)]

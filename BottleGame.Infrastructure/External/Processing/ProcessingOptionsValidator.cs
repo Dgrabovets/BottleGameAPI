@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 namespace BottleGame.Infrastructure.External.Processing
 {
     /// <summary>
-    /// Проверяет настройки провайдера: в режиме Live обязательны реквизиты магазина и адрес возврата.
+    /// Validates the provider settings: in Live mode the shop credentials and the return address are required
     /// </summary>
     public class ProcessingOptionsValidator : IValidateOptions<ProcessingOptions>
     {
@@ -19,17 +19,17 @@ namespace BottleGame.Infrastructure.External.Processing
 
             if (string.IsNullOrWhiteSpace(options.ShopId))
             {
-                errors.Add("Processing:ShopId обязателен в режиме Live. Задайте переменную окружения Processing__ShopId.");
+                errors.Add("Processing:ShopId is required in Live mode. Set the environment variable Processing__ShopId.");
             }
 
             if (string.IsNullOrWhiteSpace(options.SecretKey))
             {
-                errors.Add("Processing:SecretKey обязателен в режиме Live. Задайте переменную окружения Processing__SecretKey.");
+                errors.Add("Processing:SecretKey is required in Live mode. Set the environment variable Processing__SecretKey.");
             }
 
             if (!Uri.TryCreate(options.ReturnUrl, UriKind.Absolute, out _))
             {
-                errors.Add("Processing:ReturnUrl обязателен в режиме Live и должен быть абсолютным адресом.");
+                errors.Add("Processing:ReturnUrl is required in Live mode and must be an absolute address.");
             }
 
             return errors.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(errors);

@@ -5,34 +5,34 @@ using BottleGame.Application.DTOs.Responses;
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Интерфейс сервиса для работы с игровыми раундами
+    /// Interface of the service for working with game rounds
     /// </summary>
     public interface IGameRoundService
     {
         #region Methods
 
         /// <summary>
-        /// Завершить игровой раунд
+        /// Finishes a game round
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="request">Данные раунда</param>
-        /// <param name="requestingPlayerId">ID запрашивающего (для проверки прав)</param>
-        /// <param name="isAdmin">Является ли администратором</param>
-        /// <returns>Результат операции</returns>
+        /// <param name="playerId">Player id</param>
+        /// <param name="request">Round data</param>
+        /// <param name="requestingPlayerId">Id of the requesting player (for the access check)</param>
+        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <returns>Operation result</returns>
         Task<Result> FinishGameRound(int playerId, FinishRoundRequest request, int? requestingPlayerId, bool isAdmin);
 
         /// <summary>
-        /// Получить сыгранные раунды игрока
+        /// Gets the rounds played by a player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <returns>Список раундов</returns>
+        /// <param name="playerId">Player id</param>
+        /// <returns>List of rounds</returns>
         Task<Result<GetPlayerPlayedRoundsResponse>> GetPlayerPlayedRounds(int playerId);
 
         /// <summary>
-        /// Получить прибыль за период
+        /// Gets the profit for a period
         /// </summary>
-        /// <param name="request">Параметры периода</param>
-        /// <returns>Информация о прибыли</returns>
+        /// <param name="request">Period parameters</param>
+        /// <returns>Profit information</returns>
         Task<Result<GetProfitResponse>> GetProfit(GetProfitRequest request);
 
         #endregion Methods

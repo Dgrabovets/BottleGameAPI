@@ -1,28 +1,28 @@
 ﻿namespace BottleGame.Domain.Constants
 {
     /// <summary>
-    /// Типы денежных транзакций
+    /// Types of money transactions
     /// </summary>
     public static class TransactionTypes
     {
         /// <summary>
-        /// Пополнение баланса (депозит)
+        /// Balance top-up (deposit)
         /// </summary>
         public const int Deposit = 1;
 
         /// <summary>
-        /// Вывод средств
+        /// Withdrawal of funds
         /// </summary>
         public const int Withdrawal = 2;
 
         /// <summary>
-        /// Названия типов для логирования
+        /// Type names for logging
         /// </summary>
         public static string GetName(int typeId) => typeId switch
         {
-            Deposit => "Депозит",
-            Withdrawal => "Вывод",
-            _ => "Неизвестный тип"
+            Deposit => "Deposit",
+            Withdrawal => "Withdrawal",
+            _ => "Unknown type"
         };
     }
 }

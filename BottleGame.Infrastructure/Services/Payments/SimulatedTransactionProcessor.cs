@@ -8,13 +8,13 @@ using Microsoft.Extensions.Logging;
 namespace BottleGame.Infrastructure.Services.Payments
 {
     /// <summary>
-    /// Режим Simulated: пополнения и выводы завершаются локально без платёжного провайдера и реальных денег
+    /// Simulated mode: deposits and withdrawals complete locally without a payment provider and real money
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="SimulatedTransactionProcessor"/>
+    /// Initializes a new instance of <see cref="SimulatedTransactionProcessor"/>
     /// </remarks>
-    /// <param name="context">Контекст базы данных</param>
-    /// <param name="logger">Логгер</param>
+    /// <param name="context">Database context</param>
+    /// <param name="logger">Logger</param>
     public class SimulatedTransactionProcessor(
         ApplicationDbContext context,
         ILogger<SimulatedTransactionProcessor> logger) : ITransactionProcessor
@@ -22,17 +22,17 @@ namespace BottleGame.Infrastructure.Services.Payments
         #region Fields
 
         /// <summary>
-        /// Контекст базы данных
+        /// Database context
         /// </summary>
         private readonly ApplicationDbContext _context = context;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<SimulatedTransactionProcessor> _logger = logger;
 
         /// <summary>
-        /// Префикс для логов
+        /// Log prefix
         /// </summary>
         private const string Prefix = "[SimulatedTransactionProcessor]";
 
@@ -52,24 +52,24 @@ namespace BottleGame.Infrastructure.Services.Payments
         public Task<Result> ApproveWithdrawalAsync(MoneyTransaction transaction, GameParams gameParams, AppBalance appBalance)
         {
             CompleteWithdrawalLocally(transaction, appBalance, TransactionStatuses.Approved);
-            _logger.LogInformation("{Prefix} Вывод {TransactionId} одобрен локально без процессинга", Prefix, transaction.Id);
+            _logger.LogInformation("{Prefix} Withdrawal {TransactionId} approved locally without processing", Prefix, transaction.Id);
             return Task.FromResult(Result.Success());
         }
 
         /// <summary>
-        /// Локально завершает пополнение без обращения к процессинговой площадке
+        /// Completes a deposit locally without calling the processing platform
         /// </summary>
-        /// <param name="transaction">Транзакция пополнения</param>
-        /// <param name="player">Игрок</param>
-        /// <param name="amount">Сумма пополнения</param>
-        /// <returns>Ответ API с идентификатором ордера</returns>
+        /// <param name="transaction">Deposit transaction</param>
+        /// <param name="player">Player</param>
+        /// <param name="amount">Deposit amount</param>
+        /// <returns>API response with the order identifier</returns>
         private async Task<object> CompleteDepositLocallyAsync(
             MoneyTransaction transaction,
             Player player,
             decimal amount)
         {
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync()
-                ?? throw new InvalidOperationException("Не найден баланс приложения");
+                ?? throw new InvalidOperationException("Application balance not found");
 
             transaction.TransactionStatusId = TransactionStatuses.Approved;
             transaction.IsProcessingSuccess = true;
@@ -84,7 +84,7 @@ namespace BottleGame.Infrastructure.Services.Payments
             await _context.SaveChangesAsync();
 
             _logger.LogInformation(
-                "{Prefix} [Simulated] Пополнение {TransactionId} завершено локально без процессинга",
+                "{Prefix} [Simulated] Deposit {TransactionId} completed locally without processing",
                 Prefix,
                 transaction.Id);
 
@@ -96,11 +96,11 @@ namespace BottleGame.Infrastructure.Services.Payments
         }
 
         /// <summary>
-        /// Локально завершает вывод без обращения к процессинговой площадке
+        /// Completes a withdrawal locally without calling the processing platform
         /// </summary>
-        /// <param name="transaction">Транзакция вывода</param>
-        /// <param name="appBalance">Баланс приложения</param>
-        /// <param name="approvedStatusId">Идентификатор статуса «Одобрено»</param>
+        /// <param name="transaction">Withdrawal transaction</param>
+        /// <param name="appBalance">Application balance</param>
+        /// <param name="approvedStatusId">Identifier of the "Approved" status</param>
         private void CompleteWithdrawalLocally(
             MoneyTransaction transaction,
             AppBalance appBalance,

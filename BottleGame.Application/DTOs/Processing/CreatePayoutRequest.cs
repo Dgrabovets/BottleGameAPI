@@ -1,13 +1,13 @@
 namespace BottleGame.Application.DTOs.Processing
 {
     /// <summary>
-    /// Запрос на создание выплаты (вывода) у платёжного провайдера
+    /// Request to create a payout (withdrawal) at the payment provider
     /// </summary>
-    /// <param name="TransactionId">Идентификатор транзакции в приложении</param>
-    /// <param name="Amount">Сумма выплаты</param>
-    /// <param name="Currency">Код валюты</param>
-    /// <param name="Gateway">Код способа выплаты</param>
-    /// <param name="Destination">Реквизиты получателя в формате выбранного способа выплаты</param>
-    /// <param name="Description">Описание выплаты</param>
+    /// <param name="TransactionId">Id of the transaction in the application</param>
+    /// <param name="Amount">Payout amount</param>
+    /// <param name="Currency">Currency code</param>
+    /// <param name="Gateway">Code of the payout method</param>
+    /// <param name="Destination">Recipient details in the format of the chosen payout method</param>
+    /// <param name="Description">Payout description</param>
     public record CreatePayoutRequest(int TransactionId, decimal Amount, string Currency, string Gateway, string Destination, string Description);
 }

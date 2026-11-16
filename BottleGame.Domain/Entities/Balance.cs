@@ -4,13 +4,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BottleGame.Domain.Entities
 {
     /// <summary>
-    /// Баланс игрока
+    /// Player balance
     /// </summary>
     [Table("PlayersBalance")]
     public class Balance
     {
         /// <summary>
-        /// Идентификатор игрока (первичный ключ)
+        /// Player identifier (primary key)
         /// </summary>
         [Key]
         [ForeignKey("Player")]
@@ -18,7 +18,7 @@ namespace BottleGame.Domain.Entities
         public int PlayerId { get; set; }
 
         /// <summary>
-        /// Сумма на балансе
+        /// Amount on the balance
         /// </summary>
         [Required]
         [Column("Amount")]
@@ -27,7 +27,7 @@ namespace BottleGame.Domain.Entities
         #region Navigation Properties
 
         /// <summary>
-        /// Связанный игрок
+        /// Related player
         /// </summary>
         public virtual Player Player { get; set; } = null!;
 

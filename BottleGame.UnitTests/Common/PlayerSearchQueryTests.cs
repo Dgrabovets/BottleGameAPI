@@ -3,8 +3,17 @@ using FluentAssertions;
 
 namespace BottleGame.UnitTests.Common;
 
+/// <summary>
+/// Tests for PlayerSearchQuery
+/// </summary>
 public class PlayerSearchQueryTests
 {
+    /// <summary>
+    /// The q parameter is parsed into a Telegram id or a name
+    /// </summary>
+    /// <param name="q">Search text</param>
+    /// <param name="expectedTelegramId">Expected Telegram id</param>
+    /// <param name="expectedName">Expected name</param>
     [Theory]
     [InlineData("625593041", 625593041L, null)]
     [InlineData("@player_name", null, "player_name")]
@@ -20,6 +29,9 @@ public class PlayerSearchQueryTests
         result.Name.Should().Be(expectedName);
     }
 
+    /// <summary>
+    /// Resolve: explicit telegram id; has priority over q
+    /// </summary>
     [Fact]
     public void Resolve_ExplicitTelegramId_HasPriorityOverQ()
     {

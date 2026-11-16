@@ -15,27 +15,27 @@ using Moq;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Tests for TransactionServiceLiveMode.
+/// Tests for TransactionServiceLiveMode
 /// </summary>
 public class TransactionServiceLiveModeTests : IDisposable
 {
     /// <summary>
-    /// Database context of the test.
+    /// Database context of the test
     /// </summary>
     private readonly ApplicationDbContext _context;
 
     /// <summary>
-    /// The service under test.
+    /// The service under test
     /// </summary>
     private readonly TransactionService _service;
 
     /// <summary>
-    /// Mock of the payment provider.
+    /// Mock of the payment provider
     /// </summary>
     private readonly Mock<IPaymentProvider> _providerMock = new();
 
     /// <summary>
-    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// Creates the test fixture: the database, the mocks and the object under test
     /// </summary>
     public TransactionServiceLiveModeTests()
     {
@@ -57,7 +57,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// Releases the database context used by the tests.
+    /// Releases the database context used by the tests
     /// </summary>
     public void Dispose()
     {
@@ -68,11 +68,11 @@ public class TransactionServiceLiveModeTests : IDisposable
     #region Helpers
 
     /// <summary>
-    /// Adds a pending withdrawal for the player and returns it.
+    /// Adds a pending withdrawal for the player and returns it
     /// </summary>
-    /// <param name="player">Player.</param>
-    /// <param name="amount">Amount.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="player">Player</param>
+    /// <param name="amount">Amount</param>
+    /// <returns>The created value</returns>
     private MoneyTransaction AddWithdrawal(Player player, decimal amount)
     {
         var transaction = new MoneyTransaction
@@ -83,16 +83,17 @@ public class TransactionServiceLiveModeTests : IDisposable
             TransactionStatusId = TransactionStatuses.Pending,
             CreatedAt = DateTime.UtcNow
         };
+
         _context.MoneyTransactions.Add(transaction);
         _context.SaveChanges();
         return transaction;
     }
 
     /// <summary>
-    /// Sets how many rounds the player has played since the last deposit.
+    /// Sets how many rounds the player has played since the last deposit
     /// </summary>
-    /// <param name="player">Player.</param>
-    /// <param name="count">Count.</param>
+    /// <param name="player">Player</param>
+    /// <param name="count">Count</param>
     private void SetPlayedRounds(Player player, int count)
     {
         _context.PlayersPlayedRoundsStatisticForWithdrawals.Single(s => s.PlayerId == player.Id).PlayedRoundsCount = count;
@@ -100,24 +101,24 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// Player balance.
+    /// Player balance
     /// </summary>
-    /// <param name="player">Player.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="player">Player</param>
+    /// <returns>The created value</returns>
     private decimal PlayerBalance(Player player) =>
         _context.PlayersBalances.AsNoTracking().Single(b => b.PlayerId == player.Id).Amount;
 
     /// <summary>
-    /// Builds the request that approves a withdrawal.
+    /// Builds the request that approves a withdrawal
     /// </summary>
-    /// <returns>The created value.</returns>
+    /// <returns>The created value</returns>
     private static ChangeTransactionStatusRequest Approve() =>
         new() { TransactionStatusId = TransactionStatuses.Approved };
 
     /// <summary>
-    /// Verifies how many times the provider was asked to create a payout.
+    /// Verifies how many times the provider was asked to create a payout
     /// </summary>
-    /// <param name="times">Times.</param>
+    /// <param name="times">Times</param>
     private void PayoutVerify(Times times) =>
         _providerMock.Verify(
             x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()),
@@ -128,7 +129,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     #region Deposit Tests
 
     /// <summary>
-    /// When the provider accepts a deposit, the payment link is returned and the transaction waits for the notification.
+    /// When the provider accepts a deposit, the payment link is returned and the transaction waits for the notification
     /// </summary>
     [Fact]
     public async Task CreateDeposit_ProviderAccepts_ReturnsPaymentLinkAndWaitsForNotification()
@@ -150,7 +151,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// The payment request sent to the provider carries the transaction id, amount and currency.
+    /// The payment request sent to the provider carries the transaction id, amount and currency
     /// </summary>
     [Fact]
     public async Task CreateDeposit_RequestCarriesTransactionIdAndAmount()
@@ -171,7 +172,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// When the provider fails, the deposit is rejected and the balance is not credited.
+    /// When the provider fails, the deposit is rejected and the balance is not credited
     /// </summary>
     [Fact]
     public async Task CreateDeposit_ProviderFails_RejectsTransactionWithoutCreditingBalance()
@@ -196,7 +197,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     #region Withdrawal Tests
 
     /// <summary>
-    /// A withdrawal is refused when the player has not played enough rounds.
+    /// A withdrawal is refused when the player has not played enough rounds
     /// </summary>
     [Fact]
     public async Task CreateWithdrawal_NotEnoughPlayedRounds_ReturnsFailure()
@@ -211,7 +212,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// When the provider accepts the payout, the withdrawal is approved and waits for the payout notification.
+    /// When the provider accepts the payout, the withdrawal is approved and waits for the payout notification
     /// </summary>
     [Fact]
     public async Task ApproveWithdrawal_ProviderAccepts_WaitsForPayoutNotification()
@@ -233,7 +234,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// The payout request carries the player's payout method and wallet.
+    /// The payout request carries the player's payout method and wallet
     /// </summary>
     [Fact]
     public async Task ApproveWithdrawal_RequestCarriesPayoutMethodAndWallet()
@@ -261,7 +262,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// When the provider fails, the player is refunded and the withdrawal is rejected.
+    /// When the provider fails, the player is refunded and the withdrawal is rejected
     /// </summary>
     [Fact]
     public async Task ApproveWithdrawal_ProviderFails_RefundsPlayerAndRejects()
@@ -282,7 +283,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// A withdrawal above the payout limit is refused without calling the provider.
+    /// A withdrawal above the payout limit is refused without calling the provider
     /// </summary>
     [Fact]
     public async Task ApproveWithdrawal_AmountAboveThreshold_ReturnsFailureWithoutCallingProvider()
@@ -299,7 +300,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// A withdrawal is refused without calling the provider when too few rounds were played.
+    /// A withdrawal is refused without calling the provider when too few rounds were played
     /// </summary>
     [Fact]
     public async Task ApproveWithdrawal_NotEnoughPlayedRounds_ReturnsFailureWithoutCallingProvider()

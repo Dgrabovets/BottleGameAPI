@@ -3,62 +3,62 @@ using BottleGame.Application.DTOs.Processing;
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Платёжный провайдер: приём платежей, выплаты и справочники
+    /// Payment provider: accepting payments, payouts and catalogs
     /// </summary>
     public interface IPaymentProvider
     {
         /// <summary>
-        /// Возвращает валюты, с которыми работает провайдер
+        /// Returns the currencies the provider works with
         /// </summary>
-        /// <param name="cancellationToken">Токен отмены</param>
-        /// <returns>Коллекция валют</returns>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Collection of currencies</returns>
         Task<IEnumerable<CurrencyInfo>> GetCurrenciesAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Возвращает способы приёма платежей и выплат
+        /// Returns the ways to accept payments and make payouts
         /// </summary>
-        /// <param name="cancellationToken">Токен отмены</param>
-        /// <returns>Коллекция способов</returns>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Collection of methods</returns>
         Task<IEnumerable<PaymentGatewayInfo>> GetPaymentGatewaysAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Возвращает курс валюты к базовой валюте приложения
+        /// Returns the rate of a currency to the base currency of the application
         /// </summary>
-        /// <param name="currency">Код валюты</param>
-        /// <param name="cancellationToken">Токен отмены</param>
-        /// <returns>Курс; 0, если валюта не поддерживается</returns>
+        /// <param name="currency">Currency code</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Rate; 0 if the currency is not supported</returns>
         Task<decimal> GetExchangeRateAsync(string currency, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Создаёт платёж. Повторный вызов для той же транзакции возвращает тот же платёж
+        /// Creates a payment. A repeated call for the same transaction returns the same payment
         /// </summary>
-        /// <param name="request">Запрос на создание платежа</param>
-        /// <param name="cancellationToken">Токен отмены</param>
-        /// <returns>Результат создания платежа</returns>
+        /// <param name="request">Request to create a payment</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Result of creating the payment</returns>
         Task<CreatePaymentResult> CreatePaymentAsync(CreatePaymentRequest request, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Создаёт выплату. Повторный вызов для той же транзакции возвращает ту же выплату
+        /// Creates a payout. A repeated call for the same transaction returns the same payout
         /// </summary>
-        /// <param name="request">Запрос на создание выплаты</param>
-        /// <param name="cancellationToken">Токен отмены</param>
-        /// <returns>Результат создания выплаты</returns>
+        /// <param name="request">Request to create a payout</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Result of creating the payout</returns>
         Task<CreatePayoutResult> CreatePayoutAsync(CreatePayoutRequest request, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Запрашивает у провайдера текущее состояние платежа
+        /// Asks the provider for the current state of a payment
         /// </summary>
-        /// <param name="paymentId">Идентификатор платежа у провайдера</param>
-        /// <param name="cancellationToken">Токен отмены</param>
-        /// <returns>Платёж или null, если провайдер его не знает</returns>
+        /// <param name="paymentId">Id of the payment at the provider</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>The payment, or null if the provider does not know it</returns>
         Task<ProviderOperation?> GetPaymentAsync(string paymentId, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Запрашивает у провайдера текущее состояние выплаты
+        /// Asks the provider for the current state of a payout
         /// </summary>
-        /// <param name="payoutId">Идентификатор выплаты у провайдера</param>
-        /// <param name="cancellationToken">Токен отмены</param>
-        /// <returns>Выплата или null, если провайдер её не знает</returns>
+        /// <param name="payoutId">Id of the payout at the provider</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>The payout, or null if the provider does not know it</returns>
         Task<ProviderOperation?> GetPayoutAsync(string payoutId, CancellationToken cancellationToken = default);
     }
 }

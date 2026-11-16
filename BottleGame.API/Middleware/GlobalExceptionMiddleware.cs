@@ -4,41 +4,44 @@ using System.Text.Json;
 namespace BottleGame.API.Middleware
 {
     /// <summary>
-    /// Middleware для глобальной обработки исключений в приложении
+    /// Middleware for global exception handling in the application
     /// </summary>
     /// <remarks>
-    /// Перехватывает все необработанные исключения и возвращает клиенту 
-    /// унифицированный JSON-ответ с информацией об ошибке.
-    /// Также выполняет централизованное логирование всех ошибок.
+    /// Catches all unhandled exceptions and returns to the client
+    /// a unified JSON response with the error information.
+    /// It also logs all errors in one place
     /// </remarks>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="GlobalExceptionMiddleware"/>
+    /// Initializes a new instance of <see cref="GlobalExceptionMiddleware"/>
     /// </remarks>
-    /// <param name="next">Делегат следующего middleware в pipeline</param>
-    /// <param name="logger">Логгер для записи ошибок</param>
-    /// <param name="environment">Окружение приложения (в Production детали исключений не отдаются клиенту)</param>
+    /// <param name="next">Delegate of the next middleware in the pipeline</param>
+    /// <param name="logger">Logger used to record errors</param>
+    /// <param name="environment">Application environment (in Production the exception details are not sent to the client)</param>
     public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger, IWebHostEnvironment environment)
     {
 
         /// <summary>
-        /// Делегат для вызова следующего middleware в pipeline
+        /// Delegate that calls the next middleware in the pipeline
         /// </summary>
         private readonly RequestDelegate _next = next;
 
         /// <summary>
-        /// Логгер для записи информации об ошибках
+        /// Logger used to record error information
         /// </summary>
         private readonly ILogger<GlobalExceptionMiddleware> _logger = logger;
 
+        /// <summary>
+        /// Hosting environment, used to decide how much error detail to return
+        /// </summary>
         private readonly IWebHostEnvironment _environment = environment;
 
 
 
         /// <summary>
-        /// Обрабатывает HTTP-запрос и перехватывает исключения
+        /// Handles an HTTP request and catches exceptions
         /// </summary>
-        /// <param name="context">HTTP контекст текущего запроса</param>
-        /// <returns>Асинхронная задача обработки запроса</returns>
+        /// <param name="context">HTTP context of the current request</param>
+        /// <returns>Asynchronous task that handles the request</returns>
         public async Task InvokeAsync(HttpContext context)
         {
             try
@@ -54,19 +57,19 @@ namespace BottleGame.API.Middleware
 
 
         /// <summary>
-        /// Обрабатывает исключение и формирует ответ клиенту
+        /// Handles an exception and builds the response for the client
         /// </summary>
-        /// <param name="context">HTTP контекст текущего запроса</param>
-        /// <param name="exception">Перехваченное исключение</param>
-        /// <returns>Асинхронная задача отправки ответа</returns>
+        /// <param name="context">HTTP context of the current request</param>
+        /// <param name="exception">The caught exception</param>
+        /// <returns>Asynchronous task that sends the response</returns>
         /// <remarks>
-        /// Маппинг исключений на HTTP статус-коды:
+        /// Mapping of exceptions to HTTP status codes:
         /// <list type="bullet">
         ///     <item><description><see cref="KeyNotFoundException"/> → 404 Not Found</description></item>
         ///     <item><description><see cref="UnauthorizedAccessException"/> → 401 Unauthorized</description></item>
         ///     <item><description><see cref="ArgumentException"/> → 400 Bad Request</description></item>
         ///     <item><description><see cref="InvalidOperationException"/> → 400 Bad Request</description></item>
-        ///     <item><description>Остальные исключения → 500 Internal Server Error</description></item>
+        ///     <item><description>All other exceptions → 500 Internal Server Error</description></item>
         /// </list>
         /// </remarks>
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
@@ -83,14 +86,14 @@ namespace BottleGame.API.Middleware
                     response.StatusCode = (int)HttpStatusCode.NotFound;
                     errorResponse.Message = exception.Message;
                     errorResponse.StatusCode = response.StatusCode;
-                    _logger.LogWarning(exception, "Ресурс не найден: {Message}", exception.Message);
+                    _logger.LogWarning(exception, "Resource not found: {Message}", exception.Message);
                     break;
 
                 case UnauthorizedAccessException:
                     response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    errorResponse.Message = $"Доступ запрещён\r\n{exception.Message}";
+                    errorResponse.Message = $"Access denied\r\n{exception.Message}";
                     errorResponse.StatusCode = response.StatusCode;
-                    _logger.LogWarning(exception, "Неавторизованный доступ: {Message}", exception.Message);
+                    _logger.LogWarning(exception, "Unauthorized access: {Message}", exception.Message);
                     break;
 
                 case ArgumentException:
@@ -98,15 +101,16 @@ namespace BottleGame.API.Middleware
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
                     errorResponse.Message = exception.Message;
                     errorResponse.StatusCode = response.StatusCode;
-                    _logger.LogWarning(exception, "Некорректный запрос: {Message}", exception.Message);
+                    _logger.LogWarning(exception, "Invalid request: {Message}", exception.Message);
                     break;
 
                 default:
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                    errorResponse.Message = $"Внутренняя ошибка сервера\r\n{exception.Message}";
+                    errorResponse.Message = $"Internal server error\r\n{exception.Message}";
                     errorResponse.StatusCode = response.StatusCode;
-                    _logger.LogError(exception, "Необработанное исключение: {Type}: {Message}. StackTrace: {StackTrace}",
+                    _logger.LogError(exception, "Unhandled exception: {Type}: {Message}. StackTrace: {StackTrace}",
                         exception.GetType().Name, exception.Message, exception.StackTrace);
+
                     break;
             }
 

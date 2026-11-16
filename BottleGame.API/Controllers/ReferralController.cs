@@ -1,33 +1,47 @@
-﻿using System.Security.Claims;
-using BottleGame.Infrastructure.Data;
-using BottleGame.Application.DTOs.Responses;
+﻿using BottleGame.Application.DTOs.Responses;
 using BottleGame.Domain.Entities;
+using BottleGame.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BottleGame.API.Controllers
 {
     /// <summary>
-    /// Контроллер реферальной системы
+    /// Referral system controller
     /// </summary>
     /// <remarks>
-    /// Управление реферальными ссылками и приглашениями
+    /// Manages referral links and invitations
     /// </remarks>
-    /// <param name="context">Контекст базы данных.</param>
-    /// <param name="logger">Логгер.</param>
-    /// <param name="configuration">Конфигурация приложения.</param>
+    /// <param name="context">Database context</param>
+    /// <param name="logger">Logger</param>
+    /// <param name="configuration">Application configuration</param>
     [ApiController]
     [Route("api/[controller]")]
-    [Tags("Реферальная система")]
+    [Tags("Referral system")]
     public class ReferralController(ApplicationDbContext context, ILogger<ReferralController> logger, IConfiguration configuration) : Controller
     {
         #region Fields
 
+        /// <summary>
+        /// Database context
+        /// </summary>
         private readonly ApplicationDbContext _context = context;
+
+        /// <summary>
+        /// Logger
+        /// </summary>
         private readonly ILogger<ReferralController> _logger = logger;
+
+        /// <summary>
+        /// Name of the application used to build referral links
+        /// </summary>
         private readonly string _appName = configuration["AppName"]!;
 
+        /// <summary>
+        /// Prefix of the log messages
+        /// </summary>
         const string prefix = "[Referral Controller]";
 
         #endregion Fields
@@ -35,13 +49,13 @@ namespace BottleGame.API.Controllers
         #region ActionMethods
 
         /// <summary>
-        /// Получить реферальную ссылку для игрока
+        /// Gets the referral link of a player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <response code="200">Реферальная ссылка</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <response code="200">Referral link</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = "Player,Admin")]
         [ProducesResponseType(typeof(GetReferralLinkResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -57,24 +71,24 @@ namespace BottleGame.API.Controllers
                     return Unauthorized();
                 }
 
-                // Поиск игрока
+                // Find the player
                 var player = await _context.Players.Include(p => p.Ban).Include(p => p.ReferralLink).FirstOrDefaultAsync(p => p.Id == playerId);
 
                 if (player is null)
                 {
-                    _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", prefix, playerId);
-                    return NotFound($"Игрок с ID {playerId} не найден");
+                    _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", prefix, playerId);
+                    return NotFound($"Player with id {playerId} not found");
                 }
 
                 if (User.IsInRole("Player") && player.Ban is not null && player.Ban.IsActive)
                 {
-                    _logger.LogWarning("{Prefix} Игрок забанен", prefix);
-                    return Forbid("Игрок находится в бане");
+                    _logger.LogWarning("{Prefix} The player is banned", prefix);
+                    return Forbid("The player is banned");
                 }
 
                 var referralLink = player.ReferralLink;
 
-                // Создание реферальной ссылки
+                // Create the referral link
                 if (referralLink is null)
                 {
                     referralLink = new ReferralLink
@@ -88,15 +102,15 @@ namespace BottleGame.API.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                // Возврат ссылки
-                _logger.LogInformation("{Prefix} Получена ссылка для игрока {PlayerId}", prefix, playerId);
+                // Return the link
+                _logger.LogInformation("{Prefix} Link received for player {PlayerId}", prefix, playerId);
 
                 return Ok(new GetReferralLinkResponse { ReferralLink = referralLink.Link });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Ошибка при получении реф. ссылки для игрока {PlayerId}", prefix, playerId);
-                return StatusCode(500, "Внутренняя ошибка сервера");
+                _logger.LogError(ex, "{Prefix} Error while getting the referral link for player {PlayerId}", prefix, playerId);
+                return StatusCode(500, "Internal server error");
             }
         }
 

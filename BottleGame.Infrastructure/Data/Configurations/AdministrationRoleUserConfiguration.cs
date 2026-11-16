@@ -5,10 +5,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace BottleGame.Infrastructure.Data.Configurations
 {
     /// <summary>
-    /// Конфигурация сущности AdministrationRoleUser
+    /// Configuration of the AdministrationRoleUser entity
     /// </summary>
     public class AdministrationRoleUserConfiguration : IEntityTypeConfiguration<AdministrationRoleUser>
     {
+        /// <summary>
+        /// Configures the AdministrationRoleUser entity
+        /// </summary>
+        /// <param name="builder">Entity type builder</param>
         public void Configure(EntityTypeBuilder<AdministrationRoleUser> builder)
         {
             builder.ToTable("AdminCreds");

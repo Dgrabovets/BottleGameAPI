@@ -4,38 +4,38 @@ using BottleGame.Application.DTOs.Responses;
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Статистика игроков
+    /// Player statistics
     /// </summary>
     public interface IPlayerStatisticsService
     {
         /// <summary>
-        /// Получить статистику по всем игрокам
+        /// Gets the statistics of all players
         /// </summary>
-        /// <returns>Статистика игроков</returns>
+        /// <returns>Player statistics</returns>
         Task<Result<IEnumerable<PlayerStatisticsResponse>>> GetAllPlayersStatistics();
 
         /// <summary>
-        /// Получить статистику по конкретному игроку
+        /// Gets the statistics of a single player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="requestingPlayerId">ID запрашивающего</param>
-        /// <param name="isAdmin">Является ли администратором</param>
-        /// <returns>Статистика игрока</returns>
+        /// <param name="playerId">Player id</param>
+        /// <param name="requestingPlayerId">Id of the requester</param>
+        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <returns>Player statistics</returns>
         Task<Result<PlayerStatisticsResponse>> GetPlayerStatistics(int playerId, int? requestingPlayerId, bool isAdmin);
 
         /// <summary>
-        /// Получить статистику сыгранных раундов для вывода
+        /// Gets the statistics of the rounds played for a withdrawal
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="requestingPlayerId">ID запрашивающего</param>
-        /// <param name="isAdmin">Является ли администратором</param>
-        /// <returns>Статистика раундов для вывода</returns>
+        /// <param name="playerId">Player id</param>
+        /// <param name="requestingPlayerId">Id of the requester</param>
+        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <returns>Statistics of the rounds for a withdrawal</returns>
         Task<Result<PlayerRoundsStatisticsForWithdrawalDTO>> GetPlayerRoundsStatisticsForWithdrawal(int playerId, int? requestingPlayerId, bool isAdmin);
 
         /// <summary>
-        /// Получить статистику сыгранных раундов для вывода по всем игрокам
+        /// Gets the statistics of the rounds played for a withdrawal by all players
         /// </summary>
-        /// <returns>Список статистики</returns>
+        /// <returns>List of statistics</returns>
         Task<Result<IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>>> GetAllPlayersRoundsStatisticsForWithdrawal();
     }
 }

@@ -1,27 +1,24 @@
-﻿using System.Net;
-using System.Text.Json;
-
-namespace BottleGame.API.Middleware
+﻿namespace BottleGame.API.Middleware
 {
     /// <summary>
-    /// Extension-методы для регистрации <see cref="GlobalExceptionMiddleware"/> в pipeline приложения
+    /// Extension methods for registering <see cref="GlobalExceptionMiddleware"/> in the application pipeline
     /// </summary>
     public static class GlobalExceptionMiddlewareExtensions
     {
 
         /// <summary>
-        /// Добавляет глобальный обработчик исключений в pipeline приложения
+        /// Adds the global exception handler to the application pipeline
         /// </summary>
-        /// <param name="app">Построитель приложения</param>
-        /// <returns>Построитель приложения с добавленным middleware</returns>
+        /// <param name="app">Application builder</param>
+        /// <returns>Application builder with the middleware added</returns>
         /// <remarks>
-        /// Рекомендуется добавлять этот middleware первым в pipeline,
-        /// чтобы перехватывать исключения из всех последующих middleware.
+        /// It is recommended to add this middleware first in the pipeline
+        /// so that it catches the exceptions from all the following middleware
         /// </remarks>
         /// <example>
         /// <code>
         /// var app = builder.Build();
-        /// app.UseGlobalExceptionHandler(); // Должен быть первым
+        /// app.UseGlobalExceptionHandler(); // Must be first
         /// app.UseRouting();
         /// app.UseAuthentication();
         /// // ...

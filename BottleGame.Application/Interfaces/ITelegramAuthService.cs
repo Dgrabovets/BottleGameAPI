@@ -1,12 +1,12 @@
 ﻿namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Сервис для авторизации Telegram-пользователей
+    /// Service for authorizing Telegram users
     /// </summary>
     public interface ITelegramAuthService
     {
         /// <summary>
-        /// Валидирует initData от Telegram
+        /// Validates the initData from Telegram
         /// </summary>
         bool ValidateInitData(string initData);
     }

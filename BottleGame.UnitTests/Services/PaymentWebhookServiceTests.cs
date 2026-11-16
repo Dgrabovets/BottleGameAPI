@@ -14,37 +14,37 @@ using Moq;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Tests for PaymentWebhookService.
+/// Tests for PaymentWebhookService
 /// </summary>
 public class PaymentWebhookServiceTests : IDisposable
 {
     /// <summary>
-    /// Payment id.
+    /// Payment id
     /// </summary>
     private const string PaymentId = "pay-1";
 
     /// <summary>
-    /// Payout id.
+    /// Payout id
     /// </summary>
     private const string PayoutId = "payout-1";
 
     /// <summary>
-    /// Database context of the test.
+    /// Database context of the test
     /// </summary>
     private readonly ApplicationDbContext _context;
 
     /// <summary>
-    /// Mock of the payment provider.
+    /// Mock of the payment provider
     /// </summary>
     private readonly Mock<IPaymentProvider> _providerMock = new();
 
     /// <summary>
-    /// The service under test.
+    /// The service under test
     /// </summary>
     private readonly PaymentWebhookService _service;
 
     /// <summary>
-    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// Creates the test fixture: the database, the mocks and the object under test
     /// </summary>
     public PaymentWebhookServiceTests()
     {
@@ -53,7 +53,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Releases the database context used by the tests.
+    /// Releases the database context used by the tests
     /// </summary>
     public void Dispose()
     {
@@ -64,12 +64,12 @@ public class PaymentWebhookServiceTests : IDisposable
     #region Helpers
 
     /// <summary>
-    /// Adds a pending transaction for the player and returns it.
+    /// Adds a pending transaction for the player and returns it
     /// </summary>
-    /// <param name="player">Player.</param>
-    /// <param name="typeId">Type id.</param>
-    /// <param name="amount">Amount.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="player">Player</param>
+    /// <param name="typeId">Type id</param>
+    /// <param name="amount">Amount</param>
+    /// <returns>The created value</returns>
     private MoneyTransaction AddTransaction(Player player, int typeId, decimal amount)
     {
         var transaction = new MoneyTransaction
@@ -80,63 +80,64 @@ public class PaymentWebhookServiceTests : IDisposable
             TransactionStatusId = TransactionStatuses.Pending,
             CreatedAt = DateTime.UtcNow
         };
+
         _context.MoneyTransactions.Add(transaction);
         _context.SaveChanges();
         return transaction;
     }
 
     /// <summary>
-    /// Builds a notification request for the given event and object id.
+    /// Builds a notification request for the given event and object id
     /// </summary>
-    /// <param name="event">The event name.</param>
-    /// <param name="objectId">Object id.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="event">The event name</param>
+    /// <param name="objectId">Object id</param>
+    /// <returns>The created value</returns>
     private static WebhookRequestInfo Notification(string @event, string objectId) =>
         new("{\"type\":\"notification\",\"event\":\"" + @event + "\",\"object\":{\"id\":\"" + objectId + "\",\"status\":\"ignored-by-service\"}}",
             "POST", "application/json", "127.0.0.1", "tests");
 
     /// <summary>
-    /// Makes the provider report the given status for the payment.
+    /// Makes the provider report the given status for the payment
     /// </summary>
-    /// <param name="transaction">Transaction.</param>
-    /// <param name="status">Status.</param>
-    /// <param name="amount">Amount.</param>
-    /// <param name="transactionId">Transaction id.</param>
+    /// <param name="transaction">Transaction</param>
+    /// <param name="status">Status</param>
+    /// <param name="amount">Amount</param>
+    /// <param name="transactionId">Transaction id</param>
     private void ProviderReportsPayment(MoneyTransaction transaction, ProviderOperationStatus status, decimal? amount = null, int? transactionId = null) =>
         _providerMock
             .Setup(x => x.GetPaymentAsync(PaymentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProviderOperation(PaymentId, status, amount ?? transaction.Amount, "rub", transactionId ?? transaction.Id, null));
 
     /// <summary>
-    /// Makes the provider report the given status for the payout.
+    /// Makes the provider report the given status for the payout
     /// </summary>
-    /// <param name="transaction">Transaction.</param>
-    /// <param name="status">Status.</param>
-    /// <param name="reason">Reason.</param>
+    /// <param name="transaction">Transaction</param>
+    /// <param name="status">Status</param>
+    /// <param name="reason">Reason</param>
     private void ProviderReportsPayout(MoneyTransaction transaction, ProviderOperationStatus status, string? reason = null) =>
         _providerMock
             .Setup(x => x.GetPayoutAsync(PayoutId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProviderOperation(PayoutId, status, transaction.Amount, "rub", transaction.Id, reason));
 
     /// <summary>
-    /// Player balance.
+    /// Player balance
     /// </summary>
-    /// <param name="player">Player.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="player">Player</param>
+    /// <returns>The created value</returns>
     private decimal PlayerBalance(Player player) =>
         _context.PlayersBalances.AsNoTracking().Single(b => b.PlayerId == player.Id).Amount;
 
     /// <summary>
-    /// App balance.
+    /// App balance
     /// </summary>
-    /// <returns>The created value.</returns>
+    /// <returns>The created value</returns>
     private decimal AppBalance() => _context.AppBalance.AsNoTracking().Single().Amount;
 
     /// <summary>
-    /// Links the invited player to the inviter.
+    /// Links the invited player to the inviter
     /// </summary>
-    /// <param name="invited">Invited.</param>
-    /// <param name="inviter">Inviter.</param>
+    /// <param name="invited">Invited</param>
+    /// <param name="inviter">Inviter</param>
     private void AddInvitation(Player invited, Player inviter)
     {
         _context.InvitedPlayers.Add(new InvitedPlayer
@@ -145,6 +146,7 @@ public class PaymentWebhookServiceTests : IDisposable
             PlayerIdInvitedBy = inviter.Id,
             InvitedAt = DateTime.UtcNow
         });
+
         _context.SaveChanges();
     }
 
@@ -153,7 +155,7 @@ public class PaymentWebhookServiceTests : IDisposable
     #region Payment Tests
 
     /// <summary>
-    /// A successful payment credits the player and the application balance and approves the transaction.
+    /// A successful payment credits the player and the application balance and approves the transaction
     /// </summary>
     [Fact]
     public async Task PaymentSucceeded_CreditsPlayerAndAppBalance()
@@ -173,7 +175,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Delivering the same successful notification twice credits the balance once; the second delivery is logged as a duplicate.
+    /// Delivering the same successful notification twice credits the balance once; the second delivery is logged as a duplicate
     /// </summary>
     [Fact]
     public async Task PaymentSucceeded_DeliveredTwice_CreditsOnlyOnce()
@@ -194,7 +196,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A canceled payment rejects the transaction and leaves both balances unchanged.
+    /// A canceled payment rejects the transaction and leaves both balances unchanged
     /// </summary>
     [Fact]
     public async Task PaymentCanceled_RejectsTransactionWithoutChangingBalances()
@@ -212,7 +214,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A payment that is still pending at the provider leaves the transaction as it is.
+    /// A payment that is still pending at the provider leaves the transaction as it is
     /// </summary>
     [Fact]
     public async Task PaymentStillPending_LeavesTransactionUntouched()
@@ -229,7 +231,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A notification for an object the provider does not know is refused and moves no money.
+    /// A notification for an object the provider does not know is refused and moves no money
     /// </summary>
     [Fact]
     public async Task ForgedNotification_ProviderDoesNotKnowThePayment_ReturnsBadRequestAndKeepsBalances()
@@ -248,7 +250,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A payment whose amount differs from the transaction amount is refused and the transaction stays unprocessed.
+    /// A payment whose amount differs from the transaction amount is refused and the transaction stays unprocessed
     /// </summary>
     [Fact]
     public async Task PaymentAmountDiffersFromTransaction_ReturnsBadRequestAndKeepsBalances()
@@ -265,7 +267,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A payment event that points to a withdrawal transaction is refused.
+    /// A payment event that points to a withdrawal transaction is refused
     /// </summary>
     [Fact]
     public async Task PaymentEventForWithdrawalTransaction_ReturnsBadRequest()
@@ -281,7 +283,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A payment without the application transaction id in its metadata is refused.
+    /// A payment without the application transaction id in its metadata is refused
     /// </summary>
     [Fact]
     public async Task PaymentWithoutTransactionId_ReturnsBadRequest()
@@ -299,7 +301,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A successful deposit pays the inviter a bonus of ten percent of the amount.
+    /// A successful deposit pays the inviter a bonus of ten percent of the amount
     /// </summary>
     [Fact]
     public async Task PaymentSucceeded_PaysTenPercentBonusToInviter()
@@ -317,7 +319,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A banned inviter does not receive the referral bonus.
+    /// A banned inviter does not receive the referral bonus
     /// </summary>
     [Fact]
     public async Task PaymentSucceeded_BannedInviterGetsNoBonus()
@@ -339,7 +341,7 @@ public class PaymentWebhookServiceTests : IDisposable
     #region Payout Tests
 
     /// <summary>
-    /// A successful payout reduces the application balance and approves the withdrawal.
+    /// A successful payout reduces the application balance and approves the withdrawal
     /// </summary>
     [Fact]
     public async Task PayoutSucceeded_ReducesAppBalance()
@@ -356,7 +358,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A canceled payout refunds the player once, even when the notification is delivered twice.
+    /// A canceled payout refunds the player once, even when the notification is delivered twice
     /// </summary>
     [Fact]
     public async Task PayoutCanceled_DeliveredTwice_RefundsPlayerOnce()
@@ -379,7 +381,7 @@ public class PaymentWebhookServiceTests : IDisposable
     #region Other Notifications
 
     /// <summary>
-    /// An event type the service does not handle is acknowledged without calling the provider.
+    /// An event type the service does not handle is acknowledged without calling the provider
     /// </summary>
     [Fact]
     public async Task UnrelatedEvent_IsAcknowledgedWithoutCallingProvider()
@@ -392,7 +394,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// A body that is not valid JSON is refused with a bad request.
+    /// A body that is not valid JSON is refused with a bad request
     /// </summary>
     [Fact]
     public async Task InvalidJson_ReturnsBadRequest()
@@ -404,7 +406,7 @@ public class PaymentWebhookServiceTests : IDisposable
     }
 
     /// <summary>
-    /// When the provider cannot be reached the service answers with an internal error, so that the provider retries.
+    /// When the provider cannot be reached the service answers with an internal error, so that the provider retries
     /// </summary>
     [Fact]
     public async Task ProviderUnavailable_ReturnsInternalError()

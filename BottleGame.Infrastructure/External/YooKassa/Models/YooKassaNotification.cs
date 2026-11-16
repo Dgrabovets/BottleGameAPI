@@ -3,18 +3,18 @@ using System.Text.Json.Serialization;
 namespace BottleGame.Infrastructure.External.YooKassa.Models
 {
     /// <summary>
-    /// Входящее уведомление ЮKassa.
+    /// Incoming YooKassa notification
     /// </summary>
     internal class YooKassaNotification
     {
         /// <summary>
-        /// Название события, например payment.succeeded.
+        /// Event name, for example payment.succeeded
         /// </summary>
         [JsonPropertyName("event")]
         public string Event { get; set; } = string.Empty;
 
         /// <summary>
-        /// Объект, к которому относится событие.
+        /// Object the event refers to
         /// </summary>
         [JsonPropertyName("object")]
         public YooKassaOperation? Object { get; set; }

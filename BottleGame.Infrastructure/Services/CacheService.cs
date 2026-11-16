@@ -1,19 +1,19 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using BottleGame.Infrastructure.Data;
+﻿using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Entities;
+using BottleGame.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using BottleGame.Application.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
-    /// Сервис кэширования справочных данных
+    /// Reference data caching service
     /// </summary>
-    /// <param name="cache">Кэш в памяти</param>
-    /// <param name="scopeFactory">Фабрика скоупов для создания DbContext</param>
-    /// <param name="logger">Логгер</param>
+    /// <param name="cache">In-memory cache</param>
+    /// <param name="scopeFactory">Scope factory for creating DbContext</param>
+    /// <param name="logger">Logger</param>
     public class CacheService(
         IMemoryCache cache,
         IServiceScopeFactory scopeFactory,
@@ -22,27 +22,27 @@ namespace BottleGame.Infrastructure.Services
         #region Constants
 
         /// <summary>
-        /// Ключ кэша для игровых параметров
+        /// Cache key for the game parameters
         /// </summary>
         private const string GameParamsCacheKey = "GameParams";
 
         /// <summary>
-        /// Ключ кэша для типов транзакций
+        /// Cache key for the transaction types
         /// </summary>
         private const string TransactionTypesCacheKey = "TransactionTypes";
 
         /// <summary>
-        /// Ключ кэша для статусов транзакций
+        /// Cache key for the transaction statuses
         /// </summary>
         private const string TransactionStatusesCacheKey = "TransactionStatuses";
 
         /// <summary>
-        /// Время жизни кэша по умолчанию (5 минут)
+        /// Default cache lifetime (5 minutes)
         /// </summary>
         private static readonly TimeSpan DefaultCacheDuration = TimeSpan.FromMinutes(5);
 
         /// <summary>
-        /// Время жизни кэша для справочников (30 минут)
+        /// Cache lifetime for reference data (30 minutes)
         /// </summary>
         private static readonly TimeSpan ReferenceCacheDuration = TimeSpan.FromMinutes(30);
 
@@ -50,8 +50,17 @@ namespace BottleGame.Infrastructure.Services
 
         #region Fields
 
+        /// <summary>
+        /// In-memory cache
+        /// </summary>
         private readonly IMemoryCache _cache = cache;
+        /// <summary>
+        /// Scope factory for creating a DbContext
+        /// </summary>
         private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
+        /// <summary>
+        /// Logger
+        /// </summary>
         private readonly ILogger<CacheService> _logger = logger;
 
         #endregion Fields
@@ -72,7 +81,7 @@ namespace BottleGame.Infrastructure.Services
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
 
-                _logger.LogDebug("[CacheService] GameParams загружены в кэш");
+                _logger.LogDebug("[CacheService] GameParams loaded into the cache");
 
                 return gameParams;
             });
@@ -92,7 +101,7 @@ namespace BottleGame.Infrastructure.Services
                     .AsNoTracking()
                     .ToDictionaryAsync(t => t.Id, t => t.Name);
 
-                _logger.LogDebug("[CacheService] TransactionTypes загружены в кэш ({Count} записей)", types.Count);
+                _logger.LogDebug("[CacheService] TransactionTypes loaded into the cache ({Count} records)", types.Count);
 
                 return types;
             }) ?? [];
@@ -112,7 +121,7 @@ namespace BottleGame.Infrastructure.Services
                     .AsNoTracking()
                     .ToDictionaryAsync(s => s.Id, s => s.Name);
 
-                _logger.LogDebug("[CacheService] TransactionStatuses загружены в кэш ({Count} записей)", statuses.Count);
+                _logger.LogDebug("[CacheService] TransactionStatuses loaded into the cache ({Count} records)", statuses.Count);
 
                 return statuses;
             }) ?? [];
@@ -122,21 +131,21 @@ namespace BottleGame.Infrastructure.Services
         public void InvalidateGameParams()
         {
             _cache.Remove(GameParamsCacheKey);
-            _logger.LogDebug("[CacheService] Кэш GameParams инвалидирован");
+            _logger.LogDebug("[CacheService] GameParams cache invalidated");
         }
 
         /// <inheritdoc/>
         public void InvalidateTransactionTypes()
         {
             _cache.Remove(TransactionTypesCacheKey);
-            _logger.LogDebug("[CacheService] Кэш TransactionTypes инвалидирован");
+            _logger.LogDebug("[CacheService] TransactionTypes cache invalidated");
         }
 
         /// <inheritdoc/>
         public void InvalidateTransactionStatuses()
         {
             _cache.Remove(TransactionStatusesCacheKey);
-            _logger.LogDebug("[CacheService] Кэш TransactionStatuses инвалидирован");
+            _logger.LogDebug("[CacheService] TransactionStatuses cache invalidated");
         }
 
         #endregion Public Methods

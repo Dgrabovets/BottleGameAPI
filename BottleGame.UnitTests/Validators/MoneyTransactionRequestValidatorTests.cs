@@ -1,17 +1,22 @@
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Validators;
-using FluentAssertions;
 using FluentValidation.TestHelper;
 
 namespace BottleGame.UnitTests.Validators;
 
 /// <summary>
-/// Тесты для MoneyTransactionRequestValidator
+/// Tests for MoneyTransactionRequestValidator
 /// </summary>
 public class MoneyTransactionRequestValidatorTests
 {
+    /// <summary>
+    /// The validator under test
+    /// </summary>
     private readonly MoneyTransactionRequestValidator _validator = new();
 
+    /// <summary>
+    /// Validate: valid deposit request; no errors
+    /// </summary>
     [Fact]
     public void Validate_ValidDepositRequest_NoErrors()
     {
@@ -25,6 +30,9 @@ public class MoneyTransactionRequestValidatorTests
         result.ShouldNotHaveAnyValidationErrors();
     }
 
+    /// <summary>
+    /// Validate: valid withdrawal request; no errors
+    /// </summary>
     [Fact]
     public void Validate_ValidWithdrawalRequest_NoErrors()
     {
@@ -38,6 +46,10 @@ public class MoneyTransactionRequestValidatorTests
         result.ShouldNotHaveAnyValidationErrors();
     }
 
+    /// <summary>
+    /// Validate: invalid amount; has error
+    /// </summary>
+    /// <param name="amount">Amount</param>
     [Theory]
     [InlineData(0)]
     [InlineData(-100)]
@@ -53,6 +65,9 @@ public class MoneyTransactionRequestValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.Amount);
     }
 
+    /// <summary>
+    /// Validate: positive amount; no error
+    /// </summary>
     [Fact]
     public void Validate_PositiveAmount_NoError()
     {

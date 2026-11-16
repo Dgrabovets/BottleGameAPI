@@ -6,12 +6,12 @@ using Microsoft.EntityFrameworkCore;
 namespace BottleGame.UnitTests.Fixtures;
 
 /// <summary>
-/// Фабрика для создания тестового контекста базы данных
+/// Factory for creating a test database context
 /// </summary>
 public static class TestDbContextFactory
 {
     /// <summary>
-    /// Создаёт новый тестовый контекст с уникальным именем БД
+    /// Creates a new test context with a unique database name
     /// </summary>
     public static ApplicationDbContext Create()
     {
@@ -26,7 +26,7 @@ public static class TestDbContextFactory
     }
 
     /// <summary>
-    /// Создаёт контекст с предзаполненными справочными данными
+    /// Creates a context with pre-filled reference data
     /// </summary>
     public static ApplicationDbContext CreateWithReferenceData()
     {
@@ -36,24 +36,24 @@ public static class TestDbContextFactory
     }
 
     /// <summary>
-    /// Заполняет справочные данные
+    /// Fills the reference data
     /// </summary>
     private static void SeedReferenceData(ApplicationDbContext context)
     {
-        // Типы транзакций
+        // Transaction types
         context.TransactionTypes.AddRange(
             new TransactionType { Id = TransactionTypes.Deposit, Name = "Пополнение" },
             new TransactionType { Id = TransactionTypes.Withdrawal, Name = "Вывод" }
         );
 
-        // Статусы транзакций
+        // Transaction statuses
         context.TransactionStatuses.AddRange(
             new TransactionStatus { Id = TransactionStatuses.Pending, Name = "В ожидании" },
             new TransactionStatus { Id = TransactionStatuses.Approved, Name = "Одобрено" },
             new TransactionStatus { Id = TransactionStatuses.Rejected, Name = "Отклонено" }
         );
 
-        // Игровые параметры
+        // Game parameters
         context.GameParams.Add(new GameParams
         {
             Id = 1,
@@ -80,7 +80,7 @@ public static class TestDbContextFactory
             UprightThresholdForLine = 0.5f
         });
 
-        // Баланс приложения
+        // Application balance
         context.AppBalance.Add(new AppBalance
         {
             Id = 1,
@@ -92,7 +92,7 @@ public static class TestDbContextFactory
     }
 
     /// <summary>
-    /// Создаёт тестового игрока
+    /// Creates a test player
     /// </summary>
     public static Player CreateTestPlayer(ApplicationDbContext context, long telegramId = 123456789)
     {
@@ -103,10 +103,11 @@ public static class TestDbContextFactory
             AvatarUrl = "https://example.com/avatar.jpg",
             RegisteredInAppAt = DateTime.UtcNow
         };
+
         context.Players.Add(player);
         context.SaveChanges();
 
-        // Добавляем связанные данные
+        // Add the related data
         var balance = new Balance { PlayerId = player.Id, Amount = 1000 };
         var playerOptions = new PlayerOptions
         {
@@ -117,6 +118,7 @@ public static class TestDbContextFactory
             PayoutMethod = "sbp_rub",
             Wallet = "79001234567"
         };
+
         var roundsStatistic = new PlayerPlayedRoundsStatisticForWithdrawal
         {
             PlayerId = player.Id,
@@ -132,7 +134,7 @@ public static class TestDbContextFactory
     }
 
     /// <summary>
-    /// Назначает игроку активный бан
+    /// Assigns an active ban to a player
     /// </summary>
     public static void AddActiveBan(ApplicationDbContext context, int playerId, string reason = "Test ban")
     {
@@ -143,6 +145,7 @@ public static class TestDbContextFactory
             BannedAt = DateTime.UtcNow,
             IsActive = true
         });
+
         context.SaveChanges();
     }
 }

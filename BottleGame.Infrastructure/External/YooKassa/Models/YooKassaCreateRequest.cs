@@ -3,44 +3,44 @@ using System.Text.Json.Serialization;
 namespace BottleGame.Infrastructure.External.YooKassa.Models
 {
     /// <summary>
-    /// Тело запроса на создание платежа или выплаты.
+    /// Body of the request to create a payment or payout
     /// </summary>
     internal class YooKassaCreateRequest
     {
         /// <summary>
-        /// Сумма.
+        /// Amount
         /// </summary>
         [JsonPropertyName("amount")]
         public YooKassaAmount Amount { get; set; } = new();
 
         /// <summary>
-        /// Описание операции.
+        /// Description of the operation
         /// </summary>
         [JsonPropertyName("description")]
         public string Description { get; set; } = string.Empty;
 
         /// <summary>
-        /// Произвольные данные, которые ЮKassa вернёт вместе с объектом.
+        /// Arbitrary data that YooKassa returns together with the object
         /// </summary>
         [JsonPropertyName("metadata")]
         public Dictionary<string, string> Metadata { get; set; } = [];
 
         /// <summary>
-        /// Признак автоматического списания (только для платежа).
+        /// Flag of automatic capture (payment only)
         /// </summary>
         [JsonPropertyName("capture")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public bool? Capture { get; set; }
 
         /// <summary>
-        /// Подтверждение платежа игроком (только для платежа).
+        /// Confirmation of the payment by the player (payment only)
         /// </summary>
         [JsonPropertyName("confirmation")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public YooKassaConfirmation? Confirmation { get; set; }
 
         /// <summary>
-        /// Получатель выплаты (только для выплаты).
+        /// Payout recipient (payout only)
         /// </summary>
         [JsonPropertyName("payout_destination_data")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

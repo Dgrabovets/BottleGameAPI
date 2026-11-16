@@ -1,32 +1,32 @@
-using System.Security.Claims;
-using BottleGame.Domain.Constants;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
+using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using BottleGame.Application.Interfaces;
+using System.Security.Claims;
 
 namespace BottleGame.API.Controllers
 {
     /// <summary>
-    /// Контроллер управления балансом и транзакциями
+    /// Balance and transaction controller
     /// </summary>
     /// <remarks>
-    /// Управление балансами игроков, депозитами, выводами и статусами транзакций
+    /// Manages player balances, deposits, withdrawals and transaction statuses
     /// </remarks>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="BalanceController"/>.
+    /// Initializes a new instance of <see cref="BalanceController"/>
     /// </remarks>
-    /// <param name="transactionService">Сервис для работы с транзакциями.</param>
+    /// <param name="transactionService">Service for working with transactions</param>
     [ApiController]
     [Route("api/[controller]")]
-    [Tags("Баланс и транзакции")]
+    [Tags("Balance and transactions")]
     public class BalanceController(ITransactionService transactionService) : BaseApiController
     {
         #region Fields
 
         /// <summary>
-        /// Сервис для работы с транзакциями и балансами.
+        /// Service for working with transactions and balances
         /// </summary>
         private readonly ITransactionService _transactionService = transactionService;
 
@@ -35,13 +35,13 @@ namespace BottleGame.API.Controllers
         #region Balance Methods
 
         /// <summary>
-        /// Получение баланса игрока
+        /// Gets a player's balance
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <response code="200">Возвращает текущий баланс игрока</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <response code="200">Returns the player's current balance</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [HttpGet("get-player-balance/{playerId:int}")]
         [ProducesResponseType(typeof(GetPlayerBalanceResponse), StatusCodes.Status200OK)]
@@ -62,15 +62,15 @@ namespace BottleGame.API.Controllers
         #region Transaction Methods
 
         /// <summary>
-        /// Создать транзакцию
+        /// Creates a transaction
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="request">Запрос для создания транзакции</param>
-        /// <response code="200">Успешное создание транзакции</response>
-        /// <response code="400">Некорректный запрос/Недостаточно средств</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <param name="request">Request to create a transaction</param>
+        /// <response code="200">The transaction was created</response>
+        /// <response code="400">Invalid request or insufficient funds</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -93,14 +93,14 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Изменить статус транзакции (пополнение или вывод).
+        /// Changes the status of a transaction (deposit or withdrawal)
         /// </summary>
-        /// <param name="transactionId">ID транзакции</param>
-        /// <param name="request">Модель запроса: Новый статус (2 - Одобрено, 3 - Отклонено)</param>
-        /// <response code="200">Статус транзакции успешно изменен</response>
-        /// <response code="400">Некорректный запрос/Неверный статус</response>
-        /// <response code="404">Транзакция не найдена</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="transactionId">Transaction id</param>
+        /// <param name="request">Request model: the new status (2 - Approved, 3 - Rejected)</param>
+        /// <response code="200">The transaction status was changed</response>
+        /// <response code="400">Invalid request or invalid status</response>
+        /// <response code="404">The transaction was not found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.AdminOrModerator)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -114,14 +114,14 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получить все транзакции пользователя
+        /// Gets all transactions of a player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <response code="200">Список транзакций пользователя</response>
-        /// <response code="400">Некорректные данные запроса</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <response code="200">List of the player's transactions</response>
+        /// <response code="400">Invalid request data</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [HttpGet("get-player-transactions/{playerId:int}")]
         [ProducesResponseType(typeof(GetPlayerTransactionsResponse), StatusCodes.Status200OK)]
@@ -139,12 +139,12 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получить все выводы
+        /// Gets all withdrawals
         /// </summary>
-        /// <param name="typeId">Тип транзакции</param>
-        /// <response code="200">Список всех транзакций по указанному типу</response>
-        /// <response code="400">Некорректные данные запроса</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="typeId">Transaction type</param>
+        /// <response code="200">List of all transactions of the given type</response>
+        /// <response code="400">Invalid request data</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpGet("get-all-transactions")]
         [ProducesResponseType(typeof(IEnumerable<GetPlayerTransactionsResponse>), StatusCodes.Status200OK)]
@@ -162,10 +162,10 @@ namespace BottleGame.API.Controllers
         #region Reference Data Methods
 
         /// <summary>
-        /// Получить все доступные статусы транзакций
+        /// Gets all available transaction statuses
         /// </summary>
-        /// <response code="200">Список всех статусов транзакций</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">List of all transaction statuses</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpGet("get-all-transaction-statuses")]
         [ProducesResponseType(typeof(IEnumerable<TransactionStatusOrTypeDTO>), StatusCodes.Status200OK)]
@@ -177,10 +177,10 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получить все возможные типы транзакций
+        /// Gets all possible transaction types
         /// </summary>
-        /// <response code="200">Список всех типов транзакций</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">List of all transaction types</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpGet("get-all-transaction-types")]
         [ProducesResponseType(typeof(IEnumerable<TransactionStatusOrTypeDTO>), StatusCodes.Status200OK)]
@@ -196,7 +196,7 @@ namespace BottleGame.API.Controllers
         #region Private Methods
 
         /// <summary>
-        /// Получает ID текущего игрока из claims
+        /// Gets the id of the current player from the claims
         /// </summary>
         private int? GetCurrentPlayerId()
         {
@@ -205,6 +205,7 @@ namespace BottleGame.API.Controllers
             {
                 return playerId;
             }
+
             return null;
         }
 

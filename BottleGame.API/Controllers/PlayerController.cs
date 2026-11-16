@@ -1,47 +1,47 @@
-using System.ComponentModel;
-using System.Reflection;
-using System.Security.Claims;
-using BottleGame.Domain.Constants;
 using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
+using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using BottleGame.Application.Interfaces;
+using System.ComponentModel;
+using System.Reflection;
+using System.Security.Claims;
 
 namespace BottleGame.API.Controllers
 {
     /// <summary>
-    /// Контроллер управления игроками
+    /// Player management controller
     /// </summary>
     /// <remarks>
-    /// Управление данными игроков, банами, статистикой и профилями
+    /// Manages player data, bans, statistics and profiles
     /// </remarks>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="PlayerController"/>.
+    /// Initializes a new instance of <see cref="PlayerController"/>
     /// </remarks>
-    /// <param name="playerService">Сервис для работы с игроками.</param>
-    /// <param name="playerStatisticsService">Сервис статистики игроков.</param>
-    /// <param name="banService">Сервис для работы с банами.</param>
+    /// <param name="playerService">Service for working with players</param>
+    /// <param name="playerStatisticsService">Player statistics service</param>
+    /// <param name="banService">Service for working with bans</param>
     [ApiController]
     [Route("api/[controller]")]
-    [Tags("Управление игроками")]
+    [Tags("Player management")]
     public class PlayerController(IPlayerService playerService, IPlayerStatisticsService playerStatisticsService, IBanService banService) : BaseApiController
     {
         #region Fields
 
         /// <summary>
-        /// Сервис для работы с игроками.
+        /// Service for working with players
         /// </summary>
         private readonly IPlayerService _playerService = playerService;
 
         /// <summary>
-        /// Сервис статистики игроков.
+        /// Player statistics service
         /// </summary>
         private readonly IPlayerStatisticsService _playerStatisticsService = playerStatisticsService;
 
         /// <summary>
-        /// Сервис для работы с банами игроков.
+        /// Service for working with player bans
         /// </summary>
         private readonly IBanService _banService = banService;
 
@@ -50,12 +50,12 @@ namespace BottleGame.API.Controllers
         #region Ban Methods
 
         /// <summary>
-        /// Проверить, забанен ли пользователь
+        /// Checks whether a user is banned
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <response code="200">Информация о бане</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <response code="200">Ban information</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.All)]
         [HttpGet("is-banned/{playerId:int}")]
         [ProducesResponseType(typeof(IsBannedResponse), StatusCodes.Status200OK)]
@@ -73,12 +73,12 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Забанить пользователя
+        /// Bans a user
         /// </summary>
-        /// <response code="200">Пользователь успешно забанен</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="409">Пользователь уже забанен</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">The user was banned</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="409">The user is already banned</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpPost("ban-player")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -97,19 +97,19 @@ namespace BottleGame.API.Controllers
 
             if (result.IsSuccess)
             {
-                return Ok($"Пользователь #{request.PlayerId} успешно забанен!");
+                return Ok($"User #{request.PlayerId} was banned");
             }
 
             return ToActionResult(result);
         }
 
         /// <summary>
-        /// Разбанить пользователя
+        /// Unbans a user
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <response code="200">Пользователь успешно разбанен</response>
-        /// <response code="404">Игрок не найден или не имеет активного бана</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <response code="200">The user was unbanned</response>
+        /// <response code="404">The player was not found or has no active ban</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpPost("unban-player/{playerId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -121,7 +121,7 @@ namespace BottleGame.API.Controllers
 
             if (result.IsSuccess)
             {
-                return Ok($"Пользователь #{playerId} успешно разбанен!");
+                return Ok($"User #{playerId} was unbanned");
             }
 
             return ToActionResult(result);
@@ -132,11 +132,11 @@ namespace BottleGame.API.Controllers
         #region Player Data Methods
 
         /// <summary>
-        /// Получение списка всех игроков
+        /// Gets the list of all players
         /// </summary>
-        /// <response code="200">Список пользователей</response>
-        /// <response code="404">Игроки не найдены</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">List of users</response>
+        /// <response code="404">No players were found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpGet("get-all-players")]
         [ProducesResponseType(typeof(IEnumerable<PlayerInfoResponse>), StatusCodes.Status200OK)]
@@ -152,12 +152,12 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получение данных об игроке
+        /// Gets the data of a player
         /// </summary>
-        /// <response code="200">Пользователь</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">User</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [HttpGet("get-player/{playerId:int}")]
         [ProducesResponseType(typeof(PlayerInfoByIdResponse), StatusCodes.Status200OK)]
@@ -179,14 +179,14 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Изменить пользователя
+        /// Changes a user
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="request">Модель запроса на изменение игрока</param>
-        /// <response code="200">Пользователь успешно изменен</response>
-        /// <response code="400">Неккоретные данные запроса</response>
-        /// <response code="404">Игрок не найден</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <param name="request">Request model to change a player</param>
+        /// <response code="200">The user was changed</response>
+        /// <response code="400">Invalid request data</response>
+        /// <response code="404">The player was not found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [HttpPost("edit-player/{playerId:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -211,11 +211,11 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получение топ 100 списка всех игроков
+        /// Gets the top 100 list of players
         /// </summary>
-        /// <response code="200">Список пользователей</response>
-        /// <response code="404">Игроки не найдены</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">List of users</response>
+        /// <response code="404">No players were found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpGet("get-top100-players")]
         [ProducesResponseType(typeof(PlayerInfoResponse), StatusCodes.Status200OK)]
@@ -232,10 +232,10 @@ namespace BottleGame.API.Controllers
         #region Statistics Methods
 
         /// <summary>
-        /// Получить статистику по всем игрокам
+        /// Gets the statistics of all players
         /// </summary>
-        /// <response code="200">Статистика по всем игрокам</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">Statistics of all players</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpGet("get-all-players-statistics")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -247,12 +247,12 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получить статистику по игроку
+        /// Gets the statistics of a player
         /// </summary>
-        /// <response code="200">Статистика по игроку</response>
-        /// <response code="400">Игрок не найден</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">Statistics of the player</response>
+        /// <response code="400">The player was not found</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpGet("get-player-statistics/{playerId:int}")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -269,13 +269,13 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получить статистику сыгранных раундов для вывода по игроку
+        /// Gets the statistics of the rounds a player played for a withdrawal
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <response code="200">Статистика сыгранных раундов для вывода</response>
-        /// <response code="404">Игрок или статистика не найдены</response>
-        /// <response code="403">Игрок в бане</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="playerId">Player id</param>
+        /// <response code="200">Statistics of played rounds for a withdrawal</response>
+        /// <response code="404">The player or the statistics were not found</response>
+        /// <response code="403">The player is banned</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [HttpGet("get-player-rounds-statistics-for-withdrawal/{playerId:int}")]
         [ProducesResponseType(typeof(PlayerRoundsStatisticsForWithdrawalDTO), StatusCodes.Status200OK)]
@@ -297,11 +297,11 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получить статистику сыгранных раундов для вывода по всем игрокам
+        /// Gets the statistics of the rounds played for a withdrawal by all players
         /// </summary>
-        /// <response code="200">Список статистики сыгранных раундов для вывода</response>
-        /// <response code="404">Статистика не найдена</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">List of the statistics of played rounds for a withdrawal</response>
+        /// <response code="404">The statistics were not found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.AdminOrModerator)]
         [HttpGet("get-all-players-rounds-statistics-for-withdrawal")]
         [ProducesResponseType(typeof(IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>), StatusCodes.Status200OK)]
@@ -318,7 +318,7 @@ namespace BottleGame.API.Controllers
         #region Private Methods
 
         /// <summary>
-        /// Проверяет, имеет ли текущий пользователь доступ к данным игрока
+        /// Checks whether the current user has access to the player's data
         /// </summary>
         private bool HasAccessToPlayer(int playerId)
         {
@@ -332,7 +332,7 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получает ID текущего игрока из claims
+        /// Gets the id of the current player from the claims
         /// </summary>
         private int? GetCurrentPlayerId()
         {
@@ -341,11 +341,12 @@ namespace BottleGame.API.Controllers
             {
                 return playerId;
             }
+
             return null;
         }
 
         /// <summary>
-        /// Получает значение атрибута категории свойства
+        /// Gets the value of the category attribute of a property
         /// </summary>
         public static string GetCategoryAttributeValue(Enum enumValue)
         {

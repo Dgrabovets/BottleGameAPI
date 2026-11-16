@@ -1,18 +1,18 @@
 namespace BottleGame.Infrastructure.External.Processing
 {
     /// <summary>
-    /// Режим работы с платёжным процессингом.
+    /// Mode of working with the payment processing
     /// </summary>
     public enum ProcessingMode
     {
         /// <summary>
-        /// Пополнения и выводы завершаются локально без обращения к процессингу и без реальных денег.
-        /// Для разработки, тестов и демонстраций.
+        /// Deposits and withdrawals complete locally without calling the processing and without real money.
+        /// For development, tests and demonstrations
         /// </summary>
         Simulated,
 
         /// <summary>
-        /// Платежи и выплаты проходят через платёжный процессинг, статусы приходят вебхуками.
+        /// Payments and payouts go through the payment processing, statuses arrive by webhooks
         /// </summary>
         Live
     }

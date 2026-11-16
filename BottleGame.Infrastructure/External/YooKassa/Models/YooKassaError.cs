@@ -3,18 +3,18 @@ using System.Text.Json.Serialization;
 namespace BottleGame.Infrastructure.External.YooKassa.Models
 {
     /// <summary>
-    /// Ошибка API ЮKassa.
+    /// YooKassa API error
     /// </summary>
     internal class YooKassaError
     {
         /// <summary>
-        /// Код ошибки.
+        /// Error code
         /// </summary>
         [JsonPropertyName("code")]
         public string? Code { get; set; }
 
         /// <summary>
-        /// Описание ошибки.
+        /// Error description
         /// </summary>
         [JsonPropertyName("description")]
         public string? Description { get; set; }

@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace BottleGame.API.Controllers
 {
     /// <summary>
-    /// Контроллер уведомлений от платёжного провайдера.
+    /// Controller for notifications from the payment provider
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="WebhookController"/>.
+    /// Initializes a new instance of <see cref="WebhookController"/>
     /// </remarks>
-    /// <param name="webhookService">Сервис обработки уведомлений.</param>
+    /// <param name="webhookService">Notification handling service</param>
     [Route("api/webhook")]
     [Tags("Webhooks")]
     public class WebhookController(IPaymentWebhookService webhookService) : BaseApiController
@@ -18,7 +18,7 @@ namespace BottleGame.API.Controllers
         #region Fields
 
         /// <summary>
-        /// Сервис обработки уведомлений.
+        /// Notification handling service
         /// </summary>
         private readonly IPaymentWebhookService _webhookService = webhookService;
 
@@ -27,10 +27,10 @@ namespace BottleGame.API.Controllers
         #region Action Methods
 
         /// <summary>
-        /// Уведомления ЮKassa о платежах и выплатах.
-        /// Адрес указывается в личном кабинете ЮKassa: Интеграция, HTTP-уведомления.
+        /// YooKassa notifications about payments and payouts.
+        /// The address is set in the YooKassa dashboard: Integration, HTTP notifications
         /// </summary>
-        /// <returns>Результат обработки уведомления.</returns>
+        /// <returns>Result of handling the notification</returns>
         [HttpPost("yookassa")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -55,9 +55,9 @@ namespace BottleGame.API.Controllers
         #region Helper Methods
 
         /// <summary>
-        /// Получает IP-адрес клиента для журнала.
+        /// Gets the client IP address for the log
         /// </summary>
-        /// <returns>IP-адрес клиента или null.</returns>
+        /// <returns>Client IP address or null</returns>
         private string? GetClientIpAddress() =>
             Request.Headers["X-Forwarded-For"].FirstOrDefault()
             ?? Request.Headers["X-Real-IP"].FirstOrDefault()

@@ -9,47 +9,47 @@ using Moq;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Тесты статистики администратора (общая, за период, timeline)
+/// Administrator statistics tests (general, for a period, timeline)
 /// </summary>
 public class StatisticsServiceTests : IDisposable
 {
     /// <summary>
-    /// Jan15.
+    /// Jan15
     /// </summary>
     private static readonly DateTime Jan15 = new(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
-    /// May10.
+    /// May10
     /// </summary>
     private static readonly DateTime May10 = new(2026, 5, 10, 14, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
-    /// May20.
+    /// May20
     /// </summary>
     private static readonly DateTime May20 = new(2026, 5, 20, 10, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
-    /// May25.
+    /// May25
     /// </summary>
     private static readonly DateTime May25 = new(2026, 5, 25, 16, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
-    /// Jun10.
+    /// Jun10
     /// </summary>
     private static readonly DateTime Jun10 = new(2026, 6, 10, 9, 0, 0, DateTimeKind.Utc);
 
     /// <summary>
-    /// Database context of the test.
+    /// Database context of the test
     /// </summary>
     private readonly Infrastructure.Data.ApplicationDbContext _context;
 
     /// <summary>
-    /// The service under test.
+    /// The service under test
     /// </summary>
     private readonly StatisticsService _service;
 
     /// <summary>
-    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// Creates the test fixture: the database, the mocks and the object under test
     /// </summary>
     public StatisticsServiceTests()
     {
@@ -59,11 +59,11 @@ public class StatisticsServiceTests : IDisposable
         var player2 = builder.AddPlayer(May20, balance: 3_500m, name: "PlayerMay");
         var player3 = builder.AddPlayer(Jun10, balance: 1_000m, name: "PlayerJun");
 
-        // Успешные операции (должны войти в доход / пополнения / выводы)
+        // Successful operations (must count towards income / deposits / withdrawals)
         builder.AddSuccessfulDeposit(player1.Id, 5_000m, May10);
         builder.AddSuccessfulWithdrawal(player1.Id, 1_500m, May25);
 
-        // Не должны влиять на доход и пополнения
+        // Must not affect income and deposits
         builder.AddPendingDeposit(player2.Id, 1_000m);
         builder.AddFailedDeposit(player2.Id, 2_000m, May10);
         builder.AddTransaction(
@@ -74,7 +74,7 @@ public class StatisticsServiceTests : IDisposable
             isProcessingSuccess: false,
             processedAt: May10);
 
-        // Выводы в обработке
+        // Withdrawals being processed
         builder.AddPendingWithdrawal(player2.Id, 800m);
         builder.AddApprovedWithdrawalAwaitingProcessing(player3.Id, 400m);
 
@@ -84,7 +84,7 @@ public class StatisticsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Releases the database context used by the tests.
+    /// Releases the database context used by the tests
     /// </summary>
     public void Dispose()
     {
@@ -92,10 +92,10 @@ public class StatisticsServiceTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    #region GetStatistics — общая статистика
+    #region GetStatistics — general statistics
 
     /// <summary>
-    /// Get statistics: without period; returns all time metrics.
+    /// Get statistics: without period; returns all time metrics
     /// </summary>
     [Fact]
     public async Task GetStatistics_WithoutPeriod_ReturnsAllTimeMetrics()
@@ -114,7 +114,7 @@ public class StatisticsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get statistics: excludes actively banned player.
+    /// Get statistics: excludes actively banned player
     /// </summary>
     [Fact]
     public async Task GetStatistics_ExcludesActivelyBannedPlayer()
@@ -144,12 +144,12 @@ public class StatisticsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get statistics: without period; counts only successfully processed transactions.
+    /// Get statistics: without period; counts only successfully processed transactions
     /// </summary>
     [Fact]
     public async Task GetStatistics_WithoutPeriod_CountsOnlySuccessfullyProcessedTransactions()
     {
-        // Arrange — дополнительный шум в отдельном контексте
+        // Arrange — extra noise in a separate context
         var (context, builder) = StatisticsTestDataBuilder.Create();
         var player = builder.AddPlayer(May20, 100m);
         builder.AddSuccessfulDeposit(player.Id, 100m, May10);
@@ -173,12 +173,12 @@ public class StatisticsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get statistics: with period; filters users and transactions by dates.
+    /// Get statistics: with period; filters users and transactions by dates
     /// </summary>
     [Fact]
     public async Task GetStatistics_WithPeriod_FiltersUsersAndTransactionsByDates()
     {
-        // Act — май 2026: один новый игрок, одно пополнение и один вывод
+        // Act — May 2026: one new player, one deposit and one withdrawal
         var result = await _service.GetStatistics(new GetAppGeneralStatisticsRequest
         {
             DateFrom = new DateTime(2026, 5, 1),
@@ -187,16 +187,16 @@ public class StatisticsServiceTests : IDisposable
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value!.UsersTotal.Should().Be(1, "только игрок, зарегистрированный 20 мая");
+        result.Value!.UsersTotal.Should().Be(1, "only the player registered on May 20");
         result.Value.DepositsTotal.Should().Be(5_000m);
         result.Value.WithdrawalsTotal.Should().Be(1_500m);
         result.Value.IncomeTotal.Should().Be(3_500m);
-        result.Value.BalancesTotal.Should().BeNull("баланс не считается для периода");
-        result.Value.PendingWithdrawalsTotal.Should().Be(800m, "pending выводы считаются глобально");
+        result.Value.BalancesTotal.Should().BeNull("the balance is not calculated for a period");
+        result.Value.PendingWithdrawalsTotal.Should().Be(800m, "pending withdrawals are counted globally");
     }
 
     /// <summary>
-    /// Get statistics: with period; excludes transactions outside range.
+    /// Get statistics: with period; excludes transactions outside range
     /// </summary>
     [Fact]
     public async Task GetStatistics_WithPeriod_ExcludesTransactionsOutsideRange()
@@ -226,7 +226,7 @@ public class StatisticsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get statistics: with only one date; returns failure.
+    /// Get statistics: with only one date; returns failure
     /// </summary>
     [Fact]
     public async Task GetStatistics_WithOnlyOneDate_ReturnsFailure()
@@ -237,11 +237,11 @@ public class StatisticsServiceTests : IDisposable
         });
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("обе даты");
+        result.Error.Should().Contain("both dates");
     }
 
     /// <summary>
-    /// Get statistics: with invalid range; returns failure.
+    /// Get statistics: with invalid range; returns failure
     /// </summary>
     [Fact]
     public async Task GetStatistics_WithInvalidRange_ReturnsFailure()
@@ -253,11 +253,11 @@ public class StatisticsServiceTests : IDisposable
         });
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("не может быть позже");
+        result.Error.Should().Contain("cannot be later");
     }
 
     /// <summary>
-    /// Get statistics: with too long range; returns failure.
+    /// Get statistics: with too long range; returns failure
     /// </summary>
     [Fact]
     public async Task GetStatistics_WithTooLongRange_ReturnsFailure()
@@ -273,7 +273,7 @@ public class StatisticsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get statistics timeline: with multi year period; uses year buckets.
+    /// Get statistics timeline: with multi year period; uses year buckets
     /// </summary>
     [Fact]
     public async Task GetStatisticsTimeline_WithMultiYearPeriod_UsesYearBuckets()
@@ -289,12 +289,12 @@ public class StatisticsServiceTests : IDisposable
         result.Value.Points.Count.Should().BeInRange(20, 25);
     }
 
-    #endregion GetStatistics — общая статистика
+    #endregion GetStatistics — general statistics
 
     #region GetStatisticsTimeline
 
     /// <summary>
-    /// Get statistics timeline: returns daily buckets for short period.
+    /// Get statistics timeline: returns daily buckets for short period
     /// </summary>
     [Fact]
     public async Task GetStatisticsTimeline_ReturnsDailyBucketsForShortPeriod()
@@ -315,7 +315,7 @@ public class StatisticsServiceTests : IDisposable
         may10.DepositsAmount.Should().Be(5_000m);
         may10.WithdrawalsAmount.Should().Be(0m);
         may10.IncomeAmount.Should().Be(5_000m);
-        may10.UsersCount.Should().Be(1, "к концу 10 мая зарегистрирован только первый игрок");
+        may10.UsersCount.Should().Be(1, "by the end of May 10 only the first player is registered");
 
         var may25 = result.Value.Points.Single(p => p.Date.Date == May25.Date);
         may25.WithdrawalsAmount.Should().Be(1_500m);
@@ -326,7 +326,7 @@ public class StatisticsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get statistics timeline: ignores unprocessed transactions.
+    /// Get statistics timeline: ignores unprocessed transactions
     /// </summary>
     [Fact]
     public async Task GetStatisticsTimeline_IgnoresUnprocessedTransactions()
@@ -358,12 +358,12 @@ public class StatisticsServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get statistics timeline: with long period; uses week or month buckets.
+    /// Get statistics timeline: with long period; uses week or month buckets
     /// </summary>
     [Fact]
     public async Task GetStatisticsTimeline_WithLongPeriod_UsesWeekOrMonthBuckets()
     {
-        // Act — больше 90 дней
+        // Act — more than 90 days
         var result = await _service.GetStatisticsTimeline(new GetAppStatisticsTimelineRequest
         {
             DateFrom = new DateTime(2026, 1, 1),

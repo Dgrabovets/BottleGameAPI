@@ -4,16 +4,16 @@ using BottleGame.Application.DTOs.Requests;
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Обработка уведомлений платёжного провайдера
+    /// Handling of notifications from the payment provider
     /// </summary>
     public interface IPaymentWebhookService
     {
         /// <summary>
-        /// Обрабатывает входящее уведомление о платеже или выплате.
-        /// Подлинность проверяется повторным запросом объекта у провайдера, содержимое тела уведомления не используется
+        /// Handles an incoming notification about a payment or payout.
+        /// The authenticity is checked by asking the provider for the object again; the body of the notification is not used
         /// </summary>
-        /// <param name="request">Входящий webhook-запрос</param>
-        /// <returns>Результат обработки; повторная доставка уже обработанного уведомления считается успехом</returns>
+        /// <param name="request">Incoming webhook request</param>
+        /// <returns>Result of the handling; a repeated delivery of an already handled notification counts as success</returns>
         Task<Result> HandleNotificationAsync(WebhookRequestInfo request);
     }
 }

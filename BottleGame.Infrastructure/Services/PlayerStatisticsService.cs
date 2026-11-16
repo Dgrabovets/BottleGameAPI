@@ -1,22 +1,22 @@
-﻿using Microsoft.Extensions.Logging;
-using BottleGame.Application.Common;
-using BottleGame.Infrastructure.Data;
+﻿using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Responses;
-using Microsoft.EntityFrameworkCore;
 using BottleGame.Application.Interfaces;
+using BottleGame.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using static BottleGame.Infrastructure.Services.PlayerMapper;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
-    /// Сервис статистики игроков
+    /// Player statistics service
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="PlayerStatisticsService"/>
+    /// Initializes a new instance of <see cref="PlayerStatisticsService"/>
     /// </remarks>
-    /// <param name="context">Контекст базы данных</param>
-    /// <param name="logger">Логгер</param>
-    /// <param name="cacheService">Сервис кэширования</param>
+    /// <param name="context">Database context</param>
+    /// <param name="logger">Logger</param>
+    /// <param name="cacheService">Cache service</param>
     public class PlayerStatisticsService(
         ApplicationDbContext context,
         ILogger<PlayerStatisticsService> logger,
@@ -25,22 +25,22 @@ namespace BottleGame.Infrastructure.Services
         #region Fields
 
         /// <summary>
-        /// Контекст базы данных
+        /// Database context
         /// </summary>
         private readonly ApplicationDbContext _context = context;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<PlayerStatisticsService> _logger = logger;
 
         /// <summary>
-        /// Сервис кэширования
+        /// Cache service
         /// </summary>
         private readonly ICacheService _cacheService = cacheService;
 
         /// <summary>
-        /// Префикс для логов
+        /// Log prefix
         /// </summary>
         private const string Prefix = "[PlayerStatisticsService]";
 
@@ -70,7 +70,7 @@ namespace BottleGame.Infrastructure.Services
                 LossAmount = p.GameRounds.Where(r => !r.IsWin).Sum(r => r.Bet)
             }).ToList();
 
-            _logger.LogInformation("{Prefix} Получена статистика по {Count} игрокам", Prefix, response.Count);
+            _logger.LogInformation("{Prefix} Got the statistics of {Count} players", Prefix, response.Count);
 
             return Result<IEnumerable<PlayerStatisticsResponse>>.Success(response);
         }
@@ -92,8 +92,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result<PlayerStatisticsResponse>.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result<PlayerStatisticsResponse>.NotFound($"Player with id {playerId} not found");
             }
 
             var response = new PlayerStatisticsResponse
@@ -108,7 +108,7 @@ namespace BottleGame.Infrastructure.Services
                 LossAmount = player.GameRounds.Where(r => !r.IsWin).Sum(r => r.Bet)
             };
 
-            _logger.LogInformation("{Prefix} Получена статистика по игроку - {PlayerId}", Prefix, playerId);
+            _logger.LogInformation("{Prefix} Got the statistics of player - {PlayerId}", Prefix, playerId);
 
             return Result<PlayerStatisticsResponse>.Success(response);
         }
@@ -129,14 +129,14 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result<PlayerRoundsStatisticsForWithdrawalDTO>.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result<PlayerRoundsStatisticsForWithdrawalDTO>.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} Пользователь забанен", Prefix);
-                return Result<PlayerRoundsStatisticsForWithdrawalDTO>.Forbidden("Пользователь в бане");
+                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                return Result<PlayerRoundsStatisticsForWithdrawalDTO>.Forbidden("User is banned");
             }
 
             var stat = await _context.PlayersPlayedRoundsStatisticForWithdrawals
@@ -146,8 +146,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (stat is null)
             {
-                _logger.LogWarning("{Prefix} Статистика сыгранных раундов для игрока {PlayerId} не найдена", Prefix, playerId);
-                return Result<PlayerRoundsStatisticsForWithdrawalDTO>.NotFound($"Статистика сыгранных раундов для игрока {playerId} не найдена");
+                _logger.LogWarning("{Prefix} Statistics of the played rounds for player {PlayerId} not found", Prefix, playerId);
+                return Result<PlayerRoundsStatisticsForWithdrawalDTO>.NotFound($"Statistics of the played rounds for player {playerId} not found");
             }
 
             var transactionTypes = await _cacheService.GetTransactionTypesAsync();
@@ -155,8 +155,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (transactionStatuses.Count == 0 || transactionTypes.Count == 0)
             {
-                _logger.LogWarning("{Prefix} Типы или статусы транзакций не найдены", Prefix);
-                return Result<PlayerRoundsStatisticsForWithdrawalDTO>.InternalError("Типы или статусы транзакций не найдены");
+                _logger.LogWarning("{Prefix} Transaction types or statuses not found", Prefix);
+                return Result<PlayerRoundsStatisticsForWithdrawalDTO>.InternalError("Transaction types or statuses not found");
             }
 
             TransactionDTO? lastDeposit = null;
@@ -196,8 +196,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (stats.Count == 0)
             {
-                _logger.LogWarning("{Prefix} Статистика сыгранных раундов не найдена", Prefix);
-                return Result<IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>>.NotFound("Статистика сыгранных раундов не найдена");
+                _logger.LogWarning("{Prefix} Statistics of the played rounds not found", Prefix);
+                return Result<IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>>.NotFound("Statistics of the played rounds not found");
             }
 
             var transactionTypes = await _cacheService.GetTransactionTypesAsync();
@@ -205,8 +205,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (transactionStatuses.Count == 0 || transactionTypes.Count == 0)
             {
-                _logger.LogWarning("{Prefix} Типы или статусы транзакций не найдены", Prefix);
-                return Result<IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>>.InternalError("Типы или статусы транзакций не найдены");
+                _logger.LogWarning("{Prefix} Transaction types or statuses not found", Prefix);
+                return Result<IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>>.InternalError("Transaction types or statuses not found");
             }
 
             var dtos = stats.Select(stat =>

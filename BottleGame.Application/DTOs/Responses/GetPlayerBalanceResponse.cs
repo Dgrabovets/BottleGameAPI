@@ -1,17 +1,17 @@
 ﻿namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Ответ с балансом игрока
+    /// Response with a player's balance
     /// </summary>
     public class GetPlayerBalanceResponse
     {
         /// <summary>
-        /// Идентификатор игрока
+        /// Player id
         /// </summary>
         public int PlayerId { get; set; }
 
         /// <summary>
-        /// Баланс игрока
+        /// Player balance
         /// </summary>
         public decimal Balance { get; set; }
     }

@@ -3,25 +3,25 @@ using System.Text.Json.Serialization;
 namespace BottleGame.Infrastructure.External.YooKassa.Models
 {
     /// <summary>
-    /// Способ подтверждения платежа игроком.
+    /// Way for the player to confirm the payment
     /// </summary>
     internal class YooKassaConfirmation
     {
         /// <summary>
-        /// Тип подтверждения; используется redirect.
+        /// Confirmation type; redirect is used
         /// </summary>
         [JsonPropertyName("type")]
         public string Type { get; set; } = "redirect";
 
         /// <summary>
-        /// Адрес возврата после оплаты (при создании платежа).
+        /// Return address after payment (when creating a payment)
         /// </summary>
         [JsonPropertyName("return_url")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? ReturnUrl { get; set; }
 
         /// <summary>
-        /// Адрес страницы оплаты (в ответе).
+        /// Address of the payment page (in the response)
         /// </summary>
         [JsonPropertyName("confirmation_url")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

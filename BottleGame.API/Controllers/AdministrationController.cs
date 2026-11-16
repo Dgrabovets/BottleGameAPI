@@ -1,29 +1,29 @@
-﻿using System.Security.Claims;
-using BottleGame.Domain.Constants;
-using BottleGame.Application.DTOs.Requests;
+﻿using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
+using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using BottleGame.Application.Interfaces;
 using System.ComponentModel;
+using System.Security.Claims;
 
 namespace BottleGame.API.Controllers
 {
     /// <summary>
-    /// Контроллер администрирования
+    /// Administration controller
     /// </summary>
     /// <remarks>
-    /// Управление балансом приложения, статистикой и модераторами
+    /// Manages the application balance, statistics and moderators
     /// </remarks>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="AdministrationController"/>.
+    /// Initializes a new instance of <see cref="AdministrationController"/>
     /// </remarks>
-    /// <param name="appBalanceService">Сервис баланса приложения.</param>
-    /// <param name="statisticsService">Сервис статистики.</param>
-    /// <param name="moderatorService">Сервис управления модераторами.</param>
+    /// <param name="appBalanceService">Application balance service</param>
+    /// <param name="statisticsService">Statistics service</param>
+    /// <param name="moderatorService">Moderator management service</param>
     [ApiController]
     [Route("api/admin")]
-    [Tags("Администрирование")]
+    [Tags("Administration")]
     public class AdministrationController(
         IAppBalanceService appBalanceService,
         IStatisticsService statisticsService,
@@ -32,17 +32,17 @@ namespace BottleGame.API.Controllers
         #region Fields
 
         /// <summary>
-        /// Сервис баланса приложения.
+        /// Application balance service
         /// </summary>
         private readonly IAppBalanceService _appBalanceService = appBalanceService;
 
         /// <summary>
-        /// Сервис статистики.
+        /// Statistics service
         /// </summary>
         private readonly IStatisticsService _statisticsService = statisticsService;
 
         /// <summary>
-        /// Сервис управления модераторами.
+        /// Moderator management service
         /// </summary>
         private readonly IModeratorService _moderatorService = moderatorService;
 
@@ -51,7 +51,7 @@ namespace BottleGame.API.Controllers
         #region App Balance Methods
 
         /// <summary>
-        /// Получение текущего баланса приложения
+        /// Gets the current application balance
         /// </summary>
         [Authorize(Roles = RoleNames.Admin)]
         [HttpGet("get-app-balance")]
@@ -65,18 +65,18 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Обновление нижнего порога баланса приложения
+        /// Updates the lower threshold of the application balance
         /// </summary>
-        /// <response code="200">Нижний порог успешно обновлен</response>
-        /// <response code="400">Не найдены данные для обновления, скорее всего нарушена целостность данных или некорректные данные запроса</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">The lower threshold was updated</response>
+        /// <response code="400">No data to update was found, most likely the data integrity is broken or the request data is invalid</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpPost("update-threshold")]
         public async Task<IActionResult> UpdateAppBalanceThreshold(
-            [Description("Запрос на обновление нижнего порога баланса приложения")] 
+            [Description("Request to update the lower threshold of the application balance")]
             [FromBody] UpdateAppBalanceThresholdRequest request
         )
         {
@@ -95,25 +95,25 @@ namespace BottleGame.API.Controllers
 
             if (result.IsSuccess)
             {
-                return Ok(new { Message = "Нижний порог успешно обновлен" });
+                return Ok(new { Message = "The lower threshold was updated" });
             }
 
             return ToActionResult(result);
         }
 
         /// <summary>
-        /// Пополнение баланса приложения
+        /// Tops up the application balance
         /// </summary>
-        /// <response code="200">Баланс успешно пополнен</response>
-        /// <response code="400">Не найдены данные для обновления или некорректные данные запроса</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">The balance was topped up</response>
+        /// <response code="400">No data to update was found or the request data is invalid</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpPost("topup-balance")]
         public async Task<IActionResult> TopUpAppBalance(
-            [Description("Запрос на пополнение баланса приложения")]
+            [Description("Request to top up the application balance")]
             [FromBody] TopUpAppBalanceRequest request
         )
         {
@@ -134,7 +134,7 @@ namespace BottleGame.API.Controllers
             {
                 return Ok(new
                 {
-                    Message = "Баланс успешно пополнен",
+                    Message = "The balance was topped up",
                     NewBalance = result.Value
                 });
             }
@@ -147,11 +147,11 @@ namespace BottleGame.API.Controllers
         #region Statistics Methods
 
         /// <summary>
-        /// Получение админской статистики
+        /// Gets the administration statistics
         /// </summary>
-        /// <response code="200">Статистика</response>
-        /// <response code="400">Нужные данные не найдены, скорее всего нарушена целостность данных</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <response code="200">Statistics</response>
+        /// <response code="400">The required data was not found, most likely the data integrity is broken</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(typeof(GetAppGeneralStatisticsResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -171,7 +171,7 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Получение временной шкалы статистики для графиков
+        /// Gets the statistics timeline for charts
         /// </summary>
         [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(typeof(GetAppStatisticsTimelineResponse), StatusCodes.Status200OK)]
@@ -197,13 +197,13 @@ namespace BottleGame.API.Controllers
         #region Moderator Methods
 
         /// <summary>
-        /// Регистрация нового модератора
+        /// Registers a new moderator
         /// </summary>
-        /// <param name="authRequest">Данные для регистрации (логин и пароль)</param>
-        /// <response code="200">Модератор успешно зарегистрирован</response>
-        /// <response code="400">Некорректные данные запроса</response>
-        /// <response code="409">Модератор уже есть</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="authRequest">Registration data (login and password)</param>
+        /// <response code="200">The moderator was registered</response>
+        /// <response code="400">Invalid request data</response>
+        /// <response code="409">The moderator already exists</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -211,7 +211,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpPost("moderator-register")]
         public async Task<IActionResult> RegisterModerator(
-            [Description("Модель учетных данных для административных ролей")]
+            [Description("Credentials model for administration roles")]
             [FromBody] AdministrationRoleUserCredentials authRequest
         )
         {
@@ -224,19 +224,19 @@ namespace BottleGame.API.Controllers
 
             if (result.IsSuccess)
             {
-                return Ok(new { Message = "Модератор успешно зарегистрирован" });
+                return Ok(new { Message = "The moderator was registered" });
             }
 
             return ToActionResult(result);
         }
 
         /// <summary>
-        /// Получение списка модераторов или конкретного модератора по ID
+        /// Gets the list of moderators or a single moderator by id
         /// </summary>
-        /// <param name="moderatorId">ID модератора (опционально)</param>
-        /// <response code="200">Успешный запрос</response>
-        /// <response code="404">Модератор не найден (при запросе по ID)</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="moderatorId">Moderator id (optional)</param>
+        /// <response code="200">Successful request</response>
+        /// <response code="404">The moderator was not found (when requested by id)</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(typeof(IEnumerable<ModeratorDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ModeratorDTO), StatusCodes.Status200OK)]
@@ -244,7 +244,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpGet("get-moderators")]
         public async Task<IActionResult> GetModerators(
-            [Description("Идентификатор модератора")]
+            [Description("Moderator identifier")]
             [FromQuery] int? moderatorId = null
         )
         {
@@ -253,19 +253,19 @@ namespace BottleGame.API.Controllers
         }
 
         /// <summary>
-        /// Удаление модератора по ID
+        /// Deletes a moderator by id
         /// </summary>
-        /// <param name="moderatorId">ID модератора</param>
-        /// <response code="200">Модератор успешно удален</response>
-        /// <response code="404">Модератор не найден</response>
-        /// <response code="500">Внутренняя ошибка сервера</response>
+        /// <param name="moderatorId">Moderator id</param>
+        /// <response code="200">The moderator was deleted</response>
+        /// <response code="404">The moderator was not found</response>
+        /// <response code="500">Internal server error</response>
         [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [HttpDelete("delete-moderator/{moderatorId}")]
         public async Task<IActionResult> DeleteModerator(
-            [Description("Идентификатор модератора")]
+            [Description("Moderator identifier")]
             [FromRoute] int moderatorId
         )
         {
@@ -273,7 +273,7 @@ namespace BottleGame.API.Controllers
 
             if (result.IsSuccess)
             {
-                return Ok(new { Message = "Модератор успешно удален" });
+                return Ok(new { Message = "The moderator was deleted" });
             }
 
             return ToActionResult(result);
@@ -284,7 +284,7 @@ namespace BottleGame.API.Controllers
         #region Private Methods
 
         /// <summary>
-        /// Получает ID текущего администратора из claims
+        /// Gets the id of the current administrator from the claims
         /// </summary>
         private int? GetCurrentAdminId()
         {
@@ -293,6 +293,7 @@ namespace BottleGame.API.Controllers
             {
                 return adminId;
             }
+
             return null;
         }
 

@@ -5,19 +5,19 @@ using BottleGame.Application.DTOs.Responses;
 namespace BottleGame.Application.Interfaces
 {
     /// <summary>
-    /// Интерфейс сервиса для работы с транзакциями
+    /// Interface of the service for working with transactions
     /// </summary>
     public interface ITransactionService
     {
         #region Balance Methods
 
         /// <summary>
-        /// Получить баланс игрока
+        /// Gets the balance of a player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="requestingPlayerId">ID запрашивающего</param>
-        /// <param name="isAdmin">Является ли администратором</param>
-        /// <returns>Информация о балансе</returns>
+        /// <param name="playerId">Player id</param>
+        /// <param name="requestingPlayerId">Id of the requester</param>
+        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <returns>Balance information</returns>
         Task<Result<GetPlayerBalanceResponse>> GetPlayerBalance(int playerId, int? requestingPlayerId, bool isAdmin);
 
         #endregion Balance Methods
@@ -25,37 +25,37 @@ namespace BottleGame.Application.Interfaces
         #region Transaction Methods
 
         /// <summary>
-        /// Создать транзакцию (депозит или вывод)
+        /// Creates a transaction (deposit or withdrawal)
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="request">Данные транзакции</param>
-        /// <param name="requestingPlayerId">ID запрашивающего</param>
-        /// <param name="isAdmin">Является ли администратором</param>
-        /// <returns>Результат создания транзакции</returns>
+        /// <param name="playerId">Player id</param>
+        /// <param name="request">Transaction data</param>
+        /// <param name="requestingPlayerId">Id of the requester</param>
+        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <returns>Result of creating the transaction</returns>
         Task<Result<object?>> CreateTransaction(int playerId, MoneyTransactionRequest request, int? requestingPlayerId, bool isAdmin);
 
         /// <summary>
-        /// Обновить статус транзакции
+        /// Updates the status of a transaction
         /// </summary>
-        /// <param name="transactionId">ID транзакции</param>
-        /// <param name="request">Новый статус</param>
-        /// <returns>Результат операции</returns>
+        /// <param name="transactionId">Transaction id</param>
+        /// <param name="request">New status</param>
+        /// <returns>Operation result</returns>
         Task<Result> UpdateTransactionStatus(int transactionId, ChangeTransactionStatusRequest request);
 
         /// <summary>
-        /// Получить транзакции игрока
+        /// Gets the transactions of a player
         /// </summary>
-        /// <param name="playerId">ID игрока</param>
-        /// <param name="requestingPlayerId">ID запрашивающего</param>
-        /// <param name="isAdmin">Является ли администратором</param>
-        /// <returns>Список транзакций</returns>
+        /// <param name="playerId">Player id</param>
+        /// <param name="requestingPlayerId">Id of the requester</param>
+        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <returns>List of transactions</returns>
         Task<Result<GetPlayerTransactionsResponse>> GetPlayerTransactions(int playerId, int? requestingPlayerId, bool isAdmin);
 
         /// <summary>
-        /// Получить все транзакции
+        /// Gets all transactions
         /// </summary>
-        /// <param name="typeId">Фильтр по типу (опционально)</param>
-        /// <returns>Список транзакций по игрокам</returns>
+        /// <param name="typeId">Filter by type (optional)</param>
+        /// <returns>List of transactions by player</returns>
         Task<Result<IEnumerable<GetPlayerTransactionsResponse>>> GetAllTransactions(int? typeId);
 
         #endregion Transaction Methods
@@ -63,15 +63,15 @@ namespace BottleGame.Application.Interfaces
         #region Reference Data Methods
 
         /// <summary>
-        /// Получить все статусы транзакций
+        /// Gets all transaction statuses
         /// </summary>
-        /// <returns>Список статусов</returns>
+        /// <returns>List of statuses</returns>
         Task<Result<IEnumerable<TransactionStatusOrTypeDTO>>> GetAllTransactionStatuses();
 
         /// <summary>
-        /// Получить все типы транзакций
+        /// Gets all transaction types
         /// </summary>
-        /// <returns>Список типов</returns>
+        /// <returns>List of types</returns>
         Task<Result<IEnumerable<TransactionStatusOrTypeDTO>>> GetAllTransactionTypes();
 
         #endregion Reference Data Methods

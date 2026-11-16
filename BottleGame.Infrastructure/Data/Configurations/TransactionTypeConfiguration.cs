@@ -5,10 +5,14 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace BottleGame.Infrastructure.Data.Configurations
 {
     /// <summary>
-    /// Конфигурация сущности TransactionType
+    /// Configuration of the TransactionType entity
     /// </summary>
     public class TransactionTypeConfiguration : IEntityTypeConfiguration<TransactionType>
     {
+        /// <summary>
+        /// Configures the TransactionType entity
+        /// </summary>
+        /// <param name="builder">Entity type builder</param>
         public void Configure(EntityTypeBuilder<TransactionType> builder)
         {
             builder.ToTable("TransactionTypes");

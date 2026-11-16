@@ -1,4 +1,3 @@
-using BottleGame.Application.DTOs.Processing;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
@@ -11,35 +10,35 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace BottleGame.IntegrationTests;
 
 /// <summary>
-/// Integration tests of the payment flow on a real PostgreSQL database.
+/// Integration tests of the payment flow on a real PostgreSQL database
 /// </summary>
-/// <param name="database">Database.</param>
+/// <param name="database">Database</param>
 public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixture<PostgresFixture>
 {
     /// <summary>
-    /// Payment id.
+    /// Payment id
     /// </summary>
     private const string PaymentId = "pay-1";
 
     /// <summary>
-    /// Builds a successful payment notification.
+    /// Builds a successful payment notification
     /// </summary>
-    /// <returns>The created value.</returns>
+    /// <returns>The created value</returns>
     private static WebhookRequestInfo PaymentSucceededNotification() =>
         new("""{"type":"notification","event":"payment.succeeded","object":{"id":"pay-1"}}""",
             "POST", "application/json", "127.0.0.1", "integration-tests");
 
     /// <summary>
-    /// Creates the notification service on a new database context.
+    /// Creates the notification service on a new database context
     /// </summary>
-    /// <param name="context">Context.</param>
-    /// <param name="provider">Provider.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="context">Context</param>
+    /// <param name="provider">Provider</param>
+    /// <returns>The created value</returns>
     private PaymentWebhookService CreateService(ApplicationDbContext context, IPaymentProvider provider) =>
         new(context, provider, NullLogger<PaymentWebhookService>.Instance);
 
     /// <summary>
-    /// Every mapped entity can be queried, so schema.sql has all the tables and columns of the EF model.
+    /// Every mapped entity can be queried, so schema.sql has all the tables and columns of the EF model
     /// </summary>
     [PostgresFact]
     public async Task SchemaScript_CoversEveryMappedEntity()
@@ -59,7 +58,7 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
     }
 
     /// <summary>
-    /// seed.sql loads the statuses, types, application balance and game parameters.
+    /// seed.sql loads the statuses, types, application balance and game parameters
     /// </summary>
     [PostgresFact]
     public async Task SeedScript_LoadsReferenceData()
@@ -73,7 +72,7 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
     }
 
     /// <summary>
-    /// The same successful notification delivered twice credits the balance once.
+    /// The same successful notification delivered twice credits the balance once
     /// </summary>
     [PostgresFact]
     public async Task PaymentSucceeded_CreditsBalanceOnce_EvenWhenDeliveredTwice()
@@ -95,7 +94,7 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
     }
 
     /// <summary>
-    /// Two simultaneous deliveries of the same notification apply it once, thanks to the row version.
+    /// Two simultaneous deliveries of the same notification apply it once, thanks to the row version
     /// </summary>
     [PostgresFact]
     public async Task PaymentSucceeded_DeliveredConcurrently_CreditsBalanceOnce()
@@ -123,12 +122,13 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
             // The balance alone could stay correct after a double apply because of a lost update, so the log is checked as well.
             var applied = await verify.ProcessingWebhookLogs
                 .CountAsync(l => l.TransactionId == transactionId.ToString() && l.ProcessingStatus == "Success");
+
             Assert.Equal(1, applied);
         }
     }
 
     /// <summary>
-    /// The referral bonus is paid to the inviter with real foreign keys in place.
+    /// The referral bonus is paid to the inviter with real foreign keys in place
     /// </summary>
     [PostgresFact]
     public async Task PaymentSucceeded_PaysReferralBonusToInviter_RespectingForeignKeys()
@@ -144,6 +144,7 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
                 PlayerIdInvitedBy = inviterId,
                 InvitedAt = DateTime.UtcNow
             });
+
             await context.SaveChangesAsync();
         }
 
@@ -162,7 +163,7 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
     }
 
     /// <summary>
-    /// Two simultaneous approvals of one withdrawal succeed only once.
+    /// Two simultaneous approvals of one withdrawal succeed only once
     /// </summary>
     [PostgresFact]
     public async Task ConcurrentWithdrawalApproval_AppliesOnlyOnce()

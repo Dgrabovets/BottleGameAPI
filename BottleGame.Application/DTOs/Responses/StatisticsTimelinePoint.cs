@@ -1,32 +1,32 @@
 namespace BottleGame.Application.DTOs.Responses
 {
     /// <summary>
-    /// Точка временной шкалы статистики
+    /// Point of the statistics timeline
     /// </summary>
     public class StatisticsTimelinePoint
     {
         /// <summary>
-        /// Начало бакета
+        /// Start of the bucket
         /// </summary>
         public DateTime Date { get; set; }
 
         /// <summary>
-        /// Накопительное количество игроков на конец бакета
+        /// Cumulative number of players at the end of the bucket
         /// </summary>
         public int UsersCount { get; set; }
 
         /// <summary>
-        /// Сумма пополнений за бакет
+        /// Sum of deposits in the bucket
         /// </summary>
         public decimal DepositsAmount { get; set; }
 
         /// <summary>
-        /// Сумма одобренных выводов за бакет
+        /// Sum of approved withdrawals in the bucket
         /// </summary>
         public decimal WithdrawalsAmount { get; set; }
 
         /// <summary>
-        /// Доход за бакет (пополнения − выводы)
+        /// Income of the bucket (deposits − withdrawals)
         /// </summary>
         public decimal IncomeAmount { get; set; }
     }

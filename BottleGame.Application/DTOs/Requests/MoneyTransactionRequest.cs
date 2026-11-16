@@ -1,17 +1,17 @@
 ﻿namespace BottleGame.Application.DTOs.Requests
 {
     /// <summary>
-    /// Запрос на создание денежной транзакции
+    /// Request to create a money transaction
     /// </summary>
     public class MoneyTransactionRequest
     {
         /// <summary>
-        /// Сумма транзакции
+        /// Transaction amount
         /// </summary>
         public decimal Amount { get; set; }
 
         /// <summary>
-        /// Является ли транзакция депозитом (true - депозит, false - вывод)
+        /// Whether the transaction is a deposit (true - deposit, false - withdrawal)
         /// </summary>
         public bool IsDeposit { get; set; }
     }

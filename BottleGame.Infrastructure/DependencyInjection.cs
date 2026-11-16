@@ -12,40 +12,41 @@ using Microsoft.Extensions.Options;
 namespace BottleGame.Infrastructure
 {
     /// <summary>
-    /// Расширения для регистрации сервисов Infrastructure слоя
+    /// Extensions for registering the services of the Infrastructure layer
     /// </summary>
     public static class DependencyInjection
     {
         /// <summary>
-        /// Добавляет сервисы Infrastructure слоя в контейнер DI
+        /// Adds the services of the Infrastructure layer to the DI container
         /// </summary>
-        /// <param name="services">Коллекция сервисов</param>
-        /// <param name="configuration">Конфигурация приложения</param>
-        /// <returns>Коллекция сервисов</returns>
+        /// <param name="services">Service collection</param>
+        /// <param name="configuration">Application configuration</param>
+        /// <returns>Service collection</returns>
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             var connectionString = configuration.GetConnectionString("PostgresConnection");
             if (string.IsNullOrWhiteSpace(connectionString) || connectionString.StartsWith("ENV_", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException(
-                    "Строка подключения к БД не задана. Укажите переменную окружения ConnectionStrings__PostgresConnection или добавьте секрет POSTGRES_CONNECTION в GitHub Actions.");
+                    "Database connection string is not set. Set the environment variable ConnectionStrings__PostgresConnection or add the POSTGRES_CONNECTION secret to GitHub Actions.");
 
-            // База данных
+            // Database
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
-            // Кэширование
+            // Caching
             services.AddMemoryCache();
             services.AddSingleton<ICacheService, CacheService>();
 
-            // Сервисы авторизации
+            // Authorization services
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ITelegramAuthService, TelegramAuthService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
 
-            // Платёжный провайдер (ЮKassa) — валидация при старте приложения
+            // Payment provider (YooKassa) — validation at application startup
             services.AddOptions<ProcessingOptions>()
                 .Bind(configuration.GetSection("Processing"))
                 .ValidateOnStart();
+
             services.AddSingleton<IValidateOptions<ProcessingOptions>, ProcessingOptionsValidator>();
             services.AddHttpClient<IPaymentProvider, YooKassaPaymentProvider>((provider, client) =>
             {
@@ -53,9 +54,10 @@ namespace BottleGame.Infrastructure
                 client.BaseAddress = new Uri(options.BaseUrl);
                 client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
             });
+
             services.AddScoped<ICurrencyService, CurrencyService>();
 
-            // Бизнес-сервисы
+            // Business services
             services.AddScoped<IPlayerService, PlayerService>();
             services.AddScoped<IPlayerStatisticsService, PlayerStatisticsService>();
             services.AddScoped<IBanService, BanService>();
@@ -65,6 +67,7 @@ namespace BottleGame.Infrastructure
                 provider.GetRequiredService<IOptions<ProcessingOptions>>().Value.Mode == ProcessingMode.Live
                     ? ActivatorUtilities.CreateInstance<LiveTransactionProcessor>(provider)
                     : ActivatorUtilities.CreateInstance<SimulatedTransactionProcessor>(provider));
+
             services.AddScoped<IPaymentWebhookService, PaymentWebhookService>();
             services.AddScoped<IAppBalanceService, AppBalanceService>();
             services.AddScoped<IStatisticsService, StatisticsService>();

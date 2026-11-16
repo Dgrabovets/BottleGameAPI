@@ -18,12 +18,12 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// За обратным прокси клиентский IP берётся из X-Forwarded-For только от доверенных прокси.
-// Без списка прокси заголовок используется как раньше, но его может подделать любой клиент.
+// Behind a reverse proxy the client IP is taken from X-Forwarded-For only from trusted proxies.
+// Without a list of proxies the header is used as before, but any client can spoof it.
 var knownProxies = builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [];
 var trustForwardedForHeader = knownProxies.Length == 0;
 
-#region Логирование
+#region Logging
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -39,18 +39,18 @@ builder.Host.UseSerilog();
 
 #region Dependency Injection
 
-// Application слой
+// Application layer
 builder.Services.AddApplication();
 
-// Infrastructure слой
+// Infrastructure layer
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// FluentValidation автоматическая валидация
+// FluentValidation automatic validation
 builder.Services.AddFluentValidationAutoValidation();
 
 #endregion
 
-#region Аутентификация и авторизация
+#region Authentication and authorization
 
 builder.Services.AddOptions<JwtOptions>()
     .Bind(builder.Configuration.GetSection("JWT"))
@@ -83,7 +83,7 @@ builder.Services.AddAuthorizationBuilder()
 
 #endregion
 
-#region MVC и Swagger
+#region MVC and Swagger
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -93,19 +93,20 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Bottle Game API",
         Version = "v1",
-        Description = "API для игры Bottle Game с интеграцией Telegram и платёжной системой ЮKassa",
+        Description = "API of the Bottle Game with Telegram integration and the YooKassa payment system",
     });
 
     c.TagActionsBy(api => [api.GroupName ?? api.ActionDescriptor.RouteValues["controller"]]);
     c.DocInclusionPredicate((name, api) => true);
 
-    // XML-документация из всех проектов
+    // XML documentation from all projects
     var xmlFiles = new[]
     {
         $"{Assembly.GetExecutingAssembly().GetName().Name}.xml",
         "BottleGame.Application.xml",
         "BottleGame.Domain.xml"
     };
+
     foreach (var xmlFile in xmlFiles)
     {
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -115,7 +116,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     }
 
-    // JWT в Swagger (Swashbuckle 10 / Microsoft.OpenApi 2.x)
+    // JWT in Swagger (Swashbuckle 10 / Microsoft.OpenApi 2.x)
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.Http,
@@ -156,7 +157,7 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-    // Глобально: 750 запросов в минуту на IP
+    // Globally: 750 requests per minute per IP
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: GetClientIpAddress(context),
@@ -167,7 +168,7 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
             }));
 
-    // auth (логин, Telegram): 25 запросов в минуту на IP
+    // auth (login, Telegram): 25 requests per minute per IP
     options.AddPolicy("auth", context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: GetClientIpAddress(context),
@@ -178,7 +179,7 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
             }));
 
-    // game (раунды): 250 запросов за 30 секунд на IP
+    // game (rounds): 250 requests per 30 seconds per IP
     options.AddPolicy("game", context =>
         RateLimitPartition.GetSlidingWindowLimiter(
             partitionKey: GetClientIpAddress(context),

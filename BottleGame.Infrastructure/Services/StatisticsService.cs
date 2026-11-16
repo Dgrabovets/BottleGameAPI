@@ -1,39 +1,39 @@
-using Microsoft.Extensions.Logging;
 using BottleGame.Application.Common;
-using BottleGame.Domain.Entities;
-using BottleGame.Domain.Constants;
-using BottleGame.Infrastructure.Data;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
-using Microsoft.EntityFrameworkCore;
 using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Constants;
+using BottleGame.Domain.Entities;
+using BottleGame.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
-    /// Сервис статистики приложения
+    /// Application statistics service
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="StatisticsService"/>
+    /// Initializes a new instance of <see cref="StatisticsService"/>
     /// </remarks>
-    /// <param name="context">Контекст базы данных</param>
-    /// <param name="logger">Логгер</param>
+    /// <param name="context">Database context</param>
+    /// <param name="logger">Logger</param>
     public class StatisticsService(ApplicationDbContext context, ILogger<StatisticsService> logger) : IStatisticsService
     {
         #region Fields
 
         /// <summary>
-        /// Контекст базы данных
+        /// Database context
         /// </summary>
         private readonly ApplicationDbContext _context = context;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<StatisticsService> _logger = logger;
 
         /// <summary>
-        /// Префикс для логов
+        /// Log prefix
         /// </summary>
         private const string Prefix = "[StatisticsService]";
 
@@ -61,7 +61,7 @@ namespace BottleGame.Infrastructure.Services
             }
             else if (request?.DateFrom.HasValue == true || request?.DateTill.HasValue == true)
             {
-                return Result<GetAppGeneralStatisticsResponse>.Failure("Укажите обе даты периода: dateFrom и dateTill");
+                return Result<GetAppGeneralStatisticsResponse>.Failure("Specify both dates of the period: dateFrom and dateTill");
             }
 
             var bannedPlayerIds = await _context.GetActivelyBannedPlayerIdsAsync();
@@ -127,7 +127,7 @@ namespace BottleGame.Infrastructure.Services
                 PendingWithdrawalsTotal = pendingWithdrawalsTotal
             };
 
-            _logger.LogInformation("{Prefix} Успешно получена админская статистика", Prefix);
+            _logger.LogInformation("{Prefix} Administrator statistics retrieved successfully", Prefix);
 
             return Result<GetAppGeneralStatisticsResponse>.Success(response);
         }
@@ -205,7 +205,7 @@ namespace BottleGame.Infrastructure.Services
                 Points = points
             };
 
-            _logger.LogInformation("{Prefix} Успешно получена временная шкала статистики", Prefix);
+            _logger.LogInformation("{Prefix} Statistics timeline retrieved successfully", Prefix);
 
             return Result<GetAppStatisticsTimelineResponse>.Success(response);
         }
@@ -215,16 +215,16 @@ namespace BottleGame.Infrastructure.Services
         #region Private Statistics Methods
 
         /// <summary>
-        /// Максимальная длина запрашиваемого периода статистики в днях (100 лет)
+        /// Maximum length of the requested statistics period in days (100 years)
         /// </summary>
         private const int MaxStatisticsRangeDays = 36_500;
 
         /// <summary>
-        /// Проверяет корректность диапазона дат для статистики
+        /// Checks that the date range for the statistics is valid
         /// </summary>
-        /// <param name="dateFrom">Дата начала периода</param>
-        /// <param name="dateTill">Дата окончания периода</param>
-        /// <returns>Сообщение об ошибке или <c>null</c>, если диапазон допустим</returns>
+        /// <param name="dateFrom">Start date of the period</param>
+        /// <param name="dateTill">End date of the period</param>
+        /// <returns>Error message or <c>null</c> if the range is valid</returns>
         private static string? ValidateDateRange(DateTime dateFrom, DateTime dateTill)
         {
             var from = dateFrom.Date;
@@ -232,24 +232,24 @@ namespace BottleGame.Infrastructure.Services
 
             if (from > till)
             {
-                return "Дата начала периода не может быть позже даты окончания";
+                return "The start date of the period cannot be later than the end date";
             }
 
             var days = (till - from).Days + 1;
             if (days > MaxStatisticsRangeDays)
             {
-                return $"Максимальный период — {MaxStatisticsRangeDays} дней";
+                return $"The maximum period is {MaxStatisticsRangeDays} days";
             }
 
             return null;
         }
 
         /// <summary>
-        /// Нормализует границы периода к включительному UTC-диапазону
+        /// Normalizes the period boundaries to an inclusive UTC range
         /// </summary>
-        /// <param name="dateFrom">Дата начала периода</param>
-        /// <param name="dateTill">Дата окончания периода</param>
-        /// <returns>Начало и конец периода в UTC</returns>
+        /// <param name="dateFrom">Start date of the period</param>
+        /// <param name="dateTill">End date of the period</param>
+        /// <returns>Start and end of the period in UTC</returns>
         private static (DateTime From, DateTime Till) NormalizeInclusiveUtcRange(
             DateTime dateFrom,
             DateTime dateTill)
@@ -263,11 +263,11 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <summary>
-        /// Фильтрует успешно обработанные транзакции указанного типа
+        /// Filters successfully processed transactions of the given type
         /// </summary>
-        /// <param name="query">Исходный запрос транзакций</param>
-        /// <param name="transactionTypeId">Идентификатор типа транзакции</param>
-        /// <returns>Запрос с фильтром по одобренным и успешно завершённым операциям</returns>
+        /// <param name="query">Source transaction query</param>
+        /// <param name="transactionTypeId">Transaction type identifier</param>
+        /// <returns>Query filtered to approved and successfully completed operations</returns>
         private static IQueryable<MoneyTransaction> FilterSuccessfullyProcessedTransactions(
             IQueryable<MoneyTransaction> query,
             int transactionTypeId)
@@ -280,12 +280,12 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <summary>
-        /// Ограничивает транзакции датой успешной обработки в заданном периоде
+        /// Restricts transactions by the date of successful processing within the given period
         /// </summary>
-        /// <param name="query">Исходный запрос транзакций</param>
-        /// <param name="rangeFrom">Начало периода (включительно)</param>
-        /// <param name="rangeTill">Конец периода (включительно)</param>
-        /// <returns>Запрос с фильтром по <see cref="MoneyTransaction.ProcessedAt"/></returns>
+        /// <param name="query">Source transaction query</param>
+        /// <param name="rangeFrom">Start of the period (inclusive)</param>
+        /// <param name="rangeTill">End of the period (inclusive)</param>
+        /// <returns>Query filtered by <see cref="MoneyTransaction.ProcessedAt"/></returns>
         private static IQueryable<MoneyTransaction> FilterTransactionsByProcessedDate(
             IQueryable<MoneyTransaction> query,
             DateTime rangeFrom,
@@ -298,11 +298,11 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <summary>
-        /// Выбирает размер бакета временной шкалы в зависимости от длины периода
+        /// Chooses the size of the timeline bucket depending on the length of the period
         /// </summary>
-        /// <param name="rangeFrom">Начало периода</param>
-        /// <param name="rangeTill">Конец периода</param>
-        /// <returns><c>day</c>, <c>week</c> или <c>month</c></returns>
+        /// <param name="rangeFrom">Start of the period</param>
+        /// <param name="rangeTill">End of the period</param>
+        /// <returns><c>day</c>, <c>week</c> or <c>month</c></returns>
         private static string SelectTimelineBucket(DateTime rangeFrom, DateTime rangeTill)
         {
             var days = (rangeTill.Date - rangeFrom.Date).Days + 1;
@@ -325,12 +325,12 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <summary>
-        /// Формирует список дат начала бакетов для временной шкалы
+        /// Builds the list of bucket start dates for the timeline
         /// </summary>
-        /// <param name="rangeFrom">Начало периода</param>
-        /// <param name="rangeTill">Конец периода</param>
-        /// <param name="bucket">Размер бакета: <c>day</c>, <c>week</c> или <c>month</c></param>
-        /// <returns>Список UTC-дат начала бакетов</returns>
+        /// <param name="rangeFrom">Start of the period</param>
+        /// <param name="rangeTill">End of the period</param>
+        /// <param name="bucket">Bucket size: <c>day</c>, <c>week</c> or <c>month</c></param>
+        /// <returns>List of UTC bucket start dates</returns>
         private static List<DateTime> BuildBucketStarts(
             DateTime rangeFrom,
             DateTime rangeTill,
@@ -355,12 +355,12 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <summary>
-        /// Возвращает конец бакета с учётом границы запрошенного периода
+        /// Returns the end of a bucket, taking the boundary of the requested period into account
         /// </summary>
-        /// <param name="bucketStart">Дата начала бакета</param>
-        /// <param name="bucket">Размер бакета: <c>day</c>, <c>week</c> или <c>month</c></param>
-        /// <param name="rangeTill">Конец запрошенного периода</param>
-        /// <returns>Дата и время конца бакета</returns>
+        /// <param name="bucketStart">Bucket start date</param>
+        /// <param name="bucket">Bucket size: <c>day</c>, <c>week</c> or <c>month</c></param>
+        /// <param name="rangeTill">End of the requested period</param>
+        /// <returns>Date and time of the bucket end</returns>
         private static DateTime GetBucketEnd(DateTime bucketStart, string bucket, DateTime rangeTill)
         {
             var end = bucket switch

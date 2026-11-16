@@ -11,32 +11,32 @@ using Moq;
 namespace BottleGame.UnitTests.Services;
 
 /// <summary>
-/// Тесты для CurrencyService в режимах Simulated (без процессинга) и Live.
+/// Tests for CurrencyService in the Simulated (no processing) and Live modes
 /// </summary>
 public class CurrencyServiceTests : IDisposable
 {
     /// <summary>
-    /// Mock of the payment provider.
+    /// Mock of the payment provider
     /// </summary>
     private readonly Mock<IPaymentProvider> _paymentProviderMock;
 
     /// <summary>
-    /// Memory cache used by the service.
+    /// Memory cache used by the service
     /// </summary>
     private readonly IMemoryCache _cache;
 
     /// <summary>
-    /// Mock of the logger.
+    /// Mock of the logger
     /// </summary>
     private readonly Mock<ILogger<CurrencyService>> _loggerMock;
 
     /// <summary>
-    /// The service under test.
+    /// The service under test
     /// </summary>
     private readonly CurrencyService _service;
 
     /// <summary>
-    /// Creates the test fixture: the database, the mocks and the object under test.
+    /// Creates the test fixture: the database, the mocks and the object under test
     /// </summary>
     public CurrencyServiceTests()
     {
@@ -48,15 +48,15 @@ public class CurrencyServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Creates the notification service on a new database context.
+    /// Creates the notification service on a new database context
     /// </summary>
-    /// <param name="mode">Mode.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="mode">Mode</param>
+    /// <returns>The created value</returns>
     private CurrencyService CreateService(ProcessingMode mode) =>
         new(_paymentProviderMock.Object, _cache, _loggerMock.Object, Options.Create(new ProcessingOptions { Mode = mode }));
 
     /// <summary>
-    /// Releases the database context used by the tests.
+    /// Releases the database context used by the tests
     /// </summary>
     public void Dispose()
     {
@@ -67,7 +67,7 @@ public class CurrencyServiceTests : IDisposable
     #region GetAvailableCurrenciesAsync Tests
 
     /// <summary>
-    /// Get available currencies async: returns test currency.
+    /// Get available currencies async: returns test currency
     /// </summary>
     [Fact]
     public async Task GetAvailableCurrenciesAsync_ReturnsTestCurrency()
@@ -80,7 +80,7 @@ public class CurrencyServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get available currencies async: returns same data on repeated calls.
+    /// Get available currencies async: returns same data on repeated calls
     /// </summary>
     [Fact]
     public async Task GetAvailableCurrenciesAsync_ReturnsSameDataOnRepeatedCalls()
@@ -97,7 +97,7 @@ public class CurrencyServiceTests : IDisposable
     #region GetPaymentGatewaysAsync Tests
 
     /// <summary>
-    /// Get payment gateways async: returns test gateway.
+    /// Get payment gateways async: returns test gateway
     /// </summary>
     [Fact]
     public async Task GetPaymentGatewaysAsync_ReturnsTestGateway()
@@ -115,7 +115,7 @@ public class CurrencyServiceTests : IDisposable
     #region GetPaymentGatewaysForCurrencyAsync Tests
 
     /// <summary>
-    /// Get payment gateways for currency async: filters by currency.
+    /// Get payment gateways for currency async: filters by currency
     /// </summary>
     [Fact]
     public async Task GetPaymentGatewaysForCurrencyAsync_FiltersByCurrency()
@@ -129,7 +129,7 @@ public class CurrencyServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Get payment gateways for currency async: excludes non payment gateways.
+    /// Get payment gateways for currency async: excludes non payment gateways
     /// </summary>
     [Fact]
     public async Task GetPaymentGatewaysForCurrencyAsync_ExcludesNonPaymentGateways()
@@ -145,7 +145,7 @@ public class CurrencyServiceTests : IDisposable
     #region GetPayoutGatewaysForCurrencyAsync Tests
 
     /// <summary>
-    /// Get payout gateways for currency async: filters correctly.
+    /// Get payout gateways for currency async: filters correctly
     /// </summary>
     [Fact]
     public async Task GetPayoutGatewaysForCurrencyAsync_FiltersCorrectly()
@@ -162,7 +162,7 @@ public class CurrencyServiceTests : IDisposable
     #region GetExchangeRateAsync Tests
 
     /// <summary>
-    /// Get exchange rate async: returns one in simulated mode.
+    /// Get exchange rate async: returns one in simulated mode
     /// </summary>
     [Fact]
     public async Task GetExchangeRateAsync_ReturnsOneInSimulatedMode()
@@ -180,7 +180,7 @@ public class CurrencyServiceTests : IDisposable
     #region ConvertToBaseCurrencyAsync Tests
 
     /// <summary>
-    /// Convert to base currency async: with unit rate; returns same amount.
+    /// Convert to base currency async: with unit rate; returns same amount
     /// </summary>
     [Fact]
     public async Task ConvertToBaseCurrencyAsync_WithUnitRate_ReturnsSameAmount()
@@ -195,7 +195,7 @@ public class CurrencyServiceTests : IDisposable
     #region ConvertFromBaseCurrencyAsync Tests
 
     /// <summary>
-    /// Convert from base currency async: with unit rate; returns same amount.
+    /// Convert from base currency async: with unit rate; returns same amount
     /// </summary>
     [Fact]
     public async Task ConvertFromBaseCurrencyAsync_WithUnitRate_ReturnsSameAmount()
@@ -210,7 +210,7 @@ public class CurrencyServiceTests : IDisposable
     #region IsCurrencyActiveAsync Tests
 
     /// <summary>
-    /// Is currency active async: returns true for test currency.
+    /// Is currency active async: returns true for test currency
     /// </summary>
     [Fact]
     public async Task IsCurrencyActiveAsync_ReturnsTrueForTestCurrency()
@@ -221,7 +221,7 @@ public class CurrencyServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is currency active async: returns false for unknown currency.
+    /// Is currency active async: returns false for unknown currency
     /// </summary>
     [Fact]
     public async Task IsCurrencyActiveAsync_ReturnsFalseForUnknownCurrency()
@@ -236,7 +236,7 @@ public class CurrencyServiceTests : IDisposable
     #region IsAmountValidForGatewayAsync Tests
 
     /// <summary>
-    /// Is amount valid for gateway async: returns true for valid amount.
+    /// Is amount valid for gateway async: returns true for valid amount
     /// </summary>
     [Fact]
     public async Task IsAmountValidForGatewayAsync_ReturnsTrueForValidAmount()
@@ -247,7 +247,7 @@ public class CurrencyServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is amount valid for gateway async: returns false for amount below min.
+    /// Is amount valid for gateway async: returns false for amount below min
     /// </summary>
     [Fact]
     public async Task IsAmountValidForGatewayAsync_ReturnsFalseForAmountBelowMin()
@@ -258,7 +258,7 @@ public class CurrencyServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is amount valid for gateway async: returns false for amount above max.
+    /// Is amount valid for gateway async: returns false for amount above max
     /// </summary>
     [Fact]
     public async Task IsAmountValidForGatewayAsync_ReturnsFalseForAmountAboveMax()
@@ -269,7 +269,7 @@ public class CurrencyServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Is amount valid for gateway async: returns false for unknown gateway.
+    /// Is amount valid for gateway async: returns false for unknown gateway
     /// </summary>
     [Fact]
     public async Task IsAmountValidForGatewayAsync_ReturnsFalseForUnknownGateway()
@@ -284,7 +284,7 @@ public class CurrencyServiceTests : IDisposable
     #region Live Mode Tests
 
     /// <summary>
-    /// Live: get available currencies async; loads from processing once and caches.
+    /// Live: get available currencies async; loads from processing once and caches
     /// </summary>
     [Fact]
     public async Task Live_GetAvailableCurrenciesAsync_LoadsFromProcessingOnceAndCaches()
@@ -292,6 +292,7 @@ public class CurrencyServiceTests : IDisposable
         _paymentProviderMock
             .Setup(x => x.GetCurrenciesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([new CurrencyInfo("usd", "US dollar", isActive: true)]);
+
         var service = CreateService(ProcessingMode.Live);
 
         var first = await service.GetAvailableCurrenciesAsync();
@@ -303,7 +304,7 @@ public class CurrencyServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Live: get available currencies async; force refresh reloads from processing.
+    /// Live: get available currencies async; force refresh reloads from processing
     /// </summary>
     [Fact]
     public async Task Live_GetAvailableCurrenciesAsync_ForceRefreshReloadsFromProcessing()
@@ -311,6 +312,7 @@ public class CurrencyServiceTests : IDisposable
         _paymentProviderMock
             .Setup(x => x.GetCurrenciesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([new CurrencyInfo("usd", "US dollar", isActive: true)]);
+
         var service = CreateService(ProcessingMode.Live);
 
         await service.GetAvailableCurrenciesAsync();
@@ -320,7 +322,7 @@ public class CurrencyServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Live: convert to base currency async; uses rate from processing.
+    /// Live: convert to base currency async; uses rate from processing
     /// </summary>
     [Fact]
     public async Task Live_ConvertToBaseCurrencyAsync_UsesRateFromProcessing()
@@ -328,6 +330,7 @@ public class CurrencyServiceTests : IDisposable
         _paymentProviderMock
             .Setup(x => x.GetExchangeRateAsync("usd", It.IsAny<CancellationToken>()))
             .ReturnsAsync(90m);
+
         var service = CreateService(ProcessingMode.Live);
 
         var result = await service.ConvertToBaseCurrencyAsync(900m, "usd");
@@ -340,7 +343,7 @@ public class CurrencyServiceTests : IDisposable
     #region ClearCache Tests
 
     /// <summary>
-    /// Clear cache: does not call processing api.
+    /// Clear cache: does not call processing api
     /// </summary>
     [Fact]
     public async Task ClearCache_DoesNotCallProcessingApi()

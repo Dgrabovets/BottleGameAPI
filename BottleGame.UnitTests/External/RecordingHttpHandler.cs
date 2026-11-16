@@ -1,34 +1,34 @@
+using FluentAssertions;
 using System.Net;
 using System.Text;
-using FluentAssertions;
 
 namespace BottleGame.UnitTests.External;
 
 /// <summary>
-/// HTTP handler that records every request and answers with a prepared response.
+/// HTTP handler that records every request and answers with a prepared response
 /// </summary>
 internal sealed class RecordingHttpHandler : HttpMessageHandler
 {
     /// <summary>
-    /// Status.
+    /// Status
     /// </summary>
     private HttpStatusCode _status = HttpStatusCode.OK;
 
     /// <summary>
-    /// Body.
+    /// Body
     /// </summary>
     private string _body = "{}";
 
     /// <summary>
-    /// Requests.
+    /// Requests
     /// </summary>
     public List<SentRequest> Requests { get; } = [];
 
     /// <summary>
-    /// Sets the status code and body for the next responses.
+    /// Sets the status code and body for the next responses
     /// </summary>
-    /// <param name="status">Status.</param>
-    /// <param name="body">Body.</param>
+    /// <param name="status">Status</param>
+    /// <param name="body">Body</param>
     public void Respond(HttpStatusCode status, string body)
     {
         _status = status;
@@ -36,17 +36,17 @@ internal sealed class RecordingHttpHandler : HttpMessageHandler
     }
 
     /// <summary>
-    /// Returns the only recorded request and fails when there is not exactly one.
+    /// Returns the only recorded request and fails when there is not exactly one
     /// </summary>
-    /// <returns>The created value.</returns>
+    /// <returns>The created value</returns>
     public SentRequest Single() => Requests.Should().ContainSingle().Subject;
 
     /// <summary>
-    /// Records the request and answers with the configured response.
+    /// Records the request and answers with the configured response
     /// </summary>
-    /// <param name="request">Request.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The created value.</returns>
+    /// <param name="request">Request</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The created value</returns>
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         Requests.Add(new SentRequest(

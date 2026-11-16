@@ -1,24 +1,23 @@
-﻿using Microsoft.Extensions.Logging;
-using BottleGame.Application.Common;
-using BottleGame.Infrastructure.Data;
+﻿using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
-using BottleGame.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 using BottleGame.Application.Interfaces;
+using BottleGame.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using static BottleGame.Infrastructure.Services.PlayerMapper;
 
 namespace BottleGame.Infrastructure.Services
 {
     /// <summary>
-    /// Сервис для работы с игроками
+    /// Service for working with players
     /// </summary>
     /// <remarks>
-    /// Инициализирует новый экземпляр <see cref="PlayerService"/>
+    /// Initializes a new instance of <see cref="PlayerService"/>
     /// </remarks>
-    /// <param name="context">Контекст базы данных</param>
-    /// <param name="logger">Логгер</param>
-    /// <param name="currencyService">Сервис валют и платёжных шлюзов</param>
+    /// <param name="context">Database context</param>
+    /// <param name="logger">Logger</param>
+    /// <param name="currencyService">Service of currencies and payment gateways</param>
     public class PlayerService(
         ApplicationDbContext context,
         ILogger<PlayerService> logger,
@@ -27,22 +26,22 @@ namespace BottleGame.Infrastructure.Services
         #region Fields
 
         /// <summary>
-        /// Контекст базы данных
+        /// Database context
         /// </summary>
         private readonly ApplicationDbContext _context = context;
 
         /// <summary>
-        /// Логгер
+        /// Logger
         /// </summary>
         private readonly ILogger<PlayerService> _logger = logger;
 
         /// <summary>
-        /// Сервис валют и платёжных шлюзов
+        /// Service of currencies and payment gateways
         /// </summary>
         private readonly ICurrencyService _currencyService = currencyService;
 
         /// <summary>
-        /// Префикс для логов
+        /// Log prefix
         /// </summary>
         private const string Prefix = "[PlayerService]";
 
@@ -60,8 +59,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result<IsBannedResponse>.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result<IsBannedResponse>.NotFound($"Player with id {playerId} not found");
             }
 
             var banHistory = await _context.BansHistory
@@ -82,7 +81,7 @@ namespace BottleGame.Infrastructure.Services
                 BanHistory = banHistory
             };
 
-            _logger.LogInformation("{Prefix} Проверка бана для игрока {PlayerId}. Результат: {IsBanned}",
+            _logger.LogInformation("{Prefix} Ban check for player {PlayerId}. Result: {IsBanned}",
                 Prefix, playerId, response.IsBanned);
 
             return Result<IsBannedResponse>.Success(response);
@@ -95,7 +94,7 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public async Task<Result<PlayerInfoByIdResponse>> GetPlayerById(int playerId, int? requestingPlayerId, bool isAdmin)
         {
-            // Проверка прав доступа
+            // Access check
             if (!isAdmin && requestingPlayerId != playerId)
             {
                 return Result<PlayerInfoByIdResponse>.Unauthorized();
@@ -112,14 +111,14 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result<PlayerInfoByIdResponse>.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result<PlayerInfoByIdResponse>.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} Пользователь забанен", Prefix);
-                return Result<PlayerInfoByIdResponse>.Forbidden("Пользователь в бане");
+                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                return Result<PlayerInfoByIdResponse>.Forbidden("User is banned");
             }
 
             var playersIdsInvited = player.InvitedByMe.Select(i => i.PlayerIdInvited).ToList();
@@ -147,7 +146,7 @@ namespace BottleGame.Infrastructure.Services
                 PlayersInvited = invitedPlayers.Select(MapToPlayerDTO)
             };
 
-            _logger.LogInformation("{Prefix} Получены данные об игроке с PlayerId - {PlayerId}", Prefix, playerId);
+            _logger.LogInformation("{Prefix} Got the data of the player with PlayerId - {PlayerId}", Prefix, playerId);
 
             return Result<PlayerInfoByIdResponse>.Success(response);
         }
@@ -194,13 +193,13 @@ namespace BottleGame.Infrastructure.Services
                     return Result<IEnumerable<PlayerInfoResponse>>.Success([]);
                 }
 
-                _logger.LogWarning("{Prefix} Игроки не найдены", Prefix);
-                return Result<IEnumerable<PlayerInfoResponse>>.NotFound("Игроки не найдены");
+                _logger.LogWarning("{Prefix} Players not found", Prefix);
+                return Result<IEnumerable<PlayerInfoResponse>>.NotFound("Players not found");
             }
 
             var response = players.Select(MapToPlayerInfoResponse);
 
-            _logger.LogInformation("{Prefix} Получены данные об игроках", Prefix);
+            _logger.LogInformation("{Prefix} Got the data of the players", Prefix);
 
             return Result<IEnumerable<PlayerInfoResponse>>.Success(response);
         }
@@ -223,13 +222,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (players.Count == 0)
             {
-                _logger.LogWarning("{Prefix} Игроки не найдены", Prefix);
-                return Result<IEnumerable<PlayerInfoResponse>>.NotFound("Игроки не найдены");
+                _logger.LogWarning("{Prefix} Players not found", Prefix);
+                return Result<IEnumerable<PlayerInfoResponse>>.NotFound("Players not found");
             }
 
             var response = players.Select(MapToPlayerInfoResponse);
 
-            _logger.LogInformation("{Prefix} Получены данные о топ-100 игроках", Prefix);
+            _logger.LogInformation("{Prefix} Got the data of the top 100 players", Prefix);
 
             return Result<IEnumerable<PlayerInfoResponse>>.Success(response);
         }
@@ -248,11 +247,11 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Игрок с ID {PlayerId} не найден", Prefix, playerId);
-                return Result.NotFound($"Игрок с ID {playerId} не найден");
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                return Result.NotFound($"Player with id {playerId} not found");
             }
 
-            // Изменение базовых данных
+            // Change of the basic data
             if (!string.IsNullOrWhiteSpace(request.AvatarUrl))
                 player.AvatarUrl = request.AvatarUrl;
 
@@ -262,41 +261,41 @@ namespace BottleGame.Infrastructure.Services
             if (request.WinChance != default)
                 player.PlayerOptions.WinChance = request.WinChance!.Value;
 
-            // Валидация и изменение валюты, метода оплаты и типа реквизитов (через API процессинга)
+            // Validation and change of the currency, payment method and detail type (through the processing API)
             if (!string.IsNullOrWhiteSpace(request.Currency) && !string.IsNullOrWhiteSpace(request.PaymentMethod))
             {
-                // Проверяем валюту через API процессинга
+                // Check the currency through the processing API
                 var isValidCurrency = await _currencyService.IsCurrencyActiveAsync(request.Currency);
                 if (!isValidCurrency)
                 {
                     var availableCurrencies = await _currencyService.GetAvailableCurrenciesAsync();
                     var currencyCodes = string.Join(", ", availableCurrencies.Select(c => c.Code));
-                    _logger.LogWarning("{Prefix} Попытка установить недопустимую валюту: {Currency}", Prefix, request.Currency);
-                    return Result.Failure($"Валюта '{request.Currency}' не поддерживается. Доступные: {currencyCodes}");
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid currency: {Currency}", Prefix, request.Currency);
+                    return Result.Failure($"Currency '{request.Currency}' is not supported. Available: {currencyCodes}");
                 }
 
-                // Проверяем платёжный шлюз для указанной валюты
+                // Check the payment gateway for the given currency
                 var paymentGateways = await _currencyService.GetPaymentGatewaysForCurrencyAsync(request.Currency);
                 var selectedGateway = paymentGateways.FirstOrDefault(g => g.Code.Equals(request.PaymentMethod, StringComparison.OrdinalIgnoreCase));
                 if (selectedGateway is null)
                 {
                     var gatewayCodes = string.Join(", ", paymentGateways.Select(g => g.Code));
-                    _logger.LogWarning("{Prefix} Попытка установить недопустимый метод оплаты: {PaymentMethod}", Prefix, request.PaymentMethod);
-                    return Result.Failure($"Метод оплаты '{request.PaymentMethod}' не поддерживается для валюты '{request.Currency}'. Доступные: {gatewayCodes}");
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid payment method: {PaymentMethod}", Prefix, request.PaymentMethod);
+                    return Result.Failure($"Payment method '{request.PaymentMethod}' is not supported for currency '{request.Currency}'. Available: {gatewayCodes}");
                 }
 
-                // Определяем тип реквизитов (из запроса или по умолчанию)
+                // Determine the detail type (from the request or the default)
                 var detailType = !string.IsNullOrWhiteSpace(request.PaymentDetailType)
-                    ? request.PaymentDetailType.ToLowerInvariant()
-                    : (selectedGateway.DetailTypes.Count > 0 ? selectedGateway.DetailTypes[0] : "card");
+                                   ? request.PaymentDetailType.ToLowerInvariant()
+                                   : (selectedGateway.DetailTypes.Count > 0 ? selectedGateway.DetailTypes[0] : "card");
 
-                // Проверяем, что тип реквизитов поддерживается выбранным шлюзом
+                // Check that the detail type is supported by the selected gateway
                 if (selectedGateway.DetailTypes.Count > 0 &&
                     !selectedGateway.DetailTypes.Any(dt => dt.Equals(detailType, StringComparison.OrdinalIgnoreCase)))
                 {
                     var availableTypes = string.Join(", ", selectedGateway.DetailTypes);
-                    _logger.LogWarning("{Prefix} Попытка установить недопустимый тип реквизитов: {DetailType}", Prefix, detailType);
-                    return Result.Failure($"Тип реквизитов '{detailType}' не поддерживается методом оплаты '{request.PaymentMethod}'. Доступные: {availableTypes}");
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", Prefix, detailType);
+                    return Result.Failure($"Detail type '{detailType}' is not supported by payment method '{request.PaymentMethod}'. Available: {availableTypes}");
                 }
 
                 player.PlayerOptions.Currency = request.Currency.ToLowerInvariant();
@@ -306,39 +305,39 @@ namespace BottleGame.Infrastructure.Services
             else if ((!string.IsNullOrWhiteSpace(request.Currency) && string.IsNullOrWhiteSpace(request.PaymentMethod)) ||
                      (string.IsNullOrWhiteSpace(request.Currency) && !string.IsNullOrWhiteSpace(request.PaymentMethod)))
             {
-                return Result.Failure("Поля Currency и PaymentMethod не могут изменяться отдельно друг от друга");
+                return Result.Failure("The fields Currency and PaymentMethod cannot be changed separately from each other");
             }
             else if (!string.IsNullOrWhiteSpace(request.PaymentDetailType))
             {
-                // Обновление только PaymentDetailType (без изменения метода оплаты)
+                // Update only PaymentDetailType (without changing the payment method)
                 var currentPaymentMethod = player.PlayerOptions.PaymentMethod;
                 var isValidDetailType = await _currencyService.IsDetailTypeValidForGatewayAsync(currentPaymentMethod, request.PaymentDetailType);
                 if (!isValidDetailType)
                 {
                     var availableTypes = await _currencyService.GetDetailTypesForGatewayAsync(currentPaymentMethod);
-                    var typesStr = availableTypes.Any() ? string.Join(", ", availableTypes) : "любой";
-                    _logger.LogWarning("{Prefix} Попытка установить недопустимый тип реквизитов: {DetailType}", Prefix, request.PaymentDetailType);
-                    return Result.Failure($"Тип реквизитов '{request.PaymentDetailType}' не поддерживается методом оплаты '{currentPaymentMethod}'. Доступные: {typesStr}");
+                    var typesStr = availableTypes.Any() ? string.Join(", ", availableTypes) : "any";
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", Prefix, request.PaymentDetailType);
+                    return Result.Failure($"Detail type '{request.PaymentDetailType}' is not supported by payment method '{currentPaymentMethod}'. Available: {typesStr}");
                 }
 
                 player.PlayerOptions.PaymentDetailType = request.PaymentDetailType.ToLowerInvariant();
             }
 
-            // Валидация и изменение кошелька и метода выплаты
+            // Validation and change of the wallet and the payout method
             if (!string.IsNullOrWhiteSpace(request.Wallet) && !string.IsNullOrWhiteSpace(request.PayoutMethod))
             {
-                // Получаем текущую валюту игрока для проверки шлюза выплат
+                // Get the current currency of the player to check the payout gateway
                 var currency = !string.IsNullOrWhiteSpace(request.Currency)
-                    ? request.Currency
-                    : player.PlayerOptions.Currency ?? "rub";
+                                 ? request.Currency
+                                 : player.PlayerOptions.Currency ?? "rub";
 
                 var payoutGateways = await _currencyService.GetPayoutGatewaysForCurrencyAsync(currency);
                 var isValidPayoutGateway = payoutGateways.Any(g => g.Code.Equals(request.PayoutMethod, StringComparison.OrdinalIgnoreCase));
                 if (!isValidPayoutGateway)
                 {
                     var gatewayCodes = string.Join(", ", payoutGateways.Select(g => g.Code));
-                    _logger.LogWarning("{Prefix} Попытка установить недопустимый метод выплаты: {PayoutMethod}", Prefix, request.PayoutMethod);
-                    return Result.Failure($"Метод выплаты '{request.PayoutMethod}' не поддерживается для валюты '{currency}'. Доступные: {gatewayCodes}");
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid payout method: {PayoutMethod}", Prefix, request.PayoutMethod);
+                    return Result.Failure($"Payout method '{request.PayoutMethod}' is not supported for currency '{currency}'. Available: {gatewayCodes}");
                 }
 
                 player.PlayerOptions.Wallet = request.Wallet;
@@ -347,10 +346,10 @@ namespace BottleGame.Infrastructure.Services
             else if ((!string.IsNullOrWhiteSpace(request.Wallet) && string.IsNullOrWhiteSpace(request.PayoutMethod)) ||
                      (string.IsNullOrWhiteSpace(request.Wallet) && !string.IsNullOrWhiteSpace(request.PayoutMethod)))
             {
-                return Result.Failure("Поля Wallet и PayoutMethod не могут изменяться отдельно друг от друга");
+                return Result.Failure("The fields Wallet and PayoutMethod cannot be changed separately from each other");
             }
 
-            // Изменение баланса (только для админа)
+            // Change of the balance (admin only)
             if (isAdmin && request.Balance is not null)
             {
                 var amountToUpdateBalance = player.Balance.Amount - request.Balance.Value;
@@ -360,8 +359,8 @@ namespace BottleGame.Infrastructure.Services
                 var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
                 if (appBalance is null)
                 {
-                    _logger.LogWarning("{Prefix} Не найдены данные баланса приложения", Prefix);
-                    return Result.Failure("Не найдены данные баланса приложения");
+                    _logger.LogWarning("{Prefix} Application balance data not found", Prefix);
+                    return Result.Failure("Application balance data not found");
                 }
 
                 appBalance.Amount -= amountToUpdateBalance;
@@ -372,7 +371,7 @@ namespace BottleGame.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Игрок {PlayerId} изменен", Prefix, playerId);
+            _logger.LogInformation("{Prefix} Player {PlayerId} changed", Prefix, playerId);
 
             return Result.Success();
         }
