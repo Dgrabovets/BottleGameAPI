@@ -19,7 +19,6 @@ namespace BottleGame.API.Middleware
     /// <param name="environment">Окружение приложения (в Production детали исключений не отдаются клиенту)</param>
     public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger, IWebHostEnvironment environment)
     {
-        #region Fields
 
         /// <summary>
         /// Делегат для вызова следующего middleware в pipeline
@@ -33,9 +32,7 @@ namespace BottleGame.API.Middleware
 
         private readonly IWebHostEnvironment _environment = environment;
 
-        #endregion Fields
 
-        #region Public Methods
 
         /// <summary>
         /// Обрабатывает HTTP-запрос и перехватывает исключения
@@ -54,9 +51,7 @@ namespace BottleGame.API.Middleware
             }
         }
 
-        #endregion Public Methods
 
-        #region Private Methods
 
         /// <summary>
         /// Обрабатывает исключение и формирует ответ клиенту
@@ -123,72 +118,5 @@ namespace BottleGame.API.Middleware
             await response.WriteAsync(result);
         }
 
-        #endregion Private Methods
-    }
-
-    /// <summary>
-    /// Модель ответа об ошибке для клиента
-    /// </summary>
-    /// <remarks>
-    /// Унифицированная модель, которая возвращается клиенту при возникновении любой ошибки.
-    /// Содержит HTTP статус-код, сообщение об ошибке и временную метку.
-    /// </remarks>
-    public class ErrorResponse
-    {
-        #region Properties
-
-        /// <summary>
-        /// HTTP статус-код ошибки
-        /// </summary>
-        /// <example>404</example>
-        public int StatusCode { get; set; }
-
-        /// <summary>
-        /// Человекочитаемое сообщение об ошибке
-        /// </summary>
-        /// <example>Ресурс не найден</example>
-        public string Message { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Временная метка возникновения ошибки в формате UTC
-        /// </summary>
-        /// <example>2025-12-24T10:30:00Z</example>
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-
-        #endregion Properties
-    }
-
-    /// <summary>
-    /// Extension-методы для регистрации <see cref="GlobalExceptionMiddleware"/> в pipeline приложения
-    /// </summary>
-    public static class GlobalExceptionMiddlewareExtensions
-    {
-        #region Extension Methods
-
-        /// <summary>
-        /// Добавляет глобальный обработчик исключений в pipeline приложения
-        /// </summary>
-        /// <param name="app">Построитель приложения</param>
-        /// <returns>Построитель приложения с добавленным middleware</returns>
-        /// <remarks>
-        /// Рекомендуется добавлять этот middleware первым в pipeline,
-        /// чтобы перехватывать исключения из всех последующих middleware.
-        /// </remarks>
-        /// <example>
-        /// <code>
-        /// var app = builder.Build();
-        /// app.UseGlobalExceptionHandler(); // Должен быть первым
-        /// app.UseRouting();
-        /// app.UseAuthentication();
-        /// // ...
-        /// </code>
-        /// </example>
-        public static IApplicationBuilder UseGlobalExceptionHandler(this IApplicationBuilder app)
-        {
-            return app.UseMiddleware<GlobalExceptionMiddleware>();
-        }
-
-        #endregion Extension Methods
     }
 }
-
