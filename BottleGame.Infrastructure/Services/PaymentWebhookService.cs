@@ -173,10 +173,22 @@ namespace BottleGame.Infrastructure.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                // A concurrent handler has already changed the transaction: its outcome stays, this run applies nothing.
+                // Either a concurrent handler has already applied this notification, or something else changed the
+                // balance at the same moment. Only the first case is a duplicate: in the second one nothing was applied
+                // and the error makes the provider deliver the notification again.
                 _context.ChangeTracker.Clear();
-                _logger.LogWarning("{Prefix} Transaction {TransactionId} was handled by a concurrent request, the repeat is ignored", Prefix, transactionId);
-                return await SaveLogAsync(webhookLog, "Duplicate", Result.Success());
+                var alreadyHandled = await _context.MoneyTransactions
+                    .AsNoTracking()
+                    .AnyAsync(t => t.Id == transactionId && t.IsProcessingSuccess != null);
+
+                if (alreadyHandled)
+                {
+                    _logger.LogWarning("{Prefix} Transaction {TransactionId} was handled by a concurrent request, the repeat is ignored", Prefix, transactionId);
+                    return await SaveLogAsync(webhookLog, "Duplicate", Result.Success());
+                }
+
+                _logger.LogWarning("{Prefix} Concurrent update while handling transaction {TransactionId}, the provider will retry", Prefix, transactionId);
+                return await LogAndFailAsync(webhookLog, "Concurrent update, try again");
             }
 
             return result.IsSuccess

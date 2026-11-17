@@ -170,7 +170,16 @@ namespace BottleGame.Infrastructure.Services
                 player.Balance.Amount -= request.Amount;
             }
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Another request changed the balance after the funds check above, so the check may be stale.
+                _logger.LogWarning("{Prefix} Concurrent balance update for player {PlayerId}", Prefix, playerId);
+                return Result<object?>.Conflict("The balance was changed by another request, try again");
+            }
 
             object? responseData = null;
 

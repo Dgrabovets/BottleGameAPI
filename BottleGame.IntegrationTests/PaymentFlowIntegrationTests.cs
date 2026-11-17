@@ -192,4 +192,36 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
         await using var verify = database.CreateContext();
         Assert.Equal(TransactionStatuses.Approved, (await verify.MoneyTransactions.SingleAsync(t => t.Id == transactionId)).TransactionStatusId);
     }
+
+    /// <summary>
+    /// Several simultaneous withdrawals of the whole balance create only one withdrawal, so the balance is never spent twice
+    /// </summary>
+    [PostgresFact]
+    public async Task ConcurrentWithdrawals_CannotSpendTheSameBalanceTwice()
+    {
+        var playerId = await database.AddPlayerAsync(balance: 1000);
+
+        async Task<bool> WithdrawAsync()
+        {
+            await using var context = database.CreateContext();
+            var service = new TransactionService(
+                context,
+                NullLogger<TransactionService>.Instance,
+                new FixedCache(await context.GameParams.AsNoTracking().FirstAsync()),
+                new BottleGame.Infrastructure.Services.Payments.SimulatedTransactionProcessor(
+                    context, NullLogger<BottleGame.Infrastructure.Services.Payments.SimulatedTransactionProcessor>.Instance));
+
+            var result = await service.CreateTransaction(
+                playerId, new MoneyTransactionRequest { Amount = 1000, IsDeposit = false }, playerId, isAdmin: false);
+            return result.IsSuccess;
+        }
+
+        var outcomes = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => Task.Run(WithdrawAsync)));
+
+        Assert.Single(outcomes, succeeded => succeeded);
+
+        await using var verify = database.CreateContext();
+        Assert.Equal(0, (await verify.PlayersBalances.SingleAsync(b => b.PlayerId == playerId)).Amount);
+        Assert.Equal(1, await verify.MoneyTransactions.CountAsync(t => t.PlayerId == playerId && t.TransactionTypeId == TransactionTypes.Withdrawal));
+    }
 }

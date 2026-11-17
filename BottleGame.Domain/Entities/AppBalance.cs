@@ -54,5 +54,16 @@ namespace BottleGame.Domain.Entities
         /// </summary>
         [Column("BalanceAmountAdminIdUpdatedBy")]
         public int? BalanceAmountAdminIdUpdatedBy { get; set; }
+
+        #region Concurrency
+
+        /// <summary>
+        /// Row version for optimistic concurrency. In PostgreSQL this is the xmin system column,
+        /// so no separate column or migration is needed. Two requests that change the same balance at once
+        /// cannot both win: the second one fails instead of overwriting the first
+        /// </summary>
+        public uint Version { get; set; }
+
+        #endregion Concurrency
     }
 }

@@ -105,7 +105,16 @@ namespace BottleGame.Infrastructure.Services
             // Update the player balance
             player.Balance.Amount += request.IsWin ? request.Bet : -request.Bet;
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // The balance was changed by another request after it was read, so the check above may be stale.
+                _logger.LogWarning("{Prefix} Concurrent balance update for player {PlayerId}", Prefix, playerId);
+                return Result.Conflict("The balance was changed by another request, try again");
+            }
 
             _logger.LogInformation(
                 "{Prefix} Round finished for player {PlayerId}. Status: {Status}, Amount: {Bet}",
@@ -205,7 +214,3 @@ namespace BottleGame.Infrastructure.Services
         #endregion Public Methods
     }
 }
-
-
-
-
