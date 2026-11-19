@@ -65,4 +65,3 @@ public class FinishRoundRequestValidatorTests
         result.ShouldNotHaveValidationErrorFor(x => x.Bet);
     }
 }
-

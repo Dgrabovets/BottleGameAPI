@@ -68,4 +68,3 @@ public class BanPlayerRequestValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.BanReason);
     }
 }
-

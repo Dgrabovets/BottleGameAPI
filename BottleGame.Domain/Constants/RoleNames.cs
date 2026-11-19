@@ -36,5 +36,3 @@
         public const string All = "Admin,Moderator,Player";
     }
 }
-
-

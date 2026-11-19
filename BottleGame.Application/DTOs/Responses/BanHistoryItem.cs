@@ -21,4 +21,3 @@ namespace BottleGame.Application.DTOs.Responses
         public DateTime? UnbannedAt { get; set; }
     }
 }
-

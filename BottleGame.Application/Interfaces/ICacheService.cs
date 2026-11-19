@@ -41,6 +41,3 @@ namespace BottleGame.Application.Interfaces
         void InvalidateTransactionStatuses();
     }
 }
-
-
-

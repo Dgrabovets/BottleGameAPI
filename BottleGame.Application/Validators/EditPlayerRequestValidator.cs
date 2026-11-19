@@ -88,5 +88,3 @@ namespace BottleGame.Application.Validators
         }
     }
 }
-
-

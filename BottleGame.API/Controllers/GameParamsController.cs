@@ -205,6 +205,3 @@ namespace BottleGame.API.Controllers
         #endregion ActionMethods
     }
 }
-
-
-

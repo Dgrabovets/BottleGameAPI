@@ -340,4 +340,3 @@ namespace BottleGame.Infrastructure.Services
         #endregion Simulated Data
     }
 }
-

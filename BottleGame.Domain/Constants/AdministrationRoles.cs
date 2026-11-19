@@ -26,5 +26,3 @@ namespace BottleGame.Domain.Constants
         };
     }
 }
-
-

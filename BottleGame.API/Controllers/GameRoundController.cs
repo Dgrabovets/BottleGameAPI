@@ -127,6 +127,3 @@ namespace BottleGame.API.Controllers
         #endregion Private Methods
     }
 }
-
-
-

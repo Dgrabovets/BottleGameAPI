@@ -38,6 +38,3 @@ namespace BottleGame.Application.Interfaces
         #endregion Methods
     }
 }
-
-
-

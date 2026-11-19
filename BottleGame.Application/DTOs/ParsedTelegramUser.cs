@@ -31,4 +31,3 @@
         public int? InvitingPlayerId { get; set; }
     }
 }
-

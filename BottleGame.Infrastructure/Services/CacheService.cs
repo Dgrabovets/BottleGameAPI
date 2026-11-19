@@ -151,7 +151,3 @@ namespace BottleGame.Infrastructure.Services
         #endregion Public Methods
     }
 }
-
-
-
-
