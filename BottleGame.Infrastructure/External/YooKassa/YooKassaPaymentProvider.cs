@@ -211,6 +211,13 @@ namespace BottleGame.Infrastructure.External.YooKassa
         /// <exception cref="HttpRequestException">The provider responded with an error other than "not found"</exception>
         private async Task<ProviderOperation?> GetOperationAsync(string collection, string id, string login, string secret, CancellationToken cancellationToken)
         {
+            // The id comes from an unsigned notification, so only the characters of a real id are let into the request path
+            if (!IsValidObjectId(id))
+            {
+                _logger.LogWarning("{Prefix} Refused to look up {Collection} with a malformed id", Prefix, collection);
+                return null;
+            }
+
             var (status, json) = await SendAsync(HttpMethod.Get, $"{collection}/{Uri.EscapeDataString(id)}", login, secret, null, null, cancellationToken);
 
             if (status is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
@@ -227,6 +234,14 @@ namespace BottleGame.Infrastructure.External.YooKassa
             var operation = JsonSerializer.Deserialize<YooKassaOperation>(json, JsonOptions);
             return operation is null ? null : ToProviderOperation(operation);
         }
+
+        /// <summary>
+        /// Checks that an identifier has only the characters of a YooKassa payment or payout id
+        /// </summary>
+        /// <param name="id">Identifier to check</param>
+        /// <returns>true if the identifier is safe to put into a request path</returns>
+        private static bool IsValidObjectId(string? id) =>
+            !string.IsNullOrEmpty(id) && id.Length <= 64 && id.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
 
         /// <summary>
         /// Converts a YooKassa response into a provider operation

@@ -266,6 +266,23 @@ public class YooKassaPaymentProviderTests
         await act.Should().ThrowAsync<HttpRequestException>();
     }
 
+    /// <summary>
+    /// An identifier with path characters is refused before any request is sent, because it comes from an unsigned notification
+    /// </summary>
+    [Theory]
+    [InlineData("../payouts/po-1")]
+    [InlineData("pay-1/../../x")]
+    [InlineData("pay-1?x=1")]
+    [InlineData("pay 1")]
+    [InlineData("")]
+    public async Task GetPayment_MalformedId_ReturnsNullWithoutRequest(string id)
+    {
+        var payment = await CreateProvider().GetPaymentAsync(id);
+
+        payment.Should().BeNull();
+        _handler.Requests.Should().BeEmpty();
+    }
+
     #endregion Lookup Tests
 
     #region Catalog Tests
