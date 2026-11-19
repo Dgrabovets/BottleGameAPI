@@ -11,4 +11,3 @@
         bool ValidateInitData(string initData);
     }
 }
-

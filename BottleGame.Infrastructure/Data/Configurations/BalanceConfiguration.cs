@@ -20,6 +20,13 @@ namespace BottleGame.Infrastructure.Data.Configurations
             builder.Property(b => b.PlayerId).HasColumnName("PlayerId");
             builder.Property(b => b.Amount).HasColumnName("Amount").IsRequired();
 
+            // Concurrent changes of one balance must not overwrite each other.
+            builder.Property(b => b.Version)
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
+
             builder.HasOne(b => b.Player)
                 .WithOne(p => p.Balance)
                 .HasForeignKey<Balance>(b => b.PlayerId)
@@ -27,4 +34,3 @@ namespace BottleGame.Infrastructure.Data.Configurations
         }
     }
 }
-

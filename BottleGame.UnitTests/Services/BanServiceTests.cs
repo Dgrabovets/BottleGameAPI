@@ -227,10 +227,10 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Unbanning a player without an active ban answers with 409
+    /// Unbanning a player without an active ban answers with 404
     /// </summary>
-    [Fact(Skip = "Service returns 404 when no active ban exists, not 409")]
-    public async Task UnbanPlayer_NotBanned_ReturnsConflict()
+    [Fact]
+    public async Task UnbanPlayer_NotBanned_ReturnsNotFound()
     {
         // Arrange
         var player = TestDbContextFactory.CreateTestPlayer(_context);
@@ -240,7 +240,7 @@ public class BanServiceTests : IDisposable
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.StatusCode.Should().Be(409);
+        result.StatusCode.Should().Be(404);
     }
 
     /// <summary>

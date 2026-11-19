@@ -13,4 +13,3 @@ namespace BottleGame.Application.Interfaces
         string GenerateToken(IEnumerable<Claim> claims);
     }
 }
-

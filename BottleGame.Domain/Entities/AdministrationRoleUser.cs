@@ -50,4 +50,3 @@ namespace BottleGame.Domain.Entities
         public int Role { get; set; }
     }
 }
-

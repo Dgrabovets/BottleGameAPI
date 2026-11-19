@@ -20,5 +20,3 @@ namespace BottleGame.Application.Validators
         }
     }
 }
-
-

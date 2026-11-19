@@ -81,4 +81,3 @@ public class MoneyTransactionRequestValidatorTests
         result.ShouldNotHaveValidationErrorFor(x => x.Amount);
     }
 }
-

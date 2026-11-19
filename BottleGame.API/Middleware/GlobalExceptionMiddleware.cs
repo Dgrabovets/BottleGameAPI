@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
 namespace BottleGame.API.Middleware
@@ -19,7 +20,6 @@ namespace BottleGame.API.Middleware
     /// <param name="environment">Application environment (in Production the exception details are not sent to the client)</param>
     public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger, IWebHostEnvironment environment)
     {
-
         /// <summary>
         /// Delegate that calls the next middleware in the pipeline
         /// </summary>
@@ -34,8 +34,6 @@ namespace BottleGame.API.Middleware
         /// Hosting environment, used to decide how much error detail to return
         /// </summary>
         private readonly IWebHostEnvironment _environment = environment;
-
-
 
         /// <summary>
         /// Handles an HTTP request and catches exceptions
@@ -54,8 +52,6 @@ namespace BottleGame.API.Middleware
             }
         }
 
-
-
         /// <summary>
         /// Handles an exception and builds the response for the client
         /// </summary>
@@ -69,7 +65,8 @@ namespace BottleGame.API.Middleware
         ///     <item><description><see cref="UnauthorizedAccessException"/> → 401 Unauthorized</description></item>
         ///     <item><description><see cref="ArgumentException"/> → 400 Bad Request</description></item>
         ///     <item><description><see cref="InvalidOperationException"/> → 400 Bad Request</description></item>
-        ///     <item><description>All other exceptions → 500 Internal Server Error</description></item>
+        ///     <item><description><see cref="DbUpdateConcurrencyException"/> → 409 Conflict</description></item>
+        ///     <item><description>All other exceptions → 500 Internal Server Error, with the message hidden in production</description></item>
         /// </list>
         /// </remarks>
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
@@ -104,9 +101,16 @@ namespace BottleGame.API.Middleware
                     _logger.LogWarning(exception, "Invalid request: {Message}", exception.Message);
                     break;
 
+                case DbUpdateConcurrencyException:
+                    response.StatusCode = (int)HttpStatusCode.Conflict;
+                    errorResponse.Message = "The data was changed by another request, try again";
+                    errorResponse.StatusCode = response.StatusCode;
+                    _logger.LogWarning(exception, "Concurrent update conflict");
+                    break;
+
                 default:
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                    errorResponse.Message = $"Internal server error\r\n{exception.Message}";
+                    errorResponse.Message = isProduction ? "Internal server error" : $"Internal server error\r\n{exception.Message}";
                     errorResponse.StatusCode = response.StatusCode;
                     _logger.LogError(exception, "Unhandled exception: {Type}: {Message}. StackTrace: {StackTrace}",
                         exception.GetType().Name, exception.Message, exception.StackTrace);

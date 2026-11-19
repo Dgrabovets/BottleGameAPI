@@ -24,7 +24,13 @@ namespace BottleGame.Infrastructure.Data.Configurations
             builder.Property(b => b.LowerThresholdAdminIdUpdatedBy).HasColumnName("LowerThresholdAdminIdUpdatedBy");
             builder.Property(b => b.BalanceAmountUpdatedAt).HasColumnName("BalanceAmountUpdatedAt");
             builder.Property(b => b.BalanceAmountAdminIdUpdatedBy).HasColumnName("BalanceAmountAdminIdUpdatedBy");
+
+            // Concurrent changes of one balance must not overwrite each other.
+            builder.Property(b => b.Version)
+                .HasColumnName("xmin")
+                .HasColumnType("xid")
+                .ValueGeneratedOnAddOrUpdate()
+                .IsConcurrencyToken();
         }
     }
 }
-

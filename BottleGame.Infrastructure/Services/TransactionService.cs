@@ -170,7 +170,16 @@ namespace BottleGame.Infrastructure.Services
                 player.Balance.Amount -= request.Amount;
             }
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Another request changed the balance after the funds check above, so the check may be stale.
+                _logger.LogWarning("{Prefix} Concurrent balance update for player {PlayerId}", Prefix, playerId);
+                return Result<object?>.Conflict("The balance was changed by another request, try again");
+            }
 
             object? responseData = null;
 
@@ -351,22 +360,15 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <inheritdoc/>
-        public async Task<Result<IEnumerable<GetPlayerTransactionsResponse>>> GetAllTransactions(int? typeId)
+        public async Task<Result<IEnumerable<GetPlayerTransactionsResponse>>> GetAllTransactions(int? typeId, PageRequest? page = null)
         {
-            var bannedPlayerIds = await _context.GetActivelyBannedPlayerIdsAsync();
-
-            var query = _context.MoneyTransactions
-                .AsNoTracking()
-                .WherePlayerNotActivelyBanned(bannedPlayerIds)
-                .AsQueryable();
-
-            if (typeId is not null)
-            {
-                query = query.Where(t => t.TransactionTypeId == typeId);
-            }
-
-            var rows = await query
+            var ordered = (await FilterTransactionsAsync(typeId))
                 .OrderByDescending(t => t.CreatedAt)
+                .ThenByDescending(t => t.Id);
+
+            var paged = page is null ? ordered : ordered.Skip(page.Skip).Take(page.PageSize);
+
+            var rows = await paged
                 .Select(t => new
                 {
                     t.Id,
@@ -419,6 +421,27 @@ namespace BottleGame.Infrastructure.Services
                 .ToList();
 
             return Result<IEnumerable<GetPlayerTransactionsResponse>>.Success(response);
+        }
+
+        /// <inheritdoc/>
+        public async Task<int> CountTransactions(int? typeId) =>
+            await (await FilterTransactionsAsync(typeId)).CountAsync();
+
+        /// <summary>
+        /// Builds the transaction query of the list: transactions of actively banned players are left out
+        /// </summary>
+        /// <param name="typeId">Filter by type (optional)</param>
+        /// <returns>Filtered query</returns>
+        private async Task<IQueryable<MoneyTransaction>> FilterTransactionsAsync(int? typeId)
+        {
+            var bannedPlayerIds = await _context.GetActivelyBannedPlayerIdsAsync();
+
+            var query = _context.MoneyTransactions
+                .AsNoTracking()
+                .WherePlayerNotActivelyBanned(bannedPlayerIds)
+                .AsQueryable();
+
+            return typeId is null ? query : query.Where(t => t.TransactionTypeId == typeId);
         }
 
         #endregion Transaction Methods

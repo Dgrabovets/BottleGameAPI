@@ -1,3 +1,4 @@
+using BottleGame.API.Controllers;
 using BottleGame.API.Middleware;
 using BottleGame.API.Options;
 using BottleGame.Application;
@@ -18,10 +19,9 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Behind a reverse proxy the client IP is taken from X-Forwarded-For only from trusted proxies.
-// Without a list of proxies the header is used as before, but any client can spoof it.
+// Behind a reverse proxy the client IP is read from X-Forwarded-For only when the request comes from a trusted proxy.
+// Without ForwardedHeaders:KnownProxies only a proxy on the same machine (loopback) is trusted, so a client cannot spoof the address.
 var knownProxies = builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [];
-var trustForwardedForHeader = knownProxies.Length == 0;
 
 #region Logging
 
@@ -145,6 +145,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
+              .WithExposedHeaders(BaseApiController.TotalCountHeader)
               .AllowCredentials();
     });
 });
@@ -196,26 +197,24 @@ builder.Services.AddRateLimiter(options =>
 
 #region Forwarded headers
 
-if (!trustForwardedForHeader)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+    if (knownProxies.Length > 0)
     {
-        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.KnownProxies.Clear();
+        options.KnownIPNetworks.Clear();
         foreach (var proxy in knownProxies)
         {
             options.KnownProxies.Add(IPAddress.Parse(proxy));
         }
-    });
-}
+    }
+});
 
 #endregion
 
 var app = builder.Build();
-
-if (trustForwardedForHeader)
-{
-    app.Logger.LogWarning("ForwardedHeaders:KnownProxies is not set: X-Forwarded-For is trusted as is, so clients can spoof the address used for rate limiting.");
-}
 
 if (app.Services.GetRequiredService<IOptions<ProcessingOptions>>().Value.Mode == ProcessingMode.Simulated)
 {
@@ -225,10 +224,7 @@ if (app.Services.GetRequiredService<IOptions<ProcessingOptions>>().Value.Mode ==
 // Middleware pipeline
 app.UseGlobalExceptionHandler();
 
-if (!trustForwardedForHeader)
-{
-    app.UseForwardedHeaders();
-}
+app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
@@ -249,16 +245,6 @@ app.MapControllers();
 
 app.Run();
 
-string GetClientIpAddress(HttpContext context)
-{
-    if (trustForwardedForHeader)
-    {
-        var forwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrWhiteSpace(forwardedFor))
-        {
-            return forwardedFor.Split(',')[0].Trim();
-        }
-    }
-
-    return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-}
+// The address after the forwarded headers middleware: the real client behind a trusted proxy, otherwise the direct peer
+string GetClientIpAddress(HttpContext context) =>
+    context.Connection.RemoteIpAddress?.ToString() ?? "unknown";

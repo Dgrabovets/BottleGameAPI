@@ -117,6 +117,59 @@ public class PasswordHasherTests
     }
 
     /// <summary>
+    /// New hashes use the PBKDF2 format with the number of rounds in front
+    /// </summary>
+    [Fact]
+    public void HashWithSalt_UsesPbkdf2Format()
+    {
+        var (hash, _) = _hasher.HashWithSalt("testPassword123");
+
+        hash.Should().StartWith("v2$600000$");
+        _hasher.NeedsRehash(hash).Should().BeFalse();
+    }
+
+    /// <summary>
+    /// A hash of the first version, one HMAC round, still verifies and is marked for replacement
+    /// </summary>
+    [Fact]
+    public void Verify_LegacyHash_StillWorksAndNeedsRehash()
+    {
+        const string salt = "c29tZS1zYWx0LTEyMzQ1Ng==";
+        var legacy = _hasher.Hash("testPassword123" + salt);
+
+        _hasher.Verify(legacy, "testPassword123", salt).Should().BeTrue();
+        _hasher.Verify(legacy, "wrong", salt).Should().BeFalse();
+        _hasher.NeedsRehash(legacy).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// A stored hash with a damaged or absurd number of rounds is refused instead of being computed
+    /// </summary>
+    [Theory]
+    [InlineData("v2$1$AAAA")]
+    [InlineData("v2$999999999$AAAA")]
+    [InlineData("v2$not-a-number$AAAA")]
+    [InlineData("v2$600000")]
+    [InlineData("v2$600000$not base64!")]
+    public void Verify_DamagedStoredHash_ReturnsFalse(string stored)
+    {
+        _hasher.Verify(stored, "testPassword123", "c29tZS1zYWx0LTEyMzQ1Ng==").Should().BeFalse();
+    }
+
+    /// <summary>
+    /// The same password with another salt gives another hash
+    /// </summary>
+    [Fact]
+    public void HashWithSalt_SamePasswordTwice_GivesDifferentHashes()
+    {
+        var first = _hasher.HashWithSalt("testPassword123");
+        var second = _hasher.HashWithSalt("testPassword123");
+
+        first.Hash.Should().NotBe(second.Hash);
+        first.Salt.Should().NotBe(second.Salt);
+    }
+
+    /// <summary>
     /// A wrong password fails the check
     /// </summary>
     [Fact]

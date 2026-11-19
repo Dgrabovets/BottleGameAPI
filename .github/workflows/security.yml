@@ -1,0 +1,50 @@
+name: Dependency audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # New advisories appear without any change in the repository, so the audit also runs every Monday
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vulnerable-packages:
+    name: NuGet vulnerabilities
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: List vulnerable packages, direct and transitive
+        run: |
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee audit.txt
+          if grep -q "has the following vulnerable packages" audit.txt; then
+            echo "::error::A package has a known vulnerability, see the list above."
+            exit 1
+          fi
+
+  dependency-review:
+    name: New dependencies in the pull request
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high

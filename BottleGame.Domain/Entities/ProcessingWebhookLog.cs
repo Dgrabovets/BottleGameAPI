@@ -123,5 +123,3 @@ namespace BottleGame.Domain.Entities
         public DateTime? ProcessedAt { get; set; }
     }
 }
-
-

@@ -243,5 +243,3 @@ CREATE INDEX "IX_ProcessingWebhookLogs_ReceivedAt" ON "ProcessingWebhookLogs" ("
 
 
 CREATE INDEX "IX_ProcessingWebhookLogs_TransactionId" ON "ProcessingWebhookLogs" ("TransactionId");
-
-

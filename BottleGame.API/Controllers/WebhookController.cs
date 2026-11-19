@@ -55,13 +55,10 @@ namespace BottleGame.API.Controllers
         #region Helper Methods
 
         /// <summary>
-        /// Gets the client IP address for the log
+        /// Gets the client IP address for the log. Behind a trusted proxy the forwarded headers middleware has already replaced it with the real client address
         /// </summary>
         /// <returns>Client IP address or null</returns>
-        private string? GetClientIpAddress() =>
-            Request.Headers["X-Forwarded-For"].FirstOrDefault()
-            ?? Request.Headers["X-Real-IP"].FirstOrDefault()
-            ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+        private string? GetClientIpAddress() => HttpContext.Connection.RemoteIpAddress?.ToString();
 
         #endregion Helper Methods
     }

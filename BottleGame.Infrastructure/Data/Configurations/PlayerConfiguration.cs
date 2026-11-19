@@ -34,4 +34,3 @@ namespace BottleGame.Infrastructure.Data.Configurations
         }
     }
 }
-

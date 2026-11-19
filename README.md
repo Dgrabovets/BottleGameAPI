@@ -12,10 +12,11 @@ The companion admin dashboard lives in [BottleGameAdministrationPanel](https://g
 
 ## Features
 
-- **Telegram sign-in.** The mini-app `initData` is verified on the server and exchanged for a JWT. Roles: `Player`, `Moderator`, `Admin`. Staff sign in with a login and a salted, keyed password hash.
+- **Telegram sign-in.** The mini-app `initData` is verified on the server and exchanged for a JWT. Roles: `Player`, `Moderator`, `Admin`. Staff sign in with a login and a password stored as a salted PBKDF2 hash mixed with a server secret; hashes of the older format are replaced at the next sign-in.
 - **Game rounds.** Rounds are resolved from tunable game parameters (win chances, multipliers, boosts) that admins edit at runtime.
 - **Balances and transactions.** Deposits and withdrawals with statuses, an application-level balance and a lower threshold for payouts.
 - **Payment provider integration.** A YooKassa client creates payments and SBP payouts, and its notifications are handled safely: each one is re-checked against the YooKassa API, repeated deliveries never credit or refund twice, and concurrent deliveries are blocked by optimistic concurrency. The client is covered by tests against a fake HTTP handler.
+- **Paged lists and UTC dates.** The player and transaction lists take `page` and `pageSize` (at most 200) and return the size of the whole list in the `X-Total-Count` header, banned players are left out on the server. Dates are stored and returned in UTC with a `Z`.
 - **Demo mode.** By default deposits and withdrawals complete instantly with a virtual balance, so the whole product can be tried without any payment account.
 - **Referral programme.** Inviters earn a bonus on the deposits of the players they invited, unless they are banned.
 - **Moderation.** Bans with history, player search and editing.
@@ -78,11 +79,12 @@ Secrets are never stored in the repository. `appsettings.json` contains `ENV_` p
 | `JWT__Key` | JWT signing key, at least 32 characters |
 | `TelegramBotToken` | Bot token used to verify Telegram `initData` |
 | `Security__PasswordHashSecretKey` | Secret mixed into admin password hashes |
+| `Telegram__InitDataMaxAgeMinutes` | How long a signed Telegram `initData` stays valid, 1440 (a day) by default; `0` turns the check off |
 | `Processing__Mode` | `Simulated` (default) completes deposits and withdrawals locally without real payments; `Live` uses YooKassa |
 | `Processing__ShopId`, `Processing__SecretKey` | YooKassa shop credentials for accepting payments (required in `Live`) |
 | `Processing__ReturnUrl` | Page where YooKassa sends the player after paying (required in `Live`) |
 | `Processing__PayoutAgentId`, `Processing__PayoutSecretKey` | YooKassa payout gateway credentials; without them withdrawals are refused |
-| `ForwardedHeaders__KnownProxies__0`, ... | IPs of reverse proxies whose `X-Forwarded-For` is trusted. Without them the header is trusted as is and clients can spoof the address used for rate limiting |
+| `ForwardedHeaders__KnownProxies__0`, ... | IPs of reverse proxies whose `X-Forwarded-For` is trusted. Without them only a proxy on the same machine is trusted, so a client cannot fake the address used for rate limiting; behind a proxy on another host, list it here, otherwise every client shares the proxy's address |
 | `Swagger__Enabled` | `true` serves Swagger UI outside Development |
 | `CORS__AllowedOrigins__0`, `__1`, ... | Allowed browser origins |
 
@@ -102,22 +104,29 @@ dotnet test
 ```
 
 - `BottleGame.UnitTests` covers the services on the EF Core in-memory provider: players, bans, game rounds, transactions in both processing modes, YooKassa client (against a fake HTTP handler), notifications, statistics and dependency injection.
-- `BottleGame.IntegrationTests` runs against a real PostgreSQL. Each run creates a throwaway database from `database/schema.sql` and `database/seed.sql`, so the tests also prove that the SQL scripts match the EF model. They cover duplicate and concurrent notifications, concurrent withdrawal approval and referral foreign keys. Without a server they are skipped; to run them:
+- `BottleGame.IntegrationTests` runs against a real PostgreSQL. Each run creates a throwaway database from `database/schema.sql` and `database/seed.sql`, so the tests also prove that the SQL scripts match the EF model. They cover duplicate and concurrent notifications, concurrent withdrawal approval, concurrent withdrawals of one balance and referral foreign keys. Without a server they are skipped; to run them:
 
 ```bash
 docker run -d --name bottle-pg -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:17-alpine
 BOTTLEGAME_TEST_POSTGRES="Host=localhost;Port=5433;Username=postgres;Password=postgres" dotnet test BottleGame.IntegrationTests
 ```
 
-Transactions carry a row version (PostgreSQL `xmin`) as an optimistic concurrency token, so two simultaneous requests cannot both apply the same notification or approve the same withdrawal.
+Transactions and balances (a player's and the application's) carry a row version (PostgreSQL `xmin`) as an optimistic concurrency token. Two simultaneous requests cannot both apply the same notification, approve the same withdrawal or spend the same balance twice: the second one fails with 409 and can be retried. The notification handler answers with an error in that case, so YooKassa delivers the notification again.
 
 ## CI and deployment
 
-- `ci.yml` builds and tests every pull request, including the integration tests against a PostgreSQL service container.
-- `deploy.yml` runs the same checks on `main` and deploys only if they pass.
+- `ci.yml` builds and tests every pull request and every push to `main`, including the integration tests against a PostgreSQL service container.
+- `deploy.yml` runs the same checks and deploys only if they pass. Automatic deployment is switched off: the workflow starts only by hand from the Actions tab (add `push: branches: [main]` back to deploy on every merge). Put the output of `ssh-keyscan <server>` into the `SSH_KNOWN_HOSTS` secret to pin the server host key; without it the deploy still runs but does not verify the server and prints a warning.
 
 ## Project status
 
 The transaction flow has two modes, selected with `Processing__Mode`. `Simulated` (the default) completes deposits and withdrawals locally and is what the demo runs on. `Live` creates YooKassa payments and SBP payouts and applies withdrawal rules (minimum played rounds, payout limit). `Live` is covered by unit tests with a mocked provider and an HTTP-level fake, but it has not been run against a real YooKassa account, because the project is not connected to one.
 
 Known gaps: receipts for the Russian fiscal law (54-FZ) are not sent, and payouts to bank cards need YooKassa's payout widget and are not implemented.
+
+### Known limitations
+
+This project was frozen before it was finished, and these points are left as they were on purpose. They matter before any real use:
+
+- **The client reports the game result.** `finish-game-round` takes the bet and the win flag from the mini-app, and the server only applies them. A player who calls the endpoint directly can credit any amount to their own balance. A real deployment needs the outcome to be drawn on the server, from the player's win chance, with the bet taken from a round the server has started.
+- **Moderators can only approve or reject withdrawals** and read the played-rounds statistics used for it. Everything else in the admin panel (statistics, players, transaction lists, bans) answers 403 for them, so the panel is usable only with an admin account.

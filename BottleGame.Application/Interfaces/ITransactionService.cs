@@ -55,8 +55,16 @@ namespace BottleGame.Application.Interfaces
         /// Gets all transactions
         /// </summary>
         /// <param name="typeId">Filter by type (optional)</param>
+        /// <param name="page">Page of transactions to return, null returns all of them</param>
         /// <returns>List of transactions by player</returns>
-        Task<Result<IEnumerable<GetPlayerTransactionsResponse>>> GetAllTransactions(int? typeId);
+        Task<Result<IEnumerable<GetPlayerTransactionsResponse>>> GetAllTransactions(int? typeId, PageRequest? page = null);
+
+        /// <summary>
+        /// Counts the transactions that <see cref="GetAllTransactions"/> would return without paging
+        /// </summary>
+        /// <param name="typeId">Filter by type (optional)</param>
+        /// <returns>Number of transactions</returns>
+        Task<int> CountTransactions(int? typeId);
 
         #endregion Transaction Methods
 
@@ -77,6 +85,3 @@ namespace BottleGame.Application.Interfaces
         #endregion Reference Data Methods
     }
 }
-
-
-

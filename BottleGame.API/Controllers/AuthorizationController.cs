@@ -98,6 +98,8 @@ namespace BottleGame.API.Controllers
                     return Unauthorized("Invalid login or password");
                 }
 
+                await UpgradePasswordHashAsync(admin, authRequest.Password);
+
                 // Build the claims for the token
                 var claims = new List<Claim>
                 {
@@ -206,7 +208,18 @@ namespace BottleGame.API.Controllers
                     return BadRequest("Invalid Telegram initialization data");
                 }
 
-                var playerData = Parse(initData);
+                ParsedTelegramUser playerData;
+                try
+                {
+                    playerData = Parse(initData);
+                }
+                catch (Exception ex) when (ex is FormatException or OverflowException or ArgumentException or JsonException
+                                              or KeyNotFoundException or NullReferenceException or IndexOutOfRangeException)
+                {
+                    // The data is not signed yet at this point, so any garbage can arrive here
+                    _logger.LogWarning("{Prefix} Malformed Telegram initData", prefix);
+                    return Unauthorized("Invalid Telegram authorization data");
+                }
 
                 bool isReferalLinkIsNotExisting = await _context.ReferralLinks.FirstOrDefaultAsync(p => p.PlayerId == playerData.InvitingPlayerId) is null;
 
@@ -343,6 +356,33 @@ namespace BottleGame.API.Controllers
         #region Methods
 
         /// <summary>
+        /// Replaces a hash of an old format with a current one, now that the password is known to be right.
+        /// A failure to save does not fail the sign-in: the old hash still works
+        /// </summary>
+        /// <param name="admin">Administrator who just signed in</param>
+        /// <param name="password">The password that was just checked</param>
+        private async Task UpgradePasswordHashAsync(AdministrationRoleUser admin, string password)
+        {
+            if (!_passwordHasher.NeedsRehash(admin.PasswordHash))
+            {
+                return;
+            }
+
+            try
+            {
+                var (hash, salt) = _passwordHasher.HashWithSalt(password);
+                admin.PasswordHash = hash;
+                admin.Salt = salt;
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("{Prefix} Password hash of {Login} upgraded", prefix, admin.Login);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "{Prefix} Could not upgrade the password hash of {Login}", prefix, admin.Login);
+            }
+        }
+
+        /// <summary>
         /// Parses the Telegram user data from initData
         /// </summary>
         /// <param name="initData">Telegram WebApp initialization string</param>
@@ -356,11 +396,11 @@ namespace BottleGame.API.Controllers
             result.TelegramId = long.Parse(GetJsonValue(query["user"]!, "id")!);
             result.Username = GetJsonValue(query["user"]!, "username") ?? GetJsonValue(query["user"]!, "first_name")!;
             result.PhotoUrl = GetJsonValue(query["user"]!, "photo_url") ?? string.Empty;
-            var startParam = query["start_param"]?.Split("_")[1] ?? string.Empty;
+            var startParts = query["start_param"]?.Split('_');
 
-            if (!string.IsNullOrWhiteSpace(startParam))
+            if (startParts is { Length: > 1 } && int.TryParse(startParts[1], out var invitingPlayerId))
             {
-                result.InvitingPlayerId = Convert.ToInt32(startParam);
+                result.InvitingPlayerId = invitingPlayerId;
             }
 
             // Parse the date (Unix timestamp)
@@ -398,4 +438,3 @@ namespace BottleGame.API.Controllers
         #endregion Methods
     }
 }
-

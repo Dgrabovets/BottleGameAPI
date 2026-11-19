@@ -84,4 +84,3 @@ public class AdministrationRoleUserCredentialsValidatorTests
         result.ShouldHaveValidationErrorFor(x => x.Password);
     }
 }
-

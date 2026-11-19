@@ -36,8 +36,17 @@ namespace BottleGame.Application.Interfaces
         /// </summary>
         /// <param name="telegramId">Exact Telegram id (search, includes banned players)</param>
         /// <param name="name">Partial match on the nickname (search, includes banned players)</param>
+        /// <param name="page">Page to return, null returns the whole list</param>
         /// <returns>List of players</returns>
-        Task<Result<IEnumerable<PlayerInfoResponse>>> GetAllPlayers(long? telegramId = null, string? name = null);
+        Task<Result<IEnumerable<PlayerInfoResponse>>> GetAllPlayers(long? telegramId = null, string? name = null, PageRequest? page = null);
+
+        /// <summary>
+        /// Counts the players that <see cref="GetAllPlayers"/> would return without paging
+        /// </summary>
+        /// <param name="telegramId">Exact Telegram id (search, includes banned players)</param>
+        /// <param name="name">Partial match on the nickname (search, includes banned players)</param>
+        /// <returns>Number of players</returns>
+        Task<int> CountPlayers(long? telegramId = null, string? name = null);
 
         /// <summary>
         /// Gets the top 100 players by balance
@@ -61,6 +70,3 @@ namespace BottleGame.Application.Interfaces
         #endregion Update Methods
     }
 }
-
-
-
