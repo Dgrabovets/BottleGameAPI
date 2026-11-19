@@ -27,9 +27,11 @@ namespace BottleGame.Infrastructure.External.Processing
                 errors.Add("Processing:SecretKey is required in Live mode. Set the environment variable Processing__SecretKey.");
             }
 
-            if (!Uri.TryCreate(options.ReturnUrl, UriKind.Absolute, out _))
+            // On Linux a path such as "/return" parses as an absolute file:// address, so the scheme is checked too
+            if (!Uri.TryCreate(options.ReturnUrl, UriKind.Absolute, out var returnUri)
+                || returnUri.Scheme is not ("http" or "https"))
             {
-                errors.Add("Processing:ReturnUrl is required in Live mode and must be an absolute address.");
+                errors.Add("Processing:ReturnUrl is required in Live mode and must be an absolute http or https address.");
             }
 
             return errors.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(errors);

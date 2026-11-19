@@ -1,0 +1,39 @@
+version: 2
+
+updates:
+  # NuGet packages: one weekly pull request per group. Major versions are skipped on purpose,
+  # because the Microsoft packages must stay on the same major version as the .NET SDK
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      microsoft-and-ef:
+        patterns:
+          - Microsoft.*
+          - System.*
+          - Npgsql.*
+      testing:
+        patterns:
+          - xunit*
+          - coverlet*
+          - FluentAssertions*
+          - Moq*
+          - NSubstitute*
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday

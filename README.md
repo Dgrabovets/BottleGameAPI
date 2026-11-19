@@ -115,8 +115,8 @@ Transactions and balances (a player's and the application's) carry a row version
 
 ## CI and deployment
 
-- `ci.yml` builds and tests every pull request, including the integration tests against a PostgreSQL service container.
-- `deploy.yml` runs the same checks on `main` and deploys only if they pass. Put the output of `ssh-keyscan <server>` into the `SSH_KNOWN_HOSTS` secret to pin the server host key; without it the deploy still runs but does not verify the server and prints a warning.
+- `ci.yml` builds and tests every pull request and every push to `main`, including the integration tests against a PostgreSQL service container.
+- `deploy.yml` runs the same checks and deploys only if they pass. Automatic deployment is switched off: the workflow starts only by hand from the Actions tab (add `push: branches: [main]` back to deploy on every merge). Put the output of `ssh-keyscan <server>` into the `SSH_KNOWN_HOSTS` secret to pin the server host key; without it the deploy still runs but does not verify the server and prints a warning.
 
 ## Project status
 

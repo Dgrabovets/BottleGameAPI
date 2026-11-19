@@ -1,8 +1,8 @@
 name: Build and Deploy API
 
+# Deploying is switched off: the workflow runs only when started by hand (Actions -> Build and Deploy API -> Run workflow).
+# To deploy on every merge again, add back "push: branches: [main]" under "on:".
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
