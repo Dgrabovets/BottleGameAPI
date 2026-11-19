@@ -226,6 +226,30 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
     }
 
     /// <summary>
+    /// Banning writes an active ban and a history record, and a second ban of the same player is refused.
+    /// The in-memory unit test cannot cover this because the ban history has a row version
+    /// </summary>
+    [PostgresFact]
+    public async Task BanPlayer_CreatesBanAndHistory_AndRefusesSecondBan()
+    {
+        var playerId = await database.AddPlayerAsync(balance: 500);
+
+        async Task<int> BanAsync()
+        {
+            await using var context = database.CreateContext();
+            var service = new BanService(context, NullLogger<BanService>.Instance);
+            return (await service.BanPlayer(new BanPlayerRequest { PlayerId = playerId, BanReason = "integration test" })).StatusCode;
+        }
+
+        Assert.Equal(200, await BanAsync());
+        Assert.Equal(409, await BanAsync());
+
+        await using var verify = database.CreateContext();
+        Assert.True((await verify.Bans.SingleAsync(b => b.PlayerId == playerId)).IsActive);
+        Assert.Equal(1, await verify.BansHistory.CountAsync(h => h.PlayerId == playerId));
+    }
+
+    /// <summary>
     /// A date is stored as UTC and read back as the same moment with the UTC kind, so the JSON carries a "Z"
     /// and clients in any time zone show the right time
     /// </summary>

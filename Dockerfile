@@ -15,5 +15,9 @@ RUN dotnet publish BottleGame.API/BottleGame.API.csproj -c Release -o /app/publi
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
+# Run as the unprivileged user that the base image provides. It needs a writable folder for the log files.
+RUN mkdir -p /app/Logs && chown "$APP_UID" /app/Logs
+USER $APP_UID
+
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "BottleGame.API.dll"]

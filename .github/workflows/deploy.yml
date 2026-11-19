@@ -103,6 +103,7 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           DEPLOY_SCRIPT: ${{ secrets.DEPLOY_SCRIPT }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
           if [ -z "$DEPLOY_PATH" ] || [ -z "$DEPLOY_SCRIPT" ]; then
             echo "::error::DEPLOY_PATH and DEPLOY_SCRIPT secrets must be set (target directory and restart script on the server)."
@@ -115,5 +116,13 @@ jobs:
             echo "$SSH_PRIVATE_KEY" | tr -d '\n' | base64 -d > ~/.ssh/key
           fi
           chmod 600 ~/.ssh/key
-          rsync -avz --delete -e "ssh -i ~/.ssh/key -o StrictHostKeyChecking=no" publish/ ${SERVER_USER}@${SERVER_HOST}:"${DEPLOY_PATH}"/
-          ssh -i ~/.ssh/key -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} "${DEPLOY_SCRIPT}"
+          # Pin the server host key: put the output of "ssh-keyscan <host>" into the SSH_KNOWN_HOSTS secret
+          if [ -n "$SSH_KNOWN_HOSTS" ]; then
+            echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+            SSH_OPTS="-o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
+          else
+            echo "::warning::SSH_KNOWN_HOSTS is not set, so the server host key is not verified. Add the secret to protect the deploy from a man in the middle."
+            SSH_OPTS="-o StrictHostKeyChecking=no"
+          fi
+          rsync -avz --delete -e "ssh -i ~/.ssh/key $SSH_OPTS" publish/ ${SERVER_USER}@${SERVER_HOST}:"${DEPLOY_PATH}"/
+          ssh -i ~/.ssh/key $SSH_OPTS ${SERVER_USER}@${SERVER_HOST} "${DEPLOY_SCRIPT}"
