@@ -108,17 +108,16 @@ namespace BottleGame.Infrastructure.Data
             // Apply all configurations from the current assembly
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
-            // MSK TimeZone Converter: MSK ↔ UTC for all DateTime fields
-            var mskConverter = new ValueConverter<DateTime, DateTime>(
-                // Save to the database as UTC
-                v => DateTime.SpecifyKind(v, DateTimeKind.Unspecified).ToUniversalTime(),
-                // Read from the database as MSK
-                v => TimeZoneInfo.ConvertTimeFromUtc(v, TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time"))
+            // Dates are stored and returned as UTC. The converters only fix the kind: the database returns
+            // UTC, so the value is marked as UTC and serialized with a "Z", and a value without a kind is read as UTC.
+            var utcConverter = new ValueConverter<DateTime, DateTime>(
+                v => ToUtc(v),
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
             );
 
-            var mskNullableConverter = new ValueConverter<DateTime?, DateTime?>(
-                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Unspecified).ToUniversalTime() : null,
-                v => v.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(v.Value, TimeZoneInfo.FindSystemTimeZoneById("Russian Standard Time")) : null
+            var utcNullableConverter = new ValueConverter<DateTime?, DateTime?>(
+                v => v.HasValue ? ToUtc(v.Value) : null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : null
             );
 
             // Apply to all DateTime fields in all entities
@@ -128,18 +127,25 @@ namespace BottleGame.Infrastructure.Data
                 {
                     if (property.ClrType == typeof(DateTime))
                     {
-                        property.SetValueConverter(mskConverter);
+                        property.SetValueConverter(utcConverter);
                     }
                     else if (property.ClrType == typeof(DateTime?))
                     {
-                        property.SetValueConverter(mskNullableConverter);
+                        property.SetValueConverter(utcNullableConverter);
                     }
                 }
             }
         }
 
 
+        /// <summary>
+        /// Converts a date to UTC: a local value is converted, a value without a kind is taken as UTC
+        /// </summary>
+        /// <param name="value">Date to convert</param>
+        /// <returns>The same moment as a UTC date</returns>
+        private static DateTime ToUtc(DateTime value) =>
+            value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+
         #endregion Configuration
     }
 }
-

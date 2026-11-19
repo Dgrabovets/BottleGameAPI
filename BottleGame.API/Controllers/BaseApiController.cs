@@ -13,6 +13,11 @@ namespace BottleGame.API.Controllers
     [ApiController]
     public abstract class BaseApiController : ControllerBase
     {
+        /// <summary>
+        /// Response header with the number of items in the whole list when a page was asked for
+        /// </summary>
+        public const string TotalCountHeader = "X-Total-Count";
+
         #region Protected Methods
 
         /// <summary>
@@ -94,7 +99,3 @@ namespace BottleGame.API.Controllers
         #endregion Protected Methods
     }
 }
-
-
-
-

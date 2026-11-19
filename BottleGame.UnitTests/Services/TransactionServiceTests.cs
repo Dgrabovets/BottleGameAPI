@@ -1,3 +1,4 @@
+using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
@@ -378,6 +379,57 @@ public class TransactionServiceTests : IDisposable
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value!.All(r => r.Transactions.All(t => t.TypeId == TransactionTypes.Deposit)).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// A page holds the newest transactions first and the count is the size of the whole list
+    /// </summary>
+    [Fact]
+    public async Task GetAllTransactions_Paged_ReturnsNewestFirstAndCountsAll()
+    {
+        // Arrange
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        for (var i = 1; i <= 5; i++)
+        {
+            _context.MoneyTransactions.Add(new MoneyTransaction
+            {
+                PlayerId = player.Id,
+                Amount = i * 100,
+                TransactionTypeId = TransactionTypes.Deposit,
+                TransactionStatusId = TransactionStatuses.Pending,
+                CreatedAt = DateTime.UtcNow.AddHours(i)
+            });
+        }
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var firstPage = await _service.GetAllTransactions(null, new PageRequest(1, 2));
+        var secondPage = await _service.GetAllTransactions(null, new PageRequest(2, 2));
+        var total = await _service.CountTransactions(null);
+
+        // Assert
+        firstPage.Value!.Single().Transactions.Select(t => t.Amount).Should().Equal(500, 400);
+        secondPage.Value!.Single().Transactions.Select(t => t.Amount).Should().Equal(300, 200);
+        total.Should().Be(5);
+    }
+
+    /// <summary>
+    /// The count follows the type filter
+    /// </summary>
+    [Fact]
+    public async Task CountTransactions_FilterByType_CountsOnlyThatType()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        _context.MoneyTransactions.AddRange(
+            new MoneyTransaction { PlayerId = player.Id, Amount = 1, TransactionTypeId = TransactionTypes.Deposit, TransactionStatusId = TransactionStatuses.Pending, CreatedAt = DateTime.UtcNow },
+            new MoneyTransaction { PlayerId = player.Id, Amount = 2, TransactionTypeId = TransactionTypes.Withdrawal, TransactionStatusId = TransactionStatuses.Pending, CreatedAt = DateTime.UtcNow },
+            new MoneyTransaction { PlayerId = player.Id, Amount = 3, TransactionTypeId = TransactionTypes.Withdrawal, TransactionStatusId = TransactionStatuses.Pending, CreatedAt = DateTime.UtcNow });
+
+        await _context.SaveChangesAsync();
+
+        (await _service.CountTransactions(TransactionTypes.Withdrawal)).Should().Be(2);
+        (await _service.CountTransactions(null)).Should().Be(3);
     }
 
     #endregion GetAllTransactions Tests

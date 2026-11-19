@@ -134,6 +134,11 @@ namespace BottleGame.API.Controllers
         /// <summary>
         /// Gets the list of all players
         /// </summary>
+        /// <param name="telegramId">Exact Telegram id (search, includes banned players)</param>
+        /// <param name="name">Part of the nickname (search, includes banned players)</param>
+        /// <param name="q">One search field: a Telegram id or part of the nickname</param>
+        /// <param name="page">Page number from 1; with page or pageSize the answer holds one page and X-Total-Count carries the total</param>
+        /// <param name="pageSize">Players per page, at most 200, 20 by default</param>
         /// <response code="200">List of users</response>
         /// <response code="404">No players were found</response>
         /// <response code="500">Internal server error</response>
@@ -144,10 +149,19 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<PlayerInfoResponse>>> GetAllPlayers([FromQuery] long? telegramId = null,
                                                                                        [FromQuery] string? name = null,
-                                                                                       [FromQuery] string? q = null)
+                                                                                       [FromQuery] string? q = null,
+                                                                                       [FromQuery] int? page = null,
+                                                                                       [FromQuery] int? pageSize = null)
         {
             var search = PlayerSearchQuery.Resolve(telegramId, name, q);
-            var result = await _playerService.GetAllPlayers(search.TelegramId, search.Name);
+            var pageRequest = PageRequest.Create(page, pageSize);
+            var result = await _playerService.GetAllPlayers(search.TelegramId, search.Name, pageRequest);
+
+            if (pageRequest is not null)
+            {
+                Response.Headers[TotalCountHeader] = (await _playerService.CountPlayers(search.TelegramId, search.Name)).ToString();
+            }
+
             return ToActionResult(result);
         }
 
@@ -358,6 +372,3 @@ namespace BottleGame.API.Controllers
         #endregion Private Methods
     }
 }
-
-
-

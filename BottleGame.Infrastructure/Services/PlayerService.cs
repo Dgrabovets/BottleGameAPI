@@ -2,6 +2,7 @@
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
 using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Entities;
 using BottleGame.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -153,42 +154,31 @@ namespace BottleGame.Infrastructure.Services
 
         /// <inheritdoc/>
         public async Task<Result<IEnumerable<PlayerInfoResponse>>> GetAllPlayers(long? telegramId = null,
-                                                                                 string? name = null)
+                                                                                 string? name = null,
+                                                                                 PageRequest? page = null)
         {
             var isSearch = telegramId.HasValue || !string.IsNullOrWhiteSpace(name);
-            var bannedPlayerIds = await _context.GetActivelyBannedPlayerIdsAsync();
 
-            var query = _context.Players
+            var query = (await FilterPlayersAsync(telegramId, name))
                 .Include(p => p.GameRounds)
                 .Include(p => p.Balance)
                 .Include(p => p.InvitedByMe)
                 .Include(p => p.Ban)
                 .AsNoTracking()
+                .OrderBy(p => p.Id)
                 .AsQueryable();
 
-            if (!isSearch)
+            if (page is not null)
             {
-                query = query.WhereNotActivelyBanned(bannedPlayerIds);
-            }
-            else
-            {
-                if (telegramId.HasValue)
-                {
-                    query = query.Where(p => p.TelegramId == telegramId.Value);
-                }
-
-                if (!string.IsNullOrWhiteSpace(name))
-                {
-                    var normalizedName = name.Trim().ToLowerInvariant();
-                    query = query.Where(p => p.Name.ToLower().Contains(normalizedName));
-                }
+                query = query.Skip(page.Skip).Take(page.PageSize);
             }
 
             var players = await query.ToListAsync();
 
             if (players.Count == 0)
             {
-                if (isSearch)
+                // An empty page is not an error, only an empty list without paging is
+                if (isSearch || page is not null)
                 {
                     return Result<IEnumerable<PlayerInfoResponse>>.Success([]);
                 }
@@ -203,6 +193,10 @@ namespace BottleGame.Infrastructure.Services
 
             return Result<IEnumerable<PlayerInfoResponse>>.Success(response);
         }
+
+        /// <inheritdoc/>
+        public async Task<int> CountPlayers(long? telegramId = null, string? name = null) =>
+            await (await FilterPlayersAsync(telegramId, name)).CountAsync();
 
         /// <inheritdoc/>
         public async Task<Result<IEnumerable<PlayerInfoResponse>>> GetTop100Players()
@@ -231,6 +225,37 @@ namespace BottleGame.Infrastructure.Services
             _logger.LogInformation("{Prefix} Got the data of the top 100 players", Prefix);
 
             return Result<IEnumerable<PlayerInfoResponse>>.Success(response);
+        }
+
+        /// <summary>
+        /// Builds the player query of the list: without a search actively banned players are left out,
+        /// with a search the telegram id and the name decide and banned players are included
+        /// </summary>
+        /// <param name="telegramId">Exact Telegram id</param>
+        /// <param name="name">Partial match on the nickname</param>
+        /// <returns>Filtered query without includes and without ordering</returns>
+        private async Task<IQueryable<Player>> FilterPlayersAsync(long? telegramId, string? name)
+        {
+            var query = _context.Players.AsQueryable();
+
+            if (!telegramId.HasValue && string.IsNullOrWhiteSpace(name))
+            {
+                var bannedPlayerIds = await _context.GetActivelyBannedPlayerIdsAsync();
+                return query.WhereNotActivelyBanned(bannedPlayerIds);
+            }
+
+            if (telegramId.HasValue)
+            {
+                query = query.Where(p => p.TelegramId == telegramId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                var normalizedName = name.Trim().ToLowerInvariant();
+                query = query.Where(p => p.Name.ToLower().Contains(normalizedName));
+            }
+
+            return query;
         }
 
         #endregion Get Methods
@@ -379,7 +404,3 @@ namespace BottleGame.Infrastructure.Services
         #endregion Update Methods
     }
 }
-
-
-
-

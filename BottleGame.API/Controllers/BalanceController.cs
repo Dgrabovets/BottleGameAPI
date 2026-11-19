@@ -1,3 +1,4 @@
+using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
 using BottleGame.Application.Interfaces;
@@ -142,6 +143,8 @@ namespace BottleGame.API.Controllers
         /// Gets all withdrawals
         /// </summary>
         /// <param name="typeId">Transaction type</param>
+        /// <param name="page">Page number from 1; with page or pageSize the answer holds one page of transactions and X-Total-Count carries the total</param>
+        /// <param name="pageSize">Transactions per page, at most 200, 20 by default</param>
         /// <response code="200">List of all transactions of the given type</response>
         /// <response code="400">Invalid request data</response>
         /// <response code="500">Internal server error</response>
@@ -151,9 +154,18 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<GetPlayerTransactionsResponse>>> GetAllTransactions([FromQuery] int? typeId)
+        public async Task<ActionResult<IEnumerable<GetPlayerTransactionsResponse>>> GetAllTransactions([FromQuery] int? typeId,
+                                                                                                       [FromQuery] int? page = null,
+                                                                                                       [FromQuery] int? pageSize = null)
         {
-            var result = await _transactionService.GetAllTransactions(typeId);
+            var pageRequest = PageRequest.Create(page, pageSize);
+            var result = await _transactionService.GetAllTransactions(typeId, pageRequest);
+
+            if (pageRequest is not null)
+            {
+                Response.Headers[TotalCountHeader] = (await _transactionService.CountTransactions(typeId)).ToString();
+            }
+
             return ToActionResult(result);
         }
 
@@ -212,6 +224,3 @@ namespace BottleGame.API.Controllers
         #endregion Private Methods
     }
 }
-
-
-

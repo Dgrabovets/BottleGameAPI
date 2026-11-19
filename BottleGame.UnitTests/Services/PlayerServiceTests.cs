@@ -1,3 +1,4 @@
+using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Entities;
@@ -294,6 +295,57 @@ public class PlayerServiceTests : IDisposable
         result.IsSuccess.Should().BeTrue();
         result.Value!.Should().ContainSingle();
         result.Value!.Single().Player.Name.Should().Be("UniqueNick");
+    }
+
+    /// <summary>
+    /// A page holds only its part of the list and the count is the size of the whole list
+    /// </summary>
+    [Fact]
+    public async Task GetAllPlayers_Paged_ReturnsOnlyThePageAndCountsAll()
+    {
+        // Arrange
+        for (var i = 1; i <= 5; i++)
+        {
+            TestDbContextFactory.CreateTestPlayer(_context, 1000 + i);
+        }
+
+        // Act
+        var second = await _service.GetAllPlayers(page: new PageRequest(2, 2));
+        var last = await _service.GetAllPlayers(page: new PageRequest(3, 2));
+        var total = await _service.CountPlayers();
+
+        // Assert
+        second.Value!.Select(p => p.Player.TelegramId).Should().Equal(1003, 1004);
+        last.Value!.Select(p => p.Player.TelegramId).Should().Equal(1005);
+        total.Should().Be(5);
+    }
+
+    /// <summary>
+    /// A page after the last one is an empty list, not an error
+    /// </summary>
+    [Fact]
+    public async Task GetAllPlayers_PageAfterTheLast_ReturnsEmptyList()
+    {
+        TestDbContextFactory.CreateTestPlayer(_context, 111);
+
+        var result = await _service.GetAllPlayers(page: new PageRequest(5, 20));
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// The count leaves out actively banned players, as the list does
+    /// </summary>
+    [Fact]
+    public async Task CountPlayers_ExcludesActivelyBanned()
+    {
+        TestDbContextFactory.CreateTestPlayer(_context, 111);
+        var banned = TestDbContextFactory.CreateTestPlayer(_context, 222);
+        TestDbContextFactory.AddActiveBan(_context, banned.Id);
+
+        (await _service.CountPlayers()).Should().Be(1);
+        (await _service.CountPlayers(telegramId: 222)).Should().Be(1);
     }
 
     #endregion GetAllPlayers Tests

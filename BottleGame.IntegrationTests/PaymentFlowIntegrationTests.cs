@@ -224,4 +224,28 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
         Assert.Equal(0, (await verify.PlayersBalances.SingleAsync(b => b.PlayerId == playerId)).Amount);
         Assert.Equal(1, await verify.MoneyTransactions.CountAsync(t => t.PlayerId == playerId && t.TransactionTypeId == TransactionTypes.Withdrawal));
     }
+
+    /// <summary>
+    /// A date is stored as UTC and read back as the same moment with the UTC kind, so the JSON carries a "Z"
+    /// and clients in any time zone show the right time
+    /// </summary>
+    [PostgresFact]
+    public async Task Dates_AreStoredAndReadAsUtc()
+    {
+        var playerId = await database.AddPlayerAsync(balance: 100);
+        var before = DateTime.UtcNow;
+        var transactionId = await database.AddPendingTransactionAsync(playerId, TransactionTypes.Deposit, 100);
+        var after = DateTime.UtcNow;
+
+        await using var verify = database.CreateContext();
+        var createdAt = (await verify.MoneyTransactions.AsNoTracking().SingleAsync(t => t.Id == transactionId)).CreatedAt;
+
+        Assert.Equal(DateTimeKind.Utc, createdAt.Kind);
+        Assert.InRange(createdAt, before.AddSeconds(-2), after.AddSeconds(2));
+
+        var storedUtc = await verify.Database
+            .SqlQuery<DateTime>($"""SELECT ("CreatedAt" AT TIME ZONE 'UTC') AS "Value" FROM "MoneyTransactions" WHERE "Id" = {transactionId}""")
+            .SingleAsync();
+        Assert.InRange(storedUtc, before.AddSeconds(-2), after.AddSeconds(2));
+    }
 }
