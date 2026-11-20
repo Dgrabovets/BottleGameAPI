@@ -53,7 +53,7 @@ Service methods return a `Result` or `Result<T>` instead of throwing for expecte
 
 ## Getting started
 
-Requirements: Docker, or the .NET 10 SDK and PostgreSQL.
+Requirements: Docker, or the .NET 11 SDK and PostgreSQL.
 
 ```bash
 docker compose up --build

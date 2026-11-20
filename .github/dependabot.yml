@@ -37,3 +37,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # The images must stay on the .NET version of the projects
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
