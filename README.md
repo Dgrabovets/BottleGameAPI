@@ -1,6 +1,11 @@
 # Bottle Game API
 
 [![CI](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/ci.yml)
+[![Dependency audit](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/security.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/security.yml)
+[![CodeQL](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/codeql.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/codeql.yml)
+![.NET 11](https://img.shields.io/badge/.NET-11-512BD4?logo=dotnet&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 
 Backend for a Telegram mini-app game: player accounts, game rounds, balances, deposits and withdrawals, a referral programme and an admin API. Built with ASP.NET Core and PostgreSQL.
 
@@ -8,7 +13,7 @@ This is a portfolio project. It runs end to end in a demo mode with a virtual ba
 
 The companion admin dashboard lives in [BottleGameAdministrationPanel](https://github.com/Dgrabovets/BottleGameAdministrationPanel).
 
-![Swagger UI](docs/screenshots/swagger.jpg)
+![Scalar API reference](docs/screenshots/scalar.jpg)
 
 ## Features
 
@@ -21,24 +26,16 @@ The companion admin dashboard lives in [BottleGameAdministrationPanel](https://g
 - **Referral programme.** Inviters earn a bonus on the deposits of the players they invited, unless they are banned.
 - **Moderation.** Bans with history, player search and editing.
 - **Administration and statistics.** Profit, general statistics and timelines for the dashboard.
-- **Operations.** Request rate limiting per IP, structured logging with Serilog, a global exception handler, Swagger UI.
+- **Operations.** Request rate limiting per IP, structured logging with Serilog, a global exception handler, an interactive API reference (Scalar).
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    TG[Telegram mini-app] --> API
-    Admin[Admin dashboard] --> API
-    YK[YooKassa] -- notifications --> API
-    subgraph Solution
-        API[BottleGame.API<br/>controllers, middleware] --> App[BottleGame.Application<br/>interfaces, DTOs, validators, Result]
-        Infra[BottleGame.Infrastructure<br/>EF Core, services, YooKassa client] -.implements.-> App
-        App --> Domain[BottleGame.Domain<br/>entities, constants, enums]
-        Infra --> Domain
-    end
-    Infra --> DB[(PostgreSQL)]
-    Infra -- HTTP --> YK
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/system-dark.png">
+  <img src="docs/diagrams/system-light.png" alt="System overview: Telegram mini-app and the admin panel call the API; the solution is split into API, Application, Domain and Infrastructure; Infrastructure talks to PostgreSQL and YooKassa" width="100%">
+</picture>
+
+The diagram is drawn with [Archify](https://github.com/tt-a1i/archify) from `docs/diagrams/system.architecture.json`, so it can be redrawn after any change.
 
 | Project | Responsibility |
 |---|---|
@@ -51,6 +48,25 @@ flowchart LR
 
 Service methods return a `Result` or `Result<T>` instead of throwing for expected failures. Controllers translate it to HTTP status codes in one place (`BaseApiController`).
 
+## API overview
+
+Every endpoint is described in the interactive API reference (see [Getting started](#getting-started)). The groups, with who may call them:
+
+| Group | Base path | Access | What it does |
+|---|---|---|---|
+| Authorization | `/api/auth` | Anonymous login for staff and players, admin only for registration | Staff login, staff registration, player login from Telegram `initData` |
+| Players | `/api/Player` | Admin; a player for its own profile | Search and list players, ban and unban, profile edit, top 100, statistics |
+| Balance | `/api/Balance` | Admin or player; admin or moderator to change a status | Balance, create a deposit or a withdrawal, transaction lists, approve or reject a withdrawal |
+| Game rounds | `/api/GameRound` | Player or admin to finish a round; admin for the rest | Finish a round, played rounds of a player, profit |
+| Game parameters | `/api/GameParams` | Admin to change; player or admin to read | Win chances, multipliers, payment and payout methods, currencies |
+| Referrals | `/api/Referral` | Player or admin | Referral link of a player |
+| Administration | `/api/admin` | Admin | Application balance and threshold, statistics, timelines, moderators |
+| Currencies | `/api/currencies` | Anonymous reference data, admin to clear the cache | Currencies, payment gateways, exchange rates, amount validation |
+| Webhook | `/api/webhook/yookassa` | Anonymous, every notification is re-checked with YooKassa | Payment and payout notifications |
+| Health | `/api/Health` | Anonymous | Database and service health check |
+
+Expected failures answer with the error text and a matching status (400, 401, 403, 404 or 409). Unhandled exceptions answer with JSON that has `statusCode`, `message` and `timestamp`, and in production the message does not include the exception text. A conflict between two simultaneous requests answers `409` and can be retried.
+
 ## Getting started
 
 Requirements: Docker, or the .NET 11 SDK and PostgreSQL.
@@ -59,9 +75,9 @@ Requirements: Docker, or the .NET 11 SDK and PostgreSQL.
 docker compose up --build
 ```
 
-The API listens on `http://localhost:8080` and Swagger UI is at `http://localhost:8080/swagger`. The compose file creates the database from `database/schema.sql`, loads reference data from `database/seed.sql` and demo content from `database/demo.sql`: eight players with rounds, deposits, withdrawals and a referral.
+The API listens on `http://localhost:8080` and the interactive API reference (Scalar) is at `http://localhost:8080/scalar`. The compose file creates the database from `database/schema.sql`, loads reference data from `database/seed.sql` and demo content from `database/demo.sql`: eight players with rounds, deposits, withdrawals and a referral.
 
-Staff sign-in for the demo: `demo-admin@example.com` / `demo-admin-password`. To see it in the dashboard, run [BottleGameAdministrationPanel](https://github.com/Dgrabovets/BottleGameAdministrationPanel) next to it (`npm run dev` in its `frontend` folder). Player endpoints need a Telegram mini-app session, so try the admin endpoints in Swagger or through the dashboard.
+Staff sign-in for the demo: `demo-admin@example.com` / `demo-admin-password`. To see it in the dashboard, run [BottleGameAdministrationPanel](https://github.com/Dgrabovets/BottleGameAdministrationPanel) next to it (`npm run dev` in its `frontend` folder). Player endpoints need a Telegram mini-app session, so try the admin endpoints in the API reference (sign in with `POST /api/auth/admin-login`, then paste the token into the Bearer authentication box) or through the dashboard.
 
 To run without Docker, create a database from the same SQL files and start the API with the settings below:
 
@@ -85,7 +101,7 @@ Secrets are never stored in the repository. `appsettings.json` contains `ENV_` p
 | `Processing__ReturnUrl` | Page where YooKassa sends the player after paying (required in `Live`) |
 | `Processing__PayoutAgentId`, `Processing__PayoutSecretKey` | YooKassa payout gateway credentials; without them withdrawals are refused |
 | `ForwardedHeaders__KnownProxies__0`, ... | IPs of reverse proxies whose `X-Forwarded-For` is trusted. Without them only a proxy on the same machine is trusted, so a client cannot fake the address used for rate limiting; behind a proxy on another host, list it here, otherwise every client shares the proxy's address |
-| `Swagger__Enabled` | `true` serves Swagger UI outside Development |
+| `ApiDocs__Enabled` | `true` serves the OpenAPI document and the Scalar API reference outside Development |
 | `CORS__AllowedOrigins__0`, `__1`, ... | Allowed browser origins |
 
 The deploy workflow builds `appsettings.Production.json` from GitHub Actions secrets and variables. Environment-specific values never live in the repository: `API_ALLOWED_ORIGINS` (comma-separated CORS origins), `TELEGRAM_APP_NAME`, `API_CERT_PATH` / `API_CERT_KEY_PATH` / `API_LISTEN_URL` (TLS, optional), `DEPLOY_PATH` and `DEPLOY_SCRIPT` (server side), plus (`YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `YOOKASSA_PAYOUT_AGENT_ID`, `YOOKASSA_PAYOUT_SECRET_KEY`, `YOOKASSA_RETURN_URL`) and the repository variable `PROCESSING_MODE` (defaults to `Simulated`).
@@ -116,6 +132,9 @@ Transactions and balances (a player's and the application's) carry a row version
 ## CI and deployment
 
 - `ci.yml` builds and tests every pull request and every push to `main`, including the integration tests against a PostgreSQL service container.
+- `security.yml` (Dependency audit) lists vulnerable NuGet packages, direct and transitive, on every pull request, every push to `main` and every Monday, and reviews the dependencies a pull request adds.
+- `codeql.yml` runs GitHub CodeQL static analysis of the C# code on the same schedule.
+- Dependabot opens one pull request a week per group of packages. Major versions are left for manual upgrades, because the Microsoft packages must stay on the same major version as the .NET SDK.
 - `deploy.yml` runs the same checks and deploys only if they pass. Automatic deployment is switched off: the workflow starts only by hand from the Actions tab (add `push: branches: [main]` back to deploy on every merge). Put the output of `ssh-keyscan <server>` into the `SSH_KNOWN_HOSTS` secret to pin the server host key; without it the deploy still runs but does not verify the server and prints a warning.
 
 ## Project status

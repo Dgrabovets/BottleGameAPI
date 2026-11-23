@@ -1,5 +1,5 @@
 # Local development stack: PostgreSQL with the schema and demo reference data, plus the API.
-# Start with: docker compose up --build   (API on http://localhost:8080, Swagger at /swagger)
+# Start with: docker compose up --build   (API on http://localhost:8080, API reference at /scalar)
 services:
   db:
     image: postgres:17-alpine
@@ -32,7 +32,7 @@ services:
       TelegramBotToken: local-development-bot-token
       Security__PasswordHashSecretKey: local-development-password-secret
       Processing__Mode: Simulated
-      Swagger__Enabled: "true"
+      ApiDocs__Enabled: "true"
       ASPNETCORE_URLS: http://+:8080
 
 volumes:
