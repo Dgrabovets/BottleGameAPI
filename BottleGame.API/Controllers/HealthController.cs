@@ -10,7 +10,7 @@ namespace BottleGame.API.Controllers
     /// </summary>
     /// <remarks>
     /// Provides the /api/health endpoint for monitoring the state of the API,
-    /// the database connection and key services. It is not shown in Swagger
+    /// the database connection and key services. It is not shown in the API reference
     /// </remarks>
     [ApiController]
     [Route("api/[controller]")]

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Events;
 using System.Net;
@@ -83,7 +84,7 @@ builder.Services.AddAuthorizationBuilder()
 
 #endregion
 
-#region MVC and Swagger
+#region MVC and API documentation
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -116,7 +117,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     }
 
-    // JWT in Swagger (Swashbuckle 10 / Microsoft.OpenApi 2.x)
+    // JWT in the API reference (Swashbuckle 10 / Microsoft.OpenApi 2.x)
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.Http,
@@ -226,13 +227,12 @@ app.UseGlobalExceptionHandler();
 
 app.UseForwardedHeaders();
 
-if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
+var apiDocsEnabled = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("ApiDocs:Enabled");
+
+if (apiDocsEnabled)
 {
+    // Serves the OpenAPI document that the Scalar API reference below reads
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Bottle Game API v1");
-    });
 }
 
 app.UseHttpsRedirection();
@@ -242,6 +242,15 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+if (apiDocsEnabled)
+{
+    app.MapScalarApiReference("/scalar", options =>
+    {
+        options.WithTitle("Bottle Game API")
+            .WithOpenApiRoutePattern("/swagger/{documentName}/swagger.json");
+    });
+}
 
 app.Run();
 
