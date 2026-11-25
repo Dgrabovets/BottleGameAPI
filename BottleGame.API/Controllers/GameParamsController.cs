@@ -1,4 +1,5 @@
 ﻿using BottleGame.Application.Interfaces;
+using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
 using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Data;
@@ -57,7 +58,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">Game parameters</response>
         /// <response code="404">The parameters were not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = "Admin,Player")]
+        [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -93,7 +94,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">The parameters were changed</response>
         /// <response code="404">The parameters were not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -141,7 +142,7 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <response code="200">List of all payout methods</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = "Player,Admin")]
+        [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [HttpGet("get-all-payout-methods")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -163,7 +164,7 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <response code="200">List of all deposit methods</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = "Player,Admin")]
+        [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [HttpGet("get-all-payment-methods")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -185,7 +186,7 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <response code="200">List of all currencies</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = "Player,Admin")]
+        [Authorize(Roles = RoleNames.AdminOrPlayer)]
         [HttpGet("get-all-currencies")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

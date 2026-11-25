@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="840" viewBox="0 0 1320 840">
+  <title>Bottle Game API: system overview</title>
+  <defs>
+    <style>
+      .bg { fill: #000000; }
+      .node { fill: #03100a; stroke: #232a25; stroke-width: 1.5; }
+      .ext { fill: #000000; stroke: #a4a69f; stroke-width: 1.2; }
+      .region { fill: none; stroke: #232a25; stroke-width: 1.5; stroke-dasharray: 4 6; }
+      .bar { fill: #5fe08a; }
+      .t { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 15px; fill: #f3f2ee; text-anchor: middle; }
+      .s { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-weight: 400; font-size: 12.5px; fill: #a4a69f; text-anchor: middle; }
+      .handle { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 12px; letter-spacing: 4px; fill: #a4a69f; }
+      .title { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 26px; fill: #f3f2ee; }
+      .caption { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; letter-spacing: 3px; fill: #a4a69f; }
+      .main { stroke: #5fe08a; stroke-width: 2; fill: none; stroke-linejoin: round; }
+      .second { stroke: #2fd4c0; stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; stroke-linejoin: round; }
+      .ref { stroke: #a4a69f; stroke-width: 1.4; fill: none; stroke-linejoin: round; }
+      .pill { fill: #000000; stroke: #232a25; stroke-width: 1; }
+      .l { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; text-anchor: middle; }
+      .l-main { fill: #5fe08a; }
+      .l-second { fill: #2fd4c0; }
+      .l-ref { fill: #a4a69f; }
+      .legend { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-size: 13px; fill: #a4a69f; }
+    </style>
+    <marker id="arrow-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5fe08a"/></marker>
+    <marker id="arrow-second" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2fd4c0"/></marker>
+    <marker id="arrow-ref" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a4a69f"/></marker>
+  </defs>
+
+  <rect class="bg" width="1320" height="840" rx="16"/>
+
+  <!-- Heading -->
+  <rect class="bar" x="40" y="36" width="28" height="4" rx="2"/>
+  <text class="handle" x="40" y="62">BOTTLE GAME API</text>
+  <text class="title" x="40" y="98">System overview</text>
+
+  <!-- Solution boundary -->
+  <rect class="region" x="320" y="240" width="730" height="360" rx="14"/>
+  <text class="caption" x="1034" y="266" text-anchor="end">SOLUTION · CLEAN ARCHITECTURE</text>
+
+  <!-- Connections -->
+  <path class="main" d="M220,168 H440 V300" marker-end="url(#arrow-main)"/>
+  <path class="main" d="M220,338 H350" marker-end="url(#arrow-main)"/>
+  <path class="ref" d="M530,338 H600" marker-end="url(#arrow-ref)"/>
+  <path class="ref" d="M780,338 H850" marker-end="url(#arrow-ref)"/>
+  <path class="ref" d="M490,376 V538 H850" marker-end="url(#arrow-ref)"/>
+  <path class="second" d="M850,498 H690 V376" marker-end="url(#arrow-second)"/>
+  <path class="ref" d="M940,480 V376" marker-end="url(#arrow-ref)"/>
+  <path class="main" d="M1030,518 H1110" marker-end="url(#arrow-main)"/>
+  <path class="main" d="M940,556 V670" marker-end="url(#arrow-main)"/>
+  <path class="second" d="M400,670 V376" marker-end="url(#arrow-second)"/>
+
+  <!-- Connection labels -->
+  <rect class="pill" x="382" y="206" width="116" height="20" rx="10"/>
+  <text class="l l-main" x="440" y="220">signed initData</text>
+  <rect class="pill" x="229" y="328" width="82" height="20" rx="10"/>
+  <text class="l l-main" x="270" y="342">Bearer JWT</text>
+  <rect class="pill" x="544" y="328" width="42" height="20" rx="10"/>
+  <text class="l l-ref" x="565" y="342">uses</text>
+  <rect class="pill" x="794" y="328" width="42" height="20" rx="10"/>
+  <text class="l l-ref" x="815" y="342">uses</text>
+  <rect class="pill" x="568" y="528" width="104" height="20" rx="10"/>
+  <text class="l l-ref" x="620" y="542">DbContext, DI</text>
+  <rect class="pill" x="649" y="427" width="82" height="20" rx="10"/>
+  <text class="l l-second" x="690" y="441">implements</text>
+  <rect class="pill" x="919" y="418" width="42" height="20" rx="10"/>
+  <text class="l l-ref" x="940" y="432">maps</text>
+  <rect class="pill" x="1062" y="508" width="36" height="20" rx="10"/>
+  <text class="l l-main" x="1080" y="522">SQL</text>
+  <rect class="pill" x="879" y="625" width="122" height="20" rx="10"/>
+  <text class="l l-main" x="940" y="639">create, re-check</text>
+  <rect class="pill" x="352" y="625" width="96" height="20" rx="10"/>
+  <text class="l l-second" x="400" y="639">notification</text>
+
+  <!-- Outside this repository -->
+  <rect class="ext" x="40" y="130" width="180" height="76" rx="10"/>
+  <text class="t" x="130" y="164">Telegram mini-app</text>
+  <text class="s" x="130" y="186">players</text>
+
+  <rect class="ext" x="40" y="300" width="180" height="76" rx="10"/>
+  <text class="t" x="130" y="334">Admin panel</text>
+  <text class="s" x="130" y="356">Next.js 15, server proxy</text>
+
+  <rect class="ext" x="1110" y="480" width="170" height="76" rx="10"/>
+  <text class="t" x="1195" y="514">PostgreSQL</text>
+  <text class="s" x="1195" y="536">xmin row version</text>
+
+  <rect class="ext" x="310" y="670" width="180" height="76" rx="10"/>
+  <text class="t" x="400" y="704">YooKassa</text>
+  <text class="s" x="400" y="726">payment notifications</text>
+
+  <rect class="ext" x="850" y="670" width="180" height="76" rx="10"/>
+  <text class="t" x="940" y="704">YooKassa API</text>
+  <text class="s" x="940" y="726">payments and payouts</text>
+
+  <!-- This repository -->
+  <rect class="node" x="350" y="300" width="180" height="76" rx="10"/>
+  <rect class="bar" x="362" y="310" width="20" height="3" rx="1.5"/>
+  <text class="t" x="440" y="334">BottleGame.API</text>
+  <text class="s" x="440" y="356">controllers, JWT, rate limits</text>
+
+  <rect class="node" x="600" y="300" width="180" height="76" rx="10"/>
+  <rect class="bar" x="612" y="310" width="20" height="3" rx="1.5"/>
+  <text class="t" x="690" y="334">Application</text>
+  <text class="s" x="690" y="356">interfaces, DTOs, validators</text>
+
+  <rect class="node" x="850" y="300" width="180" height="76" rx="10"/>
+  <rect class="bar" x="862" y="310" width="20" height="3" rx="1.5"/>
+  <text class="t" x="940" y="334">Domain</text>
+  <text class="s" x="940" y="356">entities, enums, constants</text>
+
+  <rect class="node" x="850" y="480" width="180" height="76" rx="10"/>
+  <rect class="bar" x="862" y="490" width="20" height="3" rx="1.5"/>
+  <text class="t" x="940" y="514">Infrastructure</text>
+  <text class="s" x="940" y="536">EF Core, services</text>
+
+  <!-- Legend -->
+  <path class="main" d="M40,796 H76"/>
+  <text class="legend" x="86" y="800">requests and data</text>
+  <path class="second" d="M240,796 H276"/>
+  <text class="legend" x="286" y="800">notification, interface implementation</text>
+  <path class="ref" d="M560,796 H596"/>
+  <text class="legend" x="606" y="800">project reference</text>
+  <rect class="ext" x="760" y="788" width="28" height="16" rx="4"/>
+  <text class="legend" x="798" y="800">outside this repository</text>
+</svg>

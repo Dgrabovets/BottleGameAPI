@@ -1,3 +1,5 @@
+<img src="docs/header.svg" alt="Bottle Game API" width="100%">
+
 # Bottle Game API
 
 [![CI](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/ci.yml)
@@ -6,6 +8,7 @@
 ![.NET 11](https://img.shields.io/badge/.NET-11-512BD4?logo=dotnet&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/license-MIT-5fe08a)](LICENSE)
 
 Backend for a Telegram mini-app game: player accounts, game rounds, balances, deposits and withdrawals, a referral programme and an admin API. Built with ASP.NET Core and PostgreSQL.
 
@@ -32,10 +35,10 @@ The companion admin dashboard lives in [BottleGameAdministrationPanel](https://g
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/system-dark.png">
-  <img src="docs/diagrams/system-light.png" alt="System overview: Telegram mini-app and the admin panel call the API; the solution is split into API, Application, Domain and Infrastructure; Infrastructure talks to PostgreSQL and YooKassa" width="100%">
+  <img src="docs/diagrams/system-light.png" alt="System overview: the Telegram mini-app and the admin panel call the API, and YooKassa sends payment notifications to it; the solution is split into API, Application, Domain and Infrastructure, and the API also uses Infrastructure for the database context and dependency injection; Infrastructure talks to PostgreSQL and the YooKassa API" width="100%">
 </picture>
 
-The diagram is drawn with [Archify](https://github.com/tt-a1i/archify) from `docs/diagrams/system.architecture.json`, so it can be redrawn after any change.
+The diagrams are SVG files in `docs/diagrams` (`system.svg`, `payment-notifications.svg`, `quality-pipeline.svg`), and the PNG pictures are rendered from them.
 
 | Project | Responsibility |
 |---|---|
@@ -113,6 +116,8 @@ The deploy workflow builds `appsettings.Production.json` from GitHub Actions sec
 - Payouts use the SBP. A player's payout wallet is stored as `<phone>:<bank_id>`, where the bank id comes from YooKassa's `GET /v3/sbp_banks` list.
 - Only RUB is supported.
 
+<img src="docs/diagrams/payment-notifications.png" alt="How a YooKassa notification is handled: read only the event and the object id, re-check the payment or payout with YooKassa, find the transaction and check its type, skip a duplicate with 200, check the amount, then apply the outcome once with a row-version check; on a row-version conflict a notification that was already applied is a duplicate, otherwise the API answers 400 and YooKassa sends it again" width="100%">
+
 ## Tests
 
 ```bash
@@ -127,15 +132,18 @@ docker run -d --name bottle-pg -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgr
 BOTTLEGAME_TEST_POSTGRES="Host=localhost;Port=5433;Username=postgres;Password=postgres" dotnet test BottleGame.IntegrationTests
 ```
 
-Transactions and balances (a player's and the application's) carry a row version (PostgreSQL `xmin`) as an optimistic concurrency token. Two simultaneous requests cannot both apply the same notification, approve the same withdrawal or spend the same balance twice: the second one fails with 409 and can be retried. The notification handler answers with an error in that case, so YooKassa delivers the notification again.
+Transactions and balances (a player's and the application's) carry a row version (PostgreSQL `xmin`) as an optimistic concurrency token. Two simultaneous requests cannot both apply the same notification, approve the same withdrawal or spend the same balance twice. For a withdrawal or a balance change the second request fails with 409 and can be retried. The notification handler reads the transaction again after a conflict: if the other request has already applied it, the answer is 200 (a duplicate); otherwise it answers 400, so YooKassa delivers the notification again.
 
 ## CI and deployment
+
+<img src="docs/diagrams/quality-pipeline.png" alt="Quality pipeline: Dependabot and developers open pull requests; four required checks (build-and-test, NuGet vulnerabilities, New dependencies in the pull request, Analyze C#) run on them, the audit and CodeQL also run every Monday; the Protect main ruleset allows a merge only after all four pass; deploy.yml is started by hand" width="100%">
 
 - `ci.yml` builds and tests every pull request and every push to `main`, including the integration tests against a PostgreSQL service container.
 - `security.yml` (Dependency audit) lists vulnerable NuGet packages, direct and transitive, on every pull request, every push to `main` and every Monday, and reviews the dependencies a pull request adds.
 - `codeql.yml` runs GitHub CodeQL static analysis of the C# code on the same schedule.
-- Dependabot opens one pull request a week per group of packages. Major versions are left for manual upgrades, because the Microsoft packages must stay on the same major version as the .NET SDK.
-- `deploy.yml` runs the same checks and deploys only if they pass. Automatic deployment is switched off: the workflow starts only by hand from the Actions tab (add `push: branches: [main]` back to deploy on every merge). Put the output of `ssh-keyscan <server>` into the `SSH_KNOWN_HOSTS` secret to pin the server host key; without it the deploy still runs but does not verify the server and prints a warning.
+- Dependabot checks NuGet packages, GitHub Actions and Docker images every Monday and opens one pull request for the Microsoft and EF Core packages (with Npgsql) and one for the test packages; every other NuGet package gets its own. Major versions of NuGet packages and Docker images are left for manual upgrades, because the Microsoft packages and the images must stay on the same major version as the .NET SDK.
+- A branch ruleset protects `main`: changes arrive only through a pull request, the four checks `build-and-test`, `NuGet vulnerabilities`, `New dependencies in the pull request` and `Analyze C#` must pass, and force pushes and deletion are blocked.
+- `deploy.yml` first runs `ci.yml` (build and tests) and deploys only if it passes. Automatic deployment is switched off: the workflow starts only by hand from the Actions tab (add `push: branches: [main]` back to deploy on every merge). Put the output of `ssh-keyscan <server>` into the `SSH_KNOWN_HOSTS` secret to pin the server host key; without it the deploy still runs but does not verify the server and prints a warning.
 
 ## Project status
 
@@ -155,3 +163,7 @@ This project was frozen before it was finished, and these points are left as the
 2. The server draws the outcome from the player's win chance and the game parameters. Today the chance model (the decrease per throw and per rotation) lives in the mini-app, so it has to move to the server first.
 3. `finish-game-round` takes only the round id, no bet and no win flag. Closing a round that is already closed returns the same result.
 4. Tests: a client that sends another bet or result changes nothing, and two simultaneous finish calls settle the round once (the same row-version idea as for withdrawals).
+
+## License
+
+[MIT](LICENSE), copyright (c) 2026 Danila Grabovets.
