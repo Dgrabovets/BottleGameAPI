@@ -2,6 +2,7 @@ using BottleGame.API.Controllers;
 using BottleGame.API.Middleware;
 using BottleGame.API.Options;
 using BottleGame.Application;
+using BottleGame.Domain.Constants;
 using BottleGame.Infrastructure;
 using BottleGame.Infrastructure.External.Processing;
 using FluentValidation.AspNetCore;
@@ -78,9 +79,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
-    .AddPolicy("Moderator", policy => policy.RequireRole("Moderator"))
-    .AddPolicy("Player", policy => policy.RequireRole("Player"));
+    .AddPolicy(RoleNames.Admin, policy => policy.RequireRole(RoleNames.Admin))
+    .AddPolicy(RoleNames.Moderator, policy => policy.RequireRole(RoleNames.Moderator))
+    .AddPolicy(RoleNames.Player, policy => policy.RequireRole(RoleNames.Player));
 
 #endregion
 
