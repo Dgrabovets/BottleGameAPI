@@ -41,6 +41,7 @@ namespace BottleGame.Infrastructure
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<ITelegramAuthService, TelegramAuthService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
+            services.AddScoped<IPasswordUpgradeService, PasswordUpgradeService>();
 
             // Payment provider (YooKassa) — validation at application startup
             services.AddOptions<ProcessingOptions>()
@@ -72,6 +73,7 @@ namespace BottleGame.Infrastructure
             services.AddScoped<IAppBalanceService, AppBalanceService>();
             services.AddScoped<IStatisticsService, StatisticsService>();
             services.AddScoped<IModeratorService, ModeratorService>();
+            services.AddScoped<IDatabaseHealthService, DatabaseHealthService>();
 
             return services;
         }

@@ -93,10 +93,10 @@ namespace BottleGame.Infrastructure.Services
         #region Get Methods
 
         /// <inheritdoc/>
-        public async Task<Result<PlayerInfoByIdResponse>> GetPlayerById(int playerId, int? requestingPlayerId, bool isAdmin)
+        public async Task<Result<PlayerInfoByIdResponse>> GetPlayerById(int playerId, int? requestingPlayerId, bool isStaff)
         {
             // Access check
-            if (!isAdmin && requestingPlayerId != playerId)
+            if (!isStaff && requestingPlayerId != playerId)
             {
                 return Result<PlayerInfoByIdResponse>.Unauthorized();
             }
@@ -116,7 +116,7 @@ namespace BottleGame.Infrastructure.Services
                 return Result<PlayerInfoByIdResponse>.NotFound($"Player with id {playerId} not found");
             }
 
-            if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
+            if (!isStaff && player.Ban is not null && player.Ban.IsActive)
             {
                 _logger.LogWarning("{Prefix} User is banned", Prefix);
                 return Result<PlayerInfoByIdResponse>.Forbidden("User is banned");

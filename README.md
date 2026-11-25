@@ -24,7 +24,7 @@ The companion admin dashboard lives in [BottleGameAdministrationPanel](https://g
 - **Paged lists and UTC dates.** The player and transaction lists take `page` and `pageSize` (at most 200) and return the size of the whole list in the `X-Total-Count` header, banned players are left out on the server. Dates are stored and returned in UTC with a `Z`.
 - **Demo mode.** By default deposits and withdrawals complete instantly with a virtual balance, so the whole product can be tried without any payment account.
 - **Referral programme.** Inviters earn a bonus on the deposits of the players they invited, unless they are banned.
-- **Moderation.** Bans with history, player search and editing.
+- **Moderation.** Bans with history, player search and editing. A moderator can read players and transactions, approve or reject withdrawals and ban or unban players. Statistics, game settings, the application balance and the staff list are for administrators only.
 - **Administration and statistics.** Profit, general statistics and timelines for the dashboard.
 - **Operations.** Request rate limiting per IP, structured logging with Serilog, a global exception handler, an interactive API reference (Scalar).
 
@@ -55,8 +55,8 @@ Every endpoint is described in the interactive API reference (see [Getting start
 | Group | Base path | Access | What it does |
 |---|---|---|---|
 | Authorization | `/api/auth` | Anonymous login for staff and players, admin only for registration | Staff login, staff registration, player login from Telegram `initData` |
-| Players | `/api/Player` | Admin; a player for its own profile | Search and list players, ban and unban, profile edit, top 100, statistics |
-| Balance | `/api/Balance` | Admin or player; admin or moderator to change a status | Balance, create a deposit or a withdrawal, transaction lists, approve or reject a withdrawal |
+| Players | `/api/Player` | Admin or moderator to list, read, ban and unban; admin for edit and statistics; a player for its own profile | Search and list players, ban and unban, profile edit, top 100, statistics |
+| Balance | `/api/Balance` | Admin or moderator for the transaction lists and for approving or rejecting; admin or player for the balance and new transactions | Balance, create a deposit or a withdrawal, transaction lists, approve or reject a withdrawal |
 | Game rounds | `/api/GameRound` | Player or admin to finish a round; admin for the rest | Finish a round, played rounds of a player, profit |
 | Game parameters | `/api/GameParams` | Admin to change; player or admin to read | Win chances, multipliers, payment and payout methods, currencies |
 | Referrals | `/api/Referral` | Player or admin | Referral link of a player |
@@ -148,4 +148,10 @@ Known gaps: receipts for the Russian fiscal law (54-FZ) are not sent, and payout
 This project was frozen before it was finished, and these points are left as they were on purpose. They matter before any real use:
 
 - **The client reports the game result.** `finish-game-round` takes the bet and the win flag from the mini-app, and the server only applies them. A player who calls the endpoint directly can credit any amount to their own balance. A real deployment needs the outcome to be drawn on the server, from the player's win chance, with the bet taken from a round the server has started.
-- **Moderators can only approve or reject withdrawals** and read the played-rounds statistics used for it. Everything else in the admin panel (statistics, players, transaction lists, bans) answers 403 for them, so the panel is usable only with an admin account.
+
+#### How the game result could be fixed
+
+1. `start-game-round` takes the bet, takes it from the balance at once and stores an open round on the server.
+2. The server draws the outcome from the player's win chance and the game parameters. Today the chance model (the decrease per throw and per rotation) lives in the mini-app, so it has to move to the server first.
+3. `finish-game-round` takes only the round id, no bet and no win flag. Closing a round that is already closed returns the same result.
+4. Tests: a client that sends another bet or result changes nothing, and two simultaneous finish calls settle the round once (the same row-version idea as for withdrawals).

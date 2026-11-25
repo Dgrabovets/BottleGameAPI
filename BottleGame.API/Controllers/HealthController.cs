@@ -1,6 +1,6 @@
-using BottleGame.Infrastructure.Data;
+using BottleGame.API.Extensions;
+using BottleGame.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 namespace BottleGame.API.Controllers
@@ -15,12 +15,12 @@ namespace BottleGame.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public class HealthController(ApplicationDbContext context, ILogger<HealthController> logger) : ControllerBase
+    public class HealthController(IDatabaseHealthService databaseHealthService, ILogger<HealthController> logger) : ControllerBase
     {
         #region Fields
 
-        /// <inheritdoc cref="ApplicationDbContext"/>
-        private readonly ApplicationDbContext _context = context;
+        /// <inheritdoc cref="IDatabaseHealthService"/>
+        private readonly IDatabaseHealthService _databaseHealthService = databaseHealthService;
 
         /// <summary>
         /// Logger
@@ -51,13 +51,13 @@ namespace BottleGame.API.Controllers
             {
                 _logger.LogInformation("{Prefix} Health check initiated", Prefix);
 
-                var version = GetApplicationVersion();
+                var version = Assembly.GetExecutingAssembly().GetVersionText();
                 var checks = new Dictionary<string, object>
                 {
                     ["status"] = "healthy",
                     ["timestamp"] = DateTime.UtcNow.ToString("O"),
                     ["version"] = version,
-                    ["database"] = await CheckDatabase(),
+                    ["database"] = await _databaseHealthService.CheckAsync(),
                     ["uptime"] = Environment.TickCount64 / 1000
                 };
 
@@ -77,54 +77,5 @@ namespace BottleGame.API.Controllers
         }
 
         #endregion Public Methods
-
-        #region Private Methods
-
-        /// <summary>
-        /// Version from <c>BottleGame.API.csproj</c> → <c>Version</c>
-        /// </summary>
-        private static string GetApplicationVersion()
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            return assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-                ?? assembly.GetName().Version?.ToString()
-                ?? "0.0.0";
-        }
-
-        /// <summary>
-        /// Checks the state of the database
-        /// </summary>
-        /// <returns>Result of the connection check and statistics</returns>
-        private async Task<object> CheckDatabase()
-        {
-            try
-            {
-                _logger.LogDebug("{Prefix} Checking database connection", Prefix);
-
-                var canConnect = _context.Database.CanConnect();
-                if (!canConnect)
-                {
-                    _logger.LogWarning("{Prefix} Database connection failed", Prefix);
-                    return new { status = "error", message = "Cannot connect to database" };
-                }
-
-                var playerCount = await _context.Players.CountAsync();
-                _logger.LogDebug("{Prefix} Database check passed. Players: {Count}", Prefix, playerCount);
-
-                return new
-                {
-                    status = "ok",
-                    players = playerCount,
-                    connected = true
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "{Prefix} Database health check failed", Prefix);
-                return new { status = "error", message = "Database query failed" };
-            }
-        }
-
-        #endregion Private Methods
     }
 }

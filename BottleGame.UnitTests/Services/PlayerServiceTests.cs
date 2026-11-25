@@ -194,6 +194,40 @@ public class PlayerServiceTests : IDisposable
         result.StatusCode.Should().Be(401);
     }
 
+    /// <summary>
+    /// Get player by id: staff (an administrator or a moderator) reads a banned player; returns the player, so a ban can be reviewed or lifted
+    /// </summary>
+    [Fact]
+    public async Task GetPlayerById_StaffReadsBannedPlayer_ReturnsPlayer()
+    {
+        // Arrange
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        TestDbContextFactory.AddActiveBan(_context, player.Id);
+
+        // Act
+        var result = await _service.GetPlayerById(player.Id, null, true);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Get player by id: a banned player reads own data; returns forbidden
+    /// </summary>
+    [Fact]
+    public async Task GetPlayerById_BannedPlayerReadsOwnData_ReturnsForbidden()
+    {
+        // Arrange
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        TestDbContextFactory.AddActiveBan(_context, player.Id);
+
+        // Act
+        var result = await _service.GetPlayerById(player.Id, player.Id, false);
+
+        // Assert
+        result.StatusCode.Should().Be(403);
+    }
+
     #endregion GetPlayerById Tests
 
     #region GetAllPlayers Tests

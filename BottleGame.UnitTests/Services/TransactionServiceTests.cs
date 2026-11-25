@@ -222,6 +222,23 @@ public class TransactionServiceTests : IDisposable
         result.Value!.Transactions.Should().HaveCount(1);
     }
 
+    /// <summary>
+    /// Get player transactions: staff reads a banned player; returns transactions
+    /// </summary>
+    [Fact]
+    public async Task GetPlayerTransactions_StaffReadsBannedPlayer_ReturnsTransactions()
+    {
+        // Arrange
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        TestDbContextFactory.AddActiveBan(_context, player.Id);
+
+        // Act
+        var result = await _service.GetPlayerTransactions(player.Id, null, true);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
     #endregion GetPlayerTransactions Tests
 
     #region GetAllTransactions Tests

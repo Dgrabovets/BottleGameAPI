@@ -1,11 +1,11 @@
-﻿using BottleGame.Application.DTOs.Requests;
+﻿using BottleGame.API.Extensions;
+using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
-using System.Security.Claims;
 
 namespace BottleGame.API.Controllers
 {
@@ -85,7 +85,7 @@ namespace BottleGame.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var adminId = GetCurrentAdminId();
+            var adminId = User.GetUserId();
             if (!adminId.HasValue)
             {
                 return Unauthorized();
@@ -122,7 +122,7 @@ namespace BottleGame.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var adminId = GetCurrentAdminId();
+            var adminId = User.GetUserId();
             if (!adminId.HasValue)
             {
                 return Unauthorized();
@@ -280,23 +280,5 @@ namespace BottleGame.API.Controllers
         }
 
         #endregion Moderator Methods
-
-        #region Private Methods
-
-        /// <summary>
-        /// Gets the id of the current administrator from the claims
-        /// </summary>
-        private int? GetCurrentAdminId()
-        {
-            var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-            if (claim is not null && int.TryParse(claim.Value, out var adminId))
-            {
-                return adminId;
-            }
-
-            return null;
-        }
-
-        #endregion Private Methods
     }
 }

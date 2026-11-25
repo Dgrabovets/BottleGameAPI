@@ -1,9 +1,11 @@
-﻿using BottleGame.Application.Interfaces;
+﻿using BottleGame.Application.DTOs;
+using BottleGame.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Collections.Specialized;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Web;
 
 namespace BottleGame.Infrastructure.Services
@@ -71,6 +73,55 @@ namespace BottleGame.Infrastructure.Services
                 _logger.LogWarning(ex, "Telegram initData could not be validated");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="ITelegramAuthService.ParseInitData(string)"/>
+        /// </summary>
+        public ParsedTelegramUser ParseInitData(string initData)
+        {
+            var result = new ParsedTelegramUser();
+            var query = HttpUtility.ParseQueryString(initData);
+
+            // Extract the user data from the query string
+            result.TelegramId = long.Parse(GetJsonValue(query["user"]!, "id")!);
+            result.Username = GetJsonValue(query["user"]!, "username") ?? GetJsonValue(query["user"]!, "first_name")!;
+            result.PhotoUrl = GetJsonValue(query["user"]!, "photo_url") ?? string.Empty;
+            var startParts = query["start_param"]?.Split('_');
+
+            if (startParts is { Length: > 1 } && int.TryParse(startParts[1], out var invitingPlayerId))
+            {
+                result.InvitingPlayerId = invitingPlayerId;
+            }
+
+            // Parse the date (Unix timestamp)
+            result.RegisteredAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(query["auth_date"]!)).UtcDateTime;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets a property of a JSON object as text
+        /// </summary>
+        /// <param name="json">JSON object</param>
+        /// <param name="propertyName">Property name</param>
+        /// <returns>Value or null if the property is missing or not a simple value</returns>
+        private static string? GetJsonValue(string json, string propertyName)
+        {
+            using JsonDocument document = JsonDocument.Parse(json);
+            if (document.RootElement.TryGetProperty(propertyName, out var property))
+            {
+                return property.ValueKind switch
+                {
+                    JsonValueKind.String => property.GetString(),
+                    JsonValueKind.Number => property.GetInt64().ToString(),
+                    JsonValueKind.True => "true",
+                    JsonValueKind.False => "false",
+                    _ => null
+                };
+            }
+
+            return null;
         }
 
         /// <summary>
