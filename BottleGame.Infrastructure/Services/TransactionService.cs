@@ -297,7 +297,7 @@ namespace BottleGame.Infrastructure.Services
         }
 
         /// <inheritdoc/>
-        public async Task<Result<GetPlayerTransactionsResponse>> GetPlayerTransactions(int playerId, int? requestingPlayerId, bool isAdmin)
+        public async Task<Result<GetPlayerTransactionsResponse>> GetPlayerTransactions(int playerId, int? requestingPlayerId, bool isStaff)
         {
             var player = await _context.Players
                 .Include(p => p.Ban)
@@ -311,12 +311,12 @@ namespace BottleGame.Infrastructure.Services
                 return Result<GetPlayerTransactionsResponse>.NotFound($"Player with id {playerId} not found");
             }
 
-            if (!isAdmin && requestingPlayerId != playerId)
+            if (!isStaff && requestingPlayerId != playerId)
             {
                 return Result<GetPlayerTransactionsResponse>.Unauthorized();
             }
 
-            if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
+            if (!isStaff && player.Ban is not null && player.Ban.IsActive)
             {
                 _logger.LogWarning("{Prefix} User is banned", Prefix);
                 return Result<GetPlayerTransactionsResponse>.Forbidden("User is banned");

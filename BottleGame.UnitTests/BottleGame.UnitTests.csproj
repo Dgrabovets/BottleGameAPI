@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BottleGame.API\BottleGame.API.csproj" />
     <ProjectReference Include="..\BottleGame.Application\BottleGame.Application.csproj" />
     <ProjectReference Include="..\BottleGame.Domain\BottleGame.Domain.csproj" />
     <ProjectReference Include="..\BottleGame.Infrastructure\BottleGame.Infrastructure.csproj" />

@@ -47,9 +47,9 @@ namespace BottleGame.Application.Interfaces
         /// </summary>
         /// <param name="playerId">Player id</param>
         /// <param name="requestingPlayerId">Id of the requester</param>
-        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <param name="isStaff">Whether the requester is staff (an administrator or a moderator) and may read any player</param>
         /// <returns>List of transactions</returns>
-        Task<Result<GetPlayerTransactionsResponse>> GetPlayerTransactions(int playerId, int? requestingPlayerId, bool isAdmin);
+        Task<Result<GetPlayerTransactionsResponse>> GetPlayerTransactions(int playerId, int? requestingPlayerId, bool isStaff);
 
         /// <summary>
         /// Gets all transactions

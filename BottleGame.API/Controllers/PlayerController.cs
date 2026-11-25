@@ -79,7 +79,7 @@ namespace BottleGame.API.Controllers
         /// <response code="404">The player was not found</response>
         /// <response code="409">The user is already banned</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.AdminOrModerator)]
         [HttpPost("ban-player")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -110,7 +110,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">The user was unbanned</response>
         /// <response code="404">The player was not found or has no active ban</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.AdminOrModerator)]
         [HttpPost("unban-player/{playerId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -142,7 +142,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">List of users</response>
         /// <response code="404">No players were found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.AdminOrModerator)]
         [HttpGet("get-all-players")]
         [ProducesResponseType(typeof(IEnumerable<PlayerInfoResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -172,7 +172,7 @@ namespace BottleGame.API.Controllers
         /// <response code="404">The player was not found</response>
         /// <response code="403">The player is banned</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.All)]
         [HttpGet("get-player/{playerId:int}")]
         [ProducesResponseType(typeof(PlayerInfoByIdResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -186,9 +186,9 @@ namespace BottleGame.API.Controllers
             }
 
             var requestingPlayerId = GetCurrentPlayerId();
-            var isAdmin = User.IsInRole(RoleNames.Admin);
+            var isStaff = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator);
 
-            var result = await _playerService.GetPlayerById(playerId, requestingPlayerId, isAdmin);
+            var result = await _playerService.GetPlayerById(playerId, requestingPlayerId, isStaff);
             return ToActionResult(result);
         }
 
@@ -230,7 +230,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">List of users</response>
         /// <response code="404">No players were found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.AdminOrModerator)]
         [HttpGet("get-top100-players")]
         [ProducesResponseType(typeof(PlayerInfoResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

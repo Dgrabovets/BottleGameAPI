@@ -27,9 +27,9 @@ namespace BottleGame.Application.Interfaces
         /// </summary>
         /// <param name="playerId">Player id</param>
         /// <param name="requestingPlayerId">Id of the requesting player (for the access check)</param>
-        /// <param name="isAdmin">Whether the requester is an administrator</param>
+        /// <param name="isStaff">Whether the requester is staff (an administrator or a moderator) and may read any player</param>
         /// <returns>Player information</returns>
-        Task<Result<PlayerInfoByIdResponse>> GetPlayerById(int playerId, int? requestingPlayerId, bool isAdmin);
+        Task<Result<PlayerInfoByIdResponse>> GetPlayerById(int playerId, int? requestingPlayerId, bool isStaff);
 
         /// <summary>
         /// Gets the list of players (without a search, actively banned players are left out)
