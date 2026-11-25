@@ -44,22 +44,13 @@ namespace BottleGame.API.Controllers
                 body,
                 Request.Method,
                 Request.ContentType,
-                GetClientIpAddress(),
+                // Behind a trusted proxy the forwarded headers middleware has already put the real client address here
+                HttpContext.Connection.RemoteIpAddress?.ToString(),
                 Request.Headers.UserAgent.ToString());
 
             return ToActionResult(await _webhookService.HandleNotificationAsync(request));
         }
 
         #endregion Action Methods
-
-        #region Helper Methods
-
-        /// <summary>
-        /// Gets the client IP address for the log. Behind a trusted proxy the forwarded headers middleware has already replaced it with the real client address
-        /// </summary>
-        /// <returns>Client IP address or null</returns>
-        private string? GetClientIpAddress() => HttpContext.Connection.RemoteIpAddress?.ToString();
-
-        #endregion Helper Methods
     }
 }

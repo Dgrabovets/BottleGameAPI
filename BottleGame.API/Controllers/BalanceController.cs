@@ -1,3 +1,4 @@
+using BottleGame.API.Extensions;
 using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
@@ -5,7 +6,6 @@ using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace BottleGame.API.Controllers
 {
@@ -51,7 +51,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<GetPlayerBalanceResponse>> GetPlayerBalance([FromRoute] int playerId)
         {
-            var requestingPlayerId = GetCurrentPlayerId();
+            var requestingPlayerId = User.GetUserId();
             var isAdmin = User.IsInRole(RoleNames.Admin);
 
             var result = await _transactionService.GetPlayerBalance(playerId, requestingPlayerId, isAdmin);
@@ -86,7 +86,7 @@ namespace BottleGame.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var requestingPlayerId = GetCurrentPlayerId();
+            var requestingPlayerId = User.GetUserId();
             var isAdmin = User.IsInRole(RoleNames.Admin);
 
             var result = await _transactionService.CreateTransaction(playerId, request, requestingPlayerId, isAdmin);
@@ -132,8 +132,8 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<GetPlayerTransactionsResponse>> GetPlayerTransactions([FromRoute] int playerId)
         {
-            var requestingPlayerId = GetCurrentPlayerId();
-            var isStaff = User.IsInRole(RoleNames.Admin) || User.IsInRole(RoleNames.Moderator);
+            var requestingPlayerId = User.GetUserId();
+            var isStaff = User.IsStaff();
 
             var result = await _transactionService.GetPlayerTransactions(playerId, requestingPlayerId, isStaff);
             return ToActionResult(result);
@@ -204,23 +204,5 @@ namespace BottleGame.API.Controllers
         }
 
         #endregion Reference Data Methods
-
-        #region Private Methods
-
-        /// <summary>
-        /// Gets the id of the current player from the claims
-        /// </summary>
-        private int? GetCurrentPlayerId()
-        {
-            var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-            if (claim is not null && int.TryParse(claim.Value, out var playerId))
-            {
-                return playerId;
-            }
-
-            return null;
-        }
-
-        #endregion Private Methods
     }
 }

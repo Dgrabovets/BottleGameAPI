@@ -1,3 +1,4 @@
+using BottleGame.API.Extensions;
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.DTOs.Responses;
 using BottleGame.Application.Interfaces;
@@ -5,7 +6,6 @@ using BottleGame.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using System.Security.Claims;
 
 namespace BottleGame.API.Controllers
 {
@@ -60,7 +60,7 @@ namespace BottleGame.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var requestingPlayerId = GetCurrentPlayerId();
+            var requestingPlayerId = User.GetUserId();
             var isAdmin = User.IsInRole(RoleNames.Admin);
 
             var result = await _gameRoundService.FinishGameRound(playerId, request, requestingPlayerId, isAdmin);
@@ -107,23 +107,5 @@ namespace BottleGame.API.Controllers
         }
 
         #endregion Action Methods
-
-        #region Private Methods
-
-        /// <summary>
-        /// Gets the id of the current player from the claims
-        /// </summary>
-        private int? GetCurrentPlayerId()
-        {
-            var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-            if (claim is not null && int.TryParse(claim.Value, out var playerId))
-            {
-                return playerId;
-            }
-
-            return null;
-        }
-
-        #endregion Private Methods
     }
 }
