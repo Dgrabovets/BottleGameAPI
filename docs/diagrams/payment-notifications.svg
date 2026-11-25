@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1060" viewBox="0 0 1200 1060">
+  <title>Bottle Game API: how a YooKassa notification is handled</title>
+  <defs>
+    <style>
+      .bg { fill: #000000; }
+      .node { fill: #03100a; stroke: #232a25; stroke-width: 1.5; }
+      .ext { fill: #000000; stroke: #a4a69f; stroke-width: 1.2; }
+      .done { fill: #03100a; stroke: #5fe08a; stroke-width: 1.5; }
+      .note { fill: #000000; stroke: #232a25; stroke-width: 1.2; }
+      .bar { fill: #5fe08a; }
+      .t { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 15px; fill: #f3f2ee; text-anchor: middle; }
+      .s { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-weight: 400; font-size: 12.5px; fill: #a4a69f; text-anchor: middle; }
+      .n { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-weight: 400; font-size: 13px; fill: #a4a69f; text-anchor: middle; }
+      .n-ok { fill: #2fd4c0; }
+      .handle { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 12px; letter-spacing: 4px; fill: #a4a69f; }
+      .title { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 26px; fill: #f3f2ee; }
+      .main { stroke: #5fe08a; stroke-width: 2; fill: none; stroke-linejoin: round; }
+      .second { stroke: #2fd4c0; stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; stroke-linejoin: round; }
+      .reject { stroke: #a4a69f; stroke-width: 1.4; fill: none; stroke-dasharray: 3 4; stroke-linejoin: round; }
+      .pill { fill: #000000; stroke: #232a25; stroke-width: 1; }
+      .l { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; text-anchor: middle; }
+      .l-main { fill: #5fe08a; }
+      .l-second { fill: #2fd4c0; }
+      .legend { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-size: 13px; fill: #a4a69f; }
+    </style>
+    <marker id="arrow-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5fe08a"/></marker>
+    <marker id="arrow-second" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2fd4c0"/></marker>
+    <marker id="arrow-reject" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a4a69f"/></marker>
+  </defs>
+
+  <rect class="bg" width="1200" height="1060" rx="16"/>
+
+  <!-- Heading -->
+  <rect class="bar" x="40" y="36" width="28" height="4" rx="2"/>
+  <text class="handle" x="40" y="62">BOTTLE GAME API</text>
+  <text class="title" x="40" y="98">Payment notifications</text>
+
+  <!-- Main path -->
+  <path class="main" d="M520,202 V238" marker-end="url(#arrow-main)"/>
+  <path class="main" d="M520,310 V346" marker-end="url(#arrow-main)"/>
+  <path class="main" d="M520,418 V454" marker-end="url(#arrow-main)"/>
+  <path class="main" d="M520,526 V562" marker-end="url(#arrow-main)"/>
+  <path class="main" d="M520,634 V670" marker-end="url(#arrow-main)"/>
+  <path class="main" d="M520,742 V778" marker-end="url(#arrow-main)"/>
+  <path class="main" d="M520,850 V886" marker-end="url(#arrow-main)"/>
+
+  <!-- Rejections -->
+  <path class="reject" d="M720,274 H800" marker-end="url(#arrow-reject)"/>
+  <path class="reject" d="M720,382 H800" marker-end="url(#arrow-reject)"/>
+  <path class="reject" d="M720,490 H800" marker-end="url(#arrow-reject)"/>
+  <path class="reject" d="M720,706 H800" marker-end="url(#arrow-reject)"/>
+  <path class="reject" d="M1075,850 V886" marker-end="url(#arrow-reject)"/>
+
+  <!-- Safe repeats -->
+  <path class="second" d="M320,598 H260" marker-end="url(#arrow-second)"/>
+  <path class="second" d="M720,814 H800" marker-end="url(#arrow-second)"/>
+  <path class="second" d="M885,850 V886" marker-end="url(#arrow-second)"/>
+
+  <!-- Branch labels -->
+  <rect class="pill" x="271" y="588" width="38" height="20" rx="10"/>
+  <text class="l l-second" x="290" y="602">yes</text>
+  <rect class="pill" x="505" y="642" width="30" height="20" rx="10"/>
+  <text class="l l-main" x="520" y="656">no</text>
+  <rect class="pill" x="733" y="804" width="54" height="20" rx="10"/>
+  <text class="l l-second" x="760" y="818">clash</text>
+
+  <!-- Steps -->
+  <rect class="ext" x="320" y="130" width="400" height="72" rx="10"/>
+  <text class="t" x="520" y="161">YooKassa notification</text>
+  <text class="s" x="520" y="183">POST /api/webhook/yookassa, not signed</text>
+
+  <rect class="node" x="320" y="238" width="400" height="72" rx="10"/>
+  <rect class="bar" x="332" y="248" width="20" height="3" rx="1.5"/>
+  <text class="t" x="520" y="269">Read the event and the id</text>
+  <text class="s" x="520" y="291">nothing else is taken from the body</text>
+
+  <rect class="node" x="320" y="346" width="400" height="72" rx="10"/>
+  <rect class="bar" x="332" y="356" width="20" height="3" rx="1.5"/>
+  <text class="t" x="520" y="377">Re-check with YooKassa</text>
+  <text class="s" x="520" y="399">GET the payment or payout with the API's own credentials</text>
+
+  <rect class="node" x="320" y="454" width="400" height="72" rx="10"/>
+  <rect class="bar" x="332" y="464" width="20" height="3" rx="1.5"/>
+  <text class="t" x="520" y="485">Find the transaction</text>
+  <text class="s" x="520" y="507">by the id YooKassa returns; its type must match the event</text>
+
+  <rect class="node" x="320" y="562" width="400" height="72" rx="10"/>
+  <rect class="bar" x="332" y="572" width="20" height="3" rx="1.5"/>
+  <text class="t" x="520" y="593">Duplicate check</text>
+  <text class="s" x="520" y="615">is the outcome of the transaction already recorded?</text>
+
+  <rect class="node" x="320" y="670" width="400" height="72" rx="10"/>
+  <rect class="bar" x="332" y="680" width="20" height="3" rx="1.5"/>
+  <text class="t" x="520" y="701">Amount check</text>
+  <text class="s" x="520" y="723">the YooKassa amount equals the transaction amount</text>
+
+  <rect class="node" x="320" y="778" width="400" height="72" rx="10"/>
+  <rect class="bar" x="332" y="788" width="20" height="3" rx="1.5"/>
+  <text class="t" x="520" y="809">Apply once</text>
+  <text class="s" x="520" y="831">balances and referral bonus, one save checked by xmin</text>
+
+  <rect class="done" x="420" y="886" width="200" height="56" rx="10"/>
+  <text class="t" x="520" y="919">200, Success</text>
+
+  <!-- Rejected deliveries -->
+  <rect class="note" x="800" y="246" width="360" height="56" rx="10"/>
+  <text class="n" x="980" y="270">unreadable body or no id: 400</text>
+  <text class="n" x="980" y="290">other events: 200, ignored</text>
+
+  <rect class="note" x="800" y="356" width="360" height="52" rx="10"/>
+  <text class="n" x="980" y="387">not found at YooKassa: 400</text>
+
+  <rect class="note" x="800" y="464" width="360" height="52" rx="10"/>
+  <text class="n" x="980" y="495">no transaction or wrong type: 400</text>
+
+  <rect class="note" x="800" y="680" width="360" height="52" rx="10"/>
+  <text class="n" x="980" y="711">amounts differ: 400</text>
+
+  <!-- Repeated and concurrent deliveries -->
+  <rect class="note" x="40" y="566" width="220" height="64" rx="10"/>
+  <text class="n n-ok" x="150" y="592">200, Duplicate</text>
+  <text class="n" x="150" y="612">nothing is applied twice</text>
+
+  <rect class="node" x="800" y="778" width="360" height="72" rx="10"/>
+  <text class="t" x="980" y="809">Row version conflict</text>
+  <text class="s" x="980" y="831">a row changed meanwhile: read it again</text>
+
+  <rect class="note" x="800" y="886" width="170" height="56" rx="10"/>
+  <text class="n n-ok" x="885" y="910">already applied</text>
+  <text class="n" x="885" y="930">200, Duplicate</text>
+
+  <rect class="note" x="990" y="886" width="170" height="56" rx="10"/>
+  <text class="n" x="1075" y="910">not applied</text>
+  <text class="n" x="1075" y="930">400, sent again</text>
+
+  <!-- Legend -->
+  <path class="main" d="M40,996 H76"/>
+  <text class="legend" x="86" y="1000">main path</text>
+  <path class="second" d="M200,996 H236"/>
+  <text class="legend" x="246" y="1000">repeat or clash, applied at most once</text>
+  <path class="reject" d="M520,996 H556"/>
+  <text class="legend" x="566" y="1000">rejected; any answer but 200 makes YooKassa send it again</text>
+  <text class="legend" x="40" y="1030">Every delivery is stored in the webhook log as Success, Duplicate, Ignored or Error.</text>
+</svg>
