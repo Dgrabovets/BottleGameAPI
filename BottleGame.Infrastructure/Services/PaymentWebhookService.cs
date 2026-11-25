@@ -71,7 +71,7 @@ namespace BottleGame.Infrastructure.Services
 
             try
             {
-                _logger.LogInformation("{Prefix} Notification received: {Body}", Prefix, request.Body);
+                _logger.LogInformation("{Prefix} Notification received: {Body}", Prefix, LogSanitizer.Clean(request.Body));
 
                 var notification = TryParseNotification(request.Body);
                 if (notification?.Object is null || string.IsNullOrWhiteSpace(notification.Object.Id))

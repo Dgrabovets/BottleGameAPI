@@ -70,7 +70,7 @@ namespace BottleGame.Infrastructure.Services
             _context.AdminCreds.Add(moderator);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} New moderator registered: {Login}", Prefix, request.Login);
+            _logger.LogInformation("{Prefix} New moderator registered: {Login}", Prefix, LogSanitizer.Clean(request.Login));
 
             return Result.Success();
         }

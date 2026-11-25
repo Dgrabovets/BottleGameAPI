@@ -295,7 +295,7 @@ namespace BottleGame.Infrastructure.Services
                 {
                     var availableCurrencies = await _currencyService.GetAvailableCurrenciesAsync();
                     var currencyCodes = string.Join(", ", availableCurrencies.Select(c => c.Code));
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid currency: {Currency}", Prefix, request.Currency);
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid currency: {Currency}", Prefix, LogSanitizer.Clean(request.Currency));
                     return Result.Failure($"Currency '{request.Currency}' is not supported. Available: {currencyCodes}");
                 }
 
@@ -305,7 +305,7 @@ namespace BottleGame.Infrastructure.Services
                 if (selectedGateway is null)
                 {
                     var gatewayCodes = string.Join(", ", paymentGateways.Select(g => g.Code));
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid payment method: {PaymentMethod}", Prefix, request.PaymentMethod);
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid payment method: {PaymentMethod}", Prefix, LogSanitizer.Clean(request.PaymentMethod));
                     return Result.Failure($"Payment method '{request.PaymentMethod}' is not supported for currency '{request.Currency}'. Available: {gatewayCodes}");
                 }
 
@@ -319,7 +319,7 @@ namespace BottleGame.Infrastructure.Services
                     !selectedGateway.DetailTypes.Any(dt => dt.Equals(detailType, StringComparison.OrdinalIgnoreCase)))
                 {
                     var availableTypes = string.Join(", ", selectedGateway.DetailTypes);
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", Prefix, detailType);
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", Prefix, LogSanitizer.Clean(detailType));
                     return Result.Failure($"Detail type '{detailType}' is not supported by payment method '{request.PaymentMethod}'. Available: {availableTypes}");
                 }
 
@@ -341,7 +341,7 @@ namespace BottleGame.Infrastructure.Services
                 {
                     var availableTypes = await _currencyService.GetDetailTypesForGatewayAsync(currentPaymentMethod);
                     var typesStr = availableTypes.Any() ? string.Join(", ", availableTypes) : "any";
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", Prefix, request.PaymentDetailType);
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", Prefix, LogSanitizer.Clean(request.PaymentDetailType));
                     return Result.Failure($"Detail type '{request.PaymentDetailType}' is not supported by payment method '{currentPaymentMethod}'. Available: {typesStr}");
                 }
 
@@ -361,7 +361,7 @@ namespace BottleGame.Infrastructure.Services
                 if (!isValidPayoutGateway)
                 {
                     var gatewayCodes = string.Join(", ", payoutGateways.Select(g => g.Code));
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid payout method: {PayoutMethod}", Prefix, request.PayoutMethod);
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid payout method: {PayoutMethod}", Prefix, LogSanitizer.Clean(request.PayoutMethod));
                     return Result.Failure($"Payout method '{request.PayoutMethod}' is not supported for currency '{currency}'. Available: {gatewayCodes}");
                 }
 

@@ -1,4 +1,5 @@
-﻿using BottleGame.Application.DTOs.Processing;
+﻿using BottleGame.Application.Common;
+using BottleGame.Application.DTOs.Processing;
 using BottleGame.Application.Interfaces;
 using BottleGame.Infrastructure.External.Processing;
 using Microsoft.Extensions.Caching.Memory;
@@ -164,7 +165,7 @@ namespace BottleGame.Infrastructure.Services
             {
                 entry.AbsoluteExpirationRelativeToNow = ExchangeRateCacheExpiration;
 
-                _logger.LogDebug("{Prefix} Loading the rate for {Currency} from the API", Prefix, currencyCode);
+                _logger.LogDebug("{Prefix} Loading the rate for {Currency} from the API", Prefix, LogSanitizer.Clean(currencyCode));
                 return await _paymentProvider.GetExchangeRateAsync(currencyCode, cancellationToken);
             });
         }
@@ -223,7 +224,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (gateway is null)
             {
-                _logger.LogWarning("{Prefix} Gateway {Gateway} not found", Prefix, gatewayCode);
+                _logger.LogWarning("{Prefix} Gateway {Gateway} not found", Prefix, LogSanitizer.Clean(gatewayCode));
                 return false;
             }
 
@@ -242,7 +243,7 @@ namespace BottleGame.Infrastructure.Services
             if (!isValid)
             {
                 _logger.LogWarning("{Prefix} Amount {Amount} is outside the allowed range for gateway {Gateway} (min: {Min}, max: {Max})",
-                    Prefix, amount, gatewayCode, gateway.MinAmount, gateway.MaxAmount);
+                    Prefix, amount, LogSanitizer.Clean(gatewayCode), gateway.MinAmount, gateway.MaxAmount);
             }
 
             return isValid;
@@ -256,7 +257,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (gateway is null)
             {
-                _logger.LogWarning("{Prefix} Gateway {Gateway} not found", Prefix, gatewayCode);
+                _logger.LogWarning("{Prefix} Gateway {Gateway} not found", Prefix, LogSanitizer.Clean(gatewayCode));
                 return [];
             }
 
@@ -271,7 +272,7 @@ namespace BottleGame.Infrastructure.Services
             if (!detailTypes.Any())
             {
                 // If the gateway has no restrictions on detail types, any type is considered valid
-                _logger.LogDebug("{Prefix} Gateway {Gateway} has no restrictions on detail types", Prefix, gatewayCode);
+                _logger.LogDebug("{Prefix} Gateway {Gateway} has no restrictions on detail types", Prefix, LogSanitizer.Clean(gatewayCode));
                 return true;
             }
 
@@ -280,7 +281,7 @@ namespace BottleGame.Infrastructure.Services
             if (!isValid)
             {
                 _logger.LogWarning("{Prefix} Detail type '{DetailType}' is not supported by gateway {Gateway}. Available: {Available}",
-                    Prefix, detailType, gatewayCode, string.Join(", ", detailTypes));
+                    Prefix, LogSanitizer.Clean(detailType), LogSanitizer.Clean(gatewayCode), string.Join(", ", detailTypes));
             }
 
             return isValid;
