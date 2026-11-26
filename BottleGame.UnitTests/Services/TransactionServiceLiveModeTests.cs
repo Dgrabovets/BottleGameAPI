@@ -3,13 +3,16 @@ using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Data;
+using BottleGame.Infrastructure.External.Processing;
 using BottleGame.Infrastructure.Services;
 using BottleGame.Infrastructure.Services.Payments;
 using BottleGame.UnitTests.Fixtures;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace BottleGame.UnitTests.Services;
@@ -47,7 +50,8 @@ public class TransactionServiceLiveModeTests : IDisposable
         var processor = new LiveTransactionProcessor(
             _context,
             new Mock<ILogger<LiveTransactionProcessor>>().Object,
-            _providerMock.Object);
+            _providerMock.Object,
+            Options.Create(new ProcessingOptions()));
 
         _service = new TransactionService(
             _context,
@@ -107,6 +111,27 @@ public class TransactionServiceLiveModeTests : IDisposable
     /// <returns>The created value</returns>
     private decimal PlayerBalance(Player player) =>
         _context.PlayersBalances.AsNoTracking().Single(b => b.PlayerId == player.Id).Amount;
+
+    /// <summary>
+    /// Reads the transaction as it is saved in the database, bypassing the tracked instance
+    /// </summary>
+    /// <param name="transaction">Transaction</param>
+    /// <returns>The saved row</returns>
+    private MoneyTransaction Saved(MoneyTransaction transaction) =>
+        _context.MoneyTransactions.AsNoTracking().Single(t => t.Id == transaction.Id);
+
+    /// <summary>
+    /// Approves the withdrawal while the provider times out, so the payout outcome stays unknown
+    /// </summary>
+    /// <param name="transaction">Withdrawal transaction</param>
+    private async Task ApproveWithUnknownOutcomeAsync(MoneyTransaction transaction)
+    {
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException("timeout"));
+
+        await _service.UpdateTransactionStatus(transaction.Id, Approve());
+    }
 
     /// <summary>
     /// Builds the request that approves a withdrawal
@@ -280,11 +305,12 @@ public class TransactionServiceLiveModeTests : IDisposable
         result.StatusCode.Should().Be(500);
         transaction.TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
         transaction.ProcessingError.Should().Be("no funds");
+        Saved(transaction).PayoutState.Should().Be(PayoutState.Refused);
         PlayerBalance(player).Should().Be(1300);
     }
 
     /// <summary>
-    /// A timeout leaves the payout outcome unknown: the withdrawal stays pending, marked, and the player is not refunded
+    /// A timeout leaves the payout outcome unknown: the withdrawal stays pending in that state and the player is not refunded
     /// </summary>
     [Fact]
     public async Task ApproveWithdrawal_ProviderTimesOut_StaysPendingWithoutRefund()
@@ -301,7 +327,9 @@ public class TransactionServiceLiveModeTests : IDisposable
         result.IsSuccess.Should().BeFalse();
         transaction.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
         transaction.IsProcessingSuccess.Should().BeNull();
-        transaction.ProcessingError.Should().Be(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN);
+        var saved = Saved(transaction);
+        saved.PayoutState.Should().Be(PayoutState.OutcomeUnknown);
+        saved.ProcessingError.Should().BeNull();
         PlayerBalance(player).Should().Be(1000);
     }
 
@@ -333,31 +361,37 @@ public class TransactionServiceLiveModeTests : IDisposable
         retry.IsSuccess.Should().BeTrue();
         transaction.TransactionStatusId.Should().Be(TransactionStatuses.APPROVED);
         transaction.ProcessingOrderId.Should().Be("payout-1");
-        transaction.ProcessingError.Should().BeNull();
+        Saved(transaction).PayoutState.Should().Be(PayoutState.Completed);
         sent.Should().Equal(transaction.Id, transaction.Id);
         PlayerBalance(player).Should().Be(1000);
     }
 
     /// <summary>
-    /// The mark is saved before the provider is called, so a crash, a failed final save or a concurrent reject cannot hide a real payout
+    /// The unknown outcome, the request time and the destination are saved before the provider is called,
+    /// so a crash, a failed final save or a concurrent reject cannot hide a real payout
     /// </summary>
     [Fact]
-    public async Task ApproveWithdrawal_SavesMarkBeforeCallingProvider()
+    public async Task ApproveWithdrawal_SavesStateAndDestinationBeforeCallingProvider()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
         SetPlayedRounds(player, 10);
         var transaction = AddWithdrawal(player, 300);
-        string? savedAtCall = "not called";
+        MoneyTransaction? savedAtCall = null;
         _providerMock
             .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
-            .Callback(() => savedAtCall = _context.MoneyTransactions.AsNoTracking().Single(t => t.Id == transaction.Id).ProcessingError)
+            .Callback(() => savedAtCall = Saved(transaction))
             .ReturnsAsync(new CreatePayoutResult(true, "payout-1", null));
 
         var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
 
         result.IsSuccess.Should().BeTrue();
-        savedAtCall.Should().Be(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN);
-        transaction.ProcessingError.Should().BeNull();
+        savedAtCall.Should().NotBeNull();
+        savedAtCall!.PayoutState.Should().Be(PayoutState.OutcomeUnknown);
+        savedAtCall.PayoutRequestedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
+        savedAtCall.PaymentGateway.Should().Be("sbp_rub");
+        savedAtCall.PayoutWallet.Should().Be("79001234567");
+        savedAtCall.Currency.Should().Be("rub");
+        savedAtCall.ProcessingError.Should().BeNull();
     }
 
     /// <summary>
@@ -387,13 +421,109 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
-    /// The marker is stored in the database, so its text must never change: rows marked earlier would lose their protection
+    /// A repeat sends the saved destination, amount and currency with the same transaction id, not the player's current settings
     /// </summary>
     [Fact]
-    public void PayoutOutcomeUnknown_ValueIsStable()
+    public async Task ApproveWithdrawal_Repeat_SendsSavedDestinationNotCurrentSettings()
     {
-        LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN.Should().Be(
-            "Payout outcome unknown: wait for the YooKassa notification or approve again to repeat the request with the same idempotence key");
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        await ApproveWithUnknownOutcomeAsync(transaction);
+        var options = _context.PlayersOptions.Single(o => o.PlayerId == player.Id);
+        options.PayoutMethod = "bank_card";
+        options.Wallet = "79009999999:100000000222";
+        options.Currency = "kzt";
+        _context.SaveChanges();
+        CreatePayoutRequest? sent = null;
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<CreatePayoutRequest, CancellationToken>((request, _) => sent = request)
+            .ReturnsAsync(new CreatePayoutResult(true, "payout-1", null));
+
+        var retry = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        retry.IsSuccess.Should().BeTrue();
+        sent.Should().NotBeNull();
+        sent!.TransactionId.Should().Be(transaction.Id);
+        sent.Gateway.Should().Be("sbp_rub");
+        sent.Destination.Should().Be("79001234567");
+        sent.Currency.Should().Be("rub");
+        sent.Amount.Should().Be(300);
+        var saved = Saved(transaction);
+        saved.PaymentGateway.Should().Be("sbp_rub");
+        saved.Currency.Should().Be("rub");
+        saved.PayoutWallet.Should().Be("79001234567");
+    }
+
+    /// <summary>
+    /// Once the idempotence key window has passed since the first request, a repeat could make a second payout,
+    /// so it is refused without calling the provider and the withdrawal stays pending without a refund
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_RepeatAfterKeyWindow_IsRefusedWithoutCallingProvider()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        await ApproveWithUnknownOutcomeAsync(transaction);
+        var firstRequestedAt = DateTime.UtcNow.AddHours(-25);
+        transaction.PayoutRequestedAt = firstRequestedAt;
+        _context.SaveChanges();
+
+        var retry = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        retry.IsSuccess.Should().BeFalse();
+        retry.StatusCode.Should().Be(409);
+        PayoutVerify(Times.Once());
+        var saved = Saved(transaction);
+        saved.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
+        saved.PayoutState.Should().Be(PayoutState.OutcomeUnknown);
+        saved.PayoutRequestedAt.Should().Be(firstRequestedAt);
+        PlayerBalance(player).Should().Be(1000);
+    }
+
+    /// <summary>
+    /// A repeat inside the window is sent and keeps the time of the first request, so repeats never extend the window
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_RepeatInsideKeyWindow_KeepsTheFirstRequestTime()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        await ApproveWithUnknownOutcomeAsync(transaction);
+        var firstRequestedAt = DateTime.UtcNow.AddHours(-23);
+        transaction.PayoutRequestedAt = firstRequestedAt;
+        _context.SaveChanges();
+
+        await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        PayoutVerify(Times.Exactly(2));
+        Saved(transaction).PayoutRequestedAt.Should().Be(firstRequestedAt);
+        Saved(transaction).PayoutState.Should().Be(PayoutState.OutcomeUnknown);
+    }
+
+    /// <summary>
+    /// A withdrawal converted by the upgrade script has no saved request time or destination, so a repeat is refused without calling the provider
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_RepeatWithoutSavedRequest_IsRefusedWithoutCallingProvider()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        transaction.PayoutState = PayoutState.OutcomeUnknown;
+        _context.SaveChanges();
+
+        var retry = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        retry.IsSuccess.Should().BeFalse();
+        retry.StatusCode.Should().Be(409);
+        PayoutVerify(Times.Never());
+        Saved(transaction).TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
+        Saved(transaction).PayoutState.Should().Be(PayoutState.OutcomeUnknown);
+        PlayerBalance(player).Should().Be(1000);
     }
 
     /// <summary>
@@ -418,7 +548,7 @@ public class TransactionServiceLiveModeTests : IDisposable
         retry.IsSuccess.Should().BeFalse();
         transaction.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
         transaction.IsProcessingSuccess.Should().BeNull();
-        transaction.ProcessingError.Should().Be(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN);
+        Saved(transaction).PayoutState.Should().Be(PayoutState.OutcomeUnknown);
         PlayerBalance(player).Should().Be(1000);
     }
 

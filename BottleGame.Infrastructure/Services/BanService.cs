@@ -4,8 +4,8 @@ using BottleGame.Application.DTOs.Responses;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Data;
-using BottleGame.Infrastructure.Services.Payments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -156,7 +156,7 @@ namespace BottleGame.Infrastructure.Services
                         .Where(mt => mt.PlayerId == request.PlayerId &&
                                     mt.TransactionTypeId == TransactionTypes.WITHDRAWAL &&
                                     mt.TransactionStatusId == TransactionStatuses.PENDING &&
-                                    mt.ProcessingError != LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN)
+                                    mt.PayoutState != PayoutState.OutcomeUnknown)
                         .ToListAsync();
 
                     foreach (var t in transactions)

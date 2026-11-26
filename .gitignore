@@ -12,6 +12,8 @@
 *.env
 *.sql
 !database/*.sql
+!database/upgrade/*.sql
+!BottleGame.IntegrationTests/Sql/*.sql
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

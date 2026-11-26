@@ -88,6 +88,30 @@ To run without Docker, create a database from the same SQL files and start the A
 dotnet run --project BottleGame.API
 ```
 
+### Upgrading an existing database
+
+`database/schema.sql` is only for new databases: Docker Compose runs it once, when the data volume is empty. A database created from an earlier version of it needs the scripts from `database/upgrade/`, in the order of their numbers; the API cannot read transactions without them. Each script can be run again safely.
+
+1. Stop the API. The old version must not run during or after the upgrade, because it would no longer see which payouts may already exist.
+2. Run the script:
+
+```bash
+psql -v ON_ERROR_STOP=1 -d <database> -f database/upgrade/001-payout-state.sql
+```
+
+3. Start the new version.
+
+With Docker Compose, either delete the demo data with `docker compose down -v`, or keep it:
+
+```bash
+docker compose stop api
+docker compose up -d --wait db
+docker compose exec -T db psql -v ON_ERROR_STOP=1 -U bottle -d bottlegame < database/upgrade/001-payout-state.sql
+docker compose up -d --build
+```
+
+`001-payout-state.sql` adds the payout columns to the transactions and moves the withdrawals with an unknown payout outcome from the error text to the new state. Their first request time and wallet were never stored, so they cannot be approved again: only the payout notification settles them.
+
 ### Configuration
 
 Secrets are never stored in the repository. `appsettings.json` contains `ENV_` placeholders, and values come from environment variables:
@@ -103,6 +127,7 @@ Secrets are never stored in the repository. `appsettings.json` contains `ENV_` p
 | `Processing__ShopId`, `Processing__SecretKey` | YooKassa shop credentials for accepting payments (required in `Live`) |
 | `Processing__ReturnUrl` | Page where YooKassa sends the player after paying (required in `Live`) |
 | `Processing__PayoutAgentId`, `Processing__PayoutSecretKey` | YooKassa payout gateway credentials; without them withdrawals are refused |
+| `Processing__PayoutRepeatWindowHours` | How long after the first request a payout with an unknown outcome may be sent again, from 1 to 24 hours, 24 by default |
 | `ForwardedHeaders__KnownProxies__0`, ... | IPs of reverse proxies whose `X-Forwarded-For` is trusted. Without them only a proxy on the same machine is trusted, so a client cannot fake the address used for rate limiting; behind a proxy on another host, list it here, otherwise every client shares the proxy's address |
 | `ApiDocs__Enabled` | `true` serves the OpenAPI document and the Scalar API reference outside Development |
 | `CORS__AllowedOrigins__0`, `__1`, ... | Allowed browser origins |
@@ -113,7 +138,7 @@ The deploy workflow builds `appsettings.Production.json` from GitHub Actions sec
 
 - Set the notification URL in the YooKassa dashboard (Integration, HTTP notifications) to `https://<your-api>/api/webhook/yookassa` and enable `payment.succeeded`, `payment.canceled`, `payout.succeeded` and `payout.canceled`.
 - YooKassa does not sign notifications. The API reads only the object id from the body and fetches the payment or payout from YooKassa with its own credentials, so a forged notification cannot move money. It also checks that the transaction type and the amount match.
-- Only a 4xx answer to the first payout request returns the money to the player. After a timeout, a network error or a 5xx answer the payout may exist, so the withdrawal stays pending and cannot be rejected by hand: the `payout.succeeded` or `payout.canceled` notification settles it, or approving it again repeats the request with the same idempotence key `payout-<transaction id>`. A refused repeat leaves it pending too, because the first request may still have made the payout. The withdrawal is marked before the request is sent, so a reject or a ban that comes during the request or after a crash leaves it alone. YooKassa keeps an idempotence key for a limited time (24 hours by its documentation), and the time of the first request is not stored, so check a withdrawal in the YooKassa dashboard before approving it again after that window.
+- Only a 4xx answer to the first payout request returns the money to the player. After a timeout, a network error or a 5xx answer the payout may exist, so the withdrawal stays pending and cannot be rejected by hand: the `payout.succeeded` or `payout.canceled` notification settles it, or approving it again repeats the request with the same idempotence key `payout-<transaction id>`. A refused repeat leaves it pending too, because the first request may still have made the payout. Before the request is sent, the withdrawal is saved with the payout state "outcome unknown", the request time, the payout method and the wallet, so a reject or a ban that comes during the request or after a crash leaves it alone. A repeat sends the saved amount, currency, method and wallet, even if the player has changed the settings since. YooKassa keeps an idempotence key for a limited time (24 hours by its documentation), so a repeat is refused once that window (`Processing__PayoutRepeatWindowHours`) has passed since the first request; the withdrawal stays pending for a check in the YooKassa dashboard.
 - A notification that contradicts the stored transaction (another payout id, a payout that succeeded after a refund, or any outcome for a withdrawal that was rejected by hand) is not applied. It is logged as critical and saved in the webhook log with the status `ManualCheck`.
 - Payouts use the SBP. A player's payout wallet is stored as `<phone>:<bank_id>`, where the bank id comes from YooKassa's `GET /v3/sbp_banks` list.
 - Only RUB is supported.
@@ -127,7 +152,7 @@ dotnet test
 ```
 
 - `BottleGame.UnitTests` covers the services on the EF Core in-memory provider: players, bans, game rounds, transactions in both processing modes, YooKassa client (against a fake HTTP handler), notifications, statistics and dependency injection.
-- `BottleGame.IntegrationTests` runs against a real PostgreSQL. Each run creates a throwaway database from `database/schema.sql` and `database/seed.sql`, so the tests also prove that the SQL scripts match the EF model. They cover duplicate and concurrent notifications, concurrent withdrawal approval, concurrent withdrawals of one balance and referral foreign keys. Without a server they are skipped; to run them:
+- `BottleGame.IntegrationTests` runs against a real PostgreSQL. Each run creates throwaway databases from `database/schema.sql` and `database/seed.sql`. The tests compare the columns of `schema.sql` with the EF model and run the upgrade script on a database of the previous schema. They also cover duplicate and concurrent notifications, concurrent withdrawal approval, concurrent withdrawals of one balance and referral foreign keys. Without a server they are skipped; to run them:
 
 ```bash
 docker run -d --name bottle-pg -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:17-alpine
@@ -159,6 +184,7 @@ This project was frozen before it was finished, and these points are left as the
 
 - **The client reports the game result.** `finish-game-round` takes the bet and the win flag from the mini-app, and the server only applies them. A player who calls the endpoint directly can credit any amount to their own balance. A real deployment needs the outcome to be drawn on the server, from the player's win chance, with the bet taken from a round the server has started.
 - **What this means for withdrawals.** A win skips the balance check (only a loss needs enough balance), so a player with an empty balance can still report wins of up to 1 000 000 per round. Every reported round, real or not, also counts toward the minimum number of rounds needed for a withdrawal. The payout limit (10% of the lower threshold of the application balance) applies to each transaction only, not to a player or a day, so a forged balance can be withdrawn in many small payouts. In `Simulated` mode this balance is virtual. In `Live` mode it is paid out as real money, so `Live` mode must not be used until the game result is drawn on the server.
+- **A stuck withdrawal cannot be closed through the API.** A withdrawal with an unknown payout outcome is settled only by a payout notification or by a successful repeat. If the repeat window has passed and no notification comes (for example, the first request never reached YooKassa), it stays pending: check it in the YooKassa dashboard and correct the database by hand.
 
 #### How the game result could be fixed
 

@@ -3,9 +3,9 @@ using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Data;
 using BottleGame.Infrastructure.Services;
-using BottleGame.Infrastructure.Services.Payments;
 using BottleGame.UnitTests.Fixtures;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -385,7 +385,7 @@ public class PaymentWebhookServiceTests : IDisposable
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
         var transaction = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
-        transaction.ProcessingError = LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN;
+        transaction.PayoutState = PayoutState.OutcomeUnknown;
         _context.SaveChanges();
         ProviderReportsPayout(transaction, ProviderOperationStatus.Succeeded);
 
@@ -395,7 +395,7 @@ public class PaymentWebhookServiceTests : IDisposable
         transaction.TransactionStatusId.Should().Be(TransactionStatuses.APPROVED);
         transaction.IsProcessingSuccess.Should().BeTrue();
         transaction.ProcessingOrderId.Should().Be(PAYOUT_ID);
-        transaction.ProcessingError.Should().BeNull();
+        _context.MoneyTransactions.AsNoTracking().Single(t => t.Id == transaction.Id).PayoutState.Should().Be(PayoutState.Completed);
         PlayerBalance(player).Should().Be(1000);
         AppBalance().Should().Be(99700);
     }
@@ -408,7 +408,7 @@ public class PaymentWebhookServiceTests : IDisposable
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
         var transaction = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
-        transaction.ProcessingError = LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN;
+        transaction.PayoutState = PayoutState.OutcomeUnknown;
         _context.SaveChanges();
         ProviderReportsPayout(transaction, ProviderOperationStatus.Canceled, "yoo_money/rejected_by_payee");
 
@@ -418,6 +418,7 @@ public class PaymentWebhookServiceTests : IDisposable
         transaction.TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
         transaction.IsProcessingSuccess.Should().BeFalse();
         transaction.ProcessingOrderId.Should().Be(PAYOUT_ID);
+        _context.MoneyTransactions.AsNoTracking().Single(t => t.Id == transaction.Id).PayoutState.Should().Be(PayoutState.Refused);
         PlayerBalance(player).Should().Be(1300);
         AppBalance().Should().Be(100000);
     }

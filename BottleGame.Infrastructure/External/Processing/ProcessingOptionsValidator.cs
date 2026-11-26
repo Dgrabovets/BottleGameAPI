@@ -34,6 +34,12 @@ namespace BottleGame.Infrastructure.External.Processing
                 errors.Add("Processing:ReturnUrl is required in Live mode and must be an absolute http or https address.");
             }
 
+            // A longer window would let a repeat reach the provider after it has forgotten the idempotence key
+            if (options.PayoutRepeatWindowHours is < 1 or > 24)
+            {
+                errors.Add("Processing:PayoutRepeatWindowHours must be from 1 to 24 in Live mode.");
+            }
+
             return errors.Count == 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(errors);
         }
     }

@@ -68,4 +68,31 @@ public class ProcessingOptionsValidatorTests
 
         _validator.Validate(null, options).Failed.Should().BeTrue();
     }
+
+    /// <summary>
+    /// A payout may be repeated for 24 hours by default, the lifetime of an idempotence key at the provider
+    /// </summary>
+    [Fact]
+    public void PayoutRepeatWindow_IsADayByDefault()
+    {
+        new ProcessingOptions().PayoutRepeatWindowHours.Should().Be(24);
+    }
+
+    /// <summary>
+    /// Live mode accepts a window from one hour up to the lifetime of the idempotence key
+    /// </summary>
+    /// <param name="hours">Window in hours</param>
+    /// <param name="valid">Whether the settings pass</param>
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(1, true)]
+    [InlineData(24, true)]
+    [InlineData(25, false)]
+    public void Live_PayoutRepeatWindow_MustStayWithinTheKeyLifetime(int hours, bool valid)
+    {
+        var options = ValidLive();
+        options.PayoutRepeatWindowHours = hours;
+
+        _validator.Validate(null, options).Succeeded.Should().Be(valid);
+    }
 }

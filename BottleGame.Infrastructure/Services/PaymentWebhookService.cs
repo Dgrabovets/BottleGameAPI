@@ -4,6 +4,7 @@ using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Data;
 using BottleGame.Infrastructure.External.YooKassa.Models;
 using Microsoft.EntityFrameworkCore;
@@ -323,6 +324,7 @@ namespace BottleGame.Infrastructure.Services
             // The id is missing when creating the payout timed out, the notification is then the first to tell it
             transaction.ProcessingOrderId = payout.Id;
             transaction.ProcessingError = null;
+            transaction.PayoutState = PayoutState.Completed;
             appBalance.Amount -= transaction.Amount;
 
             transaction.ProcessedAt = DateTime.UtcNow;
@@ -345,6 +347,7 @@ namespace BottleGame.Infrastructure.Services
             transaction.TransactionStatusId = TransactionStatuses.REJECTED;
             transaction.ProcessingOrderId = payout.Id;
             transaction.ProcessingError = reason;
+            transaction.PayoutState = PayoutState.Refused;
             transaction.Player.Balance.Amount += transaction.Amount;
 
             transaction.ProcessedAt = DateTime.UtcNow;

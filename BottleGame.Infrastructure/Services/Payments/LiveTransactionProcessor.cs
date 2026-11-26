@@ -3,9 +3,12 @@ using BottleGame.Application.DTOs.Processing;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Data;
+using BottleGame.Infrastructure.External.Processing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace BottleGame.Infrastructure.Services.Payments
 {
@@ -15,13 +18,6 @@ namespace BottleGame.Infrastructure.Services.Payments
     public class LiveTransactionProcessor : ITransactionProcessor
     {
         #region Fields
-
-        /// <summary>
-        /// Processing error that marks a pending withdrawal whose payout may already exist at the provider.
-        /// Such a withdrawal is resolved by the payout notification or by approving it again, never by a manual rejection or a ban.
-        /// The text is stored in the database and compared exactly, so it must never change
-        /// </summary>
-        public const string PAYOUT_OUTCOME_UNKNOWN = "Payout outcome unknown: wait for the YooKassa notification or approve again to repeat the request with the same idempotence key";
 
         /// <summary>
         /// Database context
@@ -37,6 +33,11 @@ namespace BottleGame.Infrastructure.Services.Payments
         /// Payment provider
         /// </summary>
         private readonly IPaymentProvider _paymentProvider;
+
+        /// <summary>
+        /// Payment provider settings
+        /// </summary>
+        private readonly ProcessingOptions _options;
 
         /// <summary>
         /// Maximum share of the lower threshold of the application balance available for a single payout
@@ -56,11 +57,16 @@ namespace BottleGame.Infrastructure.Services.Payments
         /// <param name="context">Database context</param>
         /// <param name="logger">Logger</param>
         /// <param name="paymentProvider">Payment provider</param>
-        public LiveTransactionProcessor(ApplicationDbContext context, ILogger<LiveTransactionProcessor> logger, IPaymentProvider paymentProvider)
+        /// <param name="options">Payment provider settings</param>
+        public LiveTransactionProcessor(ApplicationDbContext context,
+                                        ILogger<LiveTransactionProcessor> logger,
+                                        IPaymentProvider paymentProvider,
+                                        IOptions<ProcessingOptions> options)
         {
             _context = context;
             _logger = logger;
             _paymentProvider = paymentProvider;
+            _options = options.Value;
         }
 
         #region Processing
@@ -134,9 +140,9 @@ namespace BottleGame.Infrastructure.Services.Payments
         /// <inheritdoc/>
         public async Task<Result> ApproveWithdrawalAsync(MoneyTransaction transaction, GameParams gameParams, AppBalance appBalance)
         {
-            // A marked row has already been sent once. The checks below only guard the first request: a deposit or a new threshold
-            // in between must not strand a payout that may already exist
-            var isRepeat = transaction.ProcessingError == PAYOUT_OUTCOME_UNKNOWN;
+            // An unknown outcome means that the payout has already been requested once. The checks below only guard the first request:
+            // a deposit or a new threshold in between must not strand a payout that may already exist
+            var isRepeat = transaction.PayoutState == PayoutState.OutcomeUnknown;
 
             if (!isRepeat)
             {
@@ -145,35 +151,45 @@ namespace BottleGame.Infrastructure.Services.Payments
                 {
                     return check;
                 }
+
+                var playerOptions = transaction.Player.PlayerOptions!;
+
+                // The state and the request are saved before the provider is called. A crash, a failed final save or a concurrent reject
+                // then cannot hide a payout that really happened: a reject that read the row earlier loses on the row version,
+                // a later one sees the state
+                transaction.PayoutState = PayoutState.OutcomeUnknown;
+                transaction.PayoutRequestedAt = DateTime.UtcNow;
+                transaction.PayoutWallet = playerOptions.Wallet ?? string.Empty;
+                transaction.PaymentGateway = playerOptions.PayoutMethod;
+                transaction.Currency = playerOptions.Currency ?? DEFAULT_CURRENCY;
+                transaction.ProcessingError = null;
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    _logger.LogWarning("Transaction {TransactionId} was changed by another request before the payout", transaction.Id);
+                    return Result.Conflict("The transaction was already changed by another request");
+                }
             }
-
-            var playerOptions = transaction.Player.PlayerOptions!;
-            var currency = playerOptions.Currency ?? DEFAULT_CURRENCY;
-
-            // The mark is saved before the request. A crash, a failed final save or a concurrent reject then cannot hide a payout
-            // that really happened: a reject that read the row earlier loses on the row version, a later one sees the mark
-            transaction.PaymentGateway = playerOptions.PayoutMethod;
-            transaction.Currency = currency;
-            transaction.ProcessingError = PAYOUT_OUTCOME_UNKNOWN;
-            try
+            else if (transaction.PayoutRequestedAt is not { } requestedAt
+                     || DateTime.UtcNow - requestedAt >= TimeSpan.FromHours(_options.PayoutRepeatWindowHours))
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                _logger.LogWarning("Transaction {TransactionId} was changed by another request before the payout", transaction.Id);
-                return Result.Conflict("The transaction was already changed by another request");
+                // The provider may have forgotten the idempotence key, so a repeat could make a second payout.
+                // Without a saved time (a row converted by the upgrade script) the age of the key is unknown
+                _logger.LogWarning("The payout for transaction {TransactionId} can no longer be repeated, requested at {RequestedAt}", transaction.Id, transaction.PayoutRequestedAt);
+                return Result.Conflict("The payout can no longer be repeated safely, because its first request is too old or was not recorded. The withdrawal stays pending: check it in the YooKassa dashboard");
             }
 
-            // The transaction id is the idempotence key at the provider, so a repeat asks for the same payout.
-            // shortcut: YooKassa keeps a key for a limited time (24 hours by its documentation) and the time of the first request
-            // is not stored, so a repeat after that window could make a second payout; storing it needs a schema change
+            // The transaction id is the idempotence key at the provider and the rest is what was saved with the first request,
+            // so a repeat asks for the same payout even if the player has changed the settings since
             var payoutRequest = new CreatePayoutRequest(
                 transaction.Id,
                 transaction.Amount,
-                currency,
-                playerOptions.PayoutMethod,
-                playerOptions.Wallet ?? string.Empty,
+                transaction.Currency!,
+                transaction.PaymentGateway!,
+                transaction.PayoutWallet!,
                 $"Withdrawal, transaction {transaction.Id}");
 
             CreatePayoutResult payout;
@@ -183,22 +199,23 @@ namespace BottleGame.Infrastructure.Services.Payments
             }
             catch (Exception ex)
             {
-                // A timeout, a network error or a 5xx answer: the payout may already exist, so the mark stays and the money is not returned
+                // A timeout, a network error or a 5xx answer: the payout may already exist, so the state stays unknown and the money is not returned
                 _logger.LogError(ex, "Outcome of the payout for transaction {TransactionId} is unknown, the withdrawal stays pending", transaction.Id);
-                return Result.InternalError(PAYOUT_OUTCOME_UNKNOWN);
+                return Result.InternalError("Payout outcome unknown, the withdrawal stays pending: wait for the YooKassa notification or approve again to repeat the request with the same idempotence key");
             }
 
             if (!payout.IsSuccess && isRepeat)
             {
-                // A refused repeat only proves that the repeat was refused (for example, the wallet changed since the first request),
-                // the first request may still have made the payout, so the mark stays
+                // A refused repeat only proves that the repeat was refused (for example, the payout gateway settings changed since
+                // the first request), the first request may still have made the payout, so the state stays unknown
                 _logger.LogError("The repeated payout for transaction {TransactionId} was refused: {ErrorMessage}. The withdrawal stays pending", transaction.Id, payout.Error);
-                return Result.InternalError(PAYOUT_OUTCOME_UNKNOWN);
+                return Result.InternalError("The repeated payout was refused, but the first request may have made it. The withdrawal stays pending: wait for the YooKassa notification or check it in the YooKassa dashboard");
             }
 
             if (!payout.IsSuccess)
             {
-                // A 4xx answer to the first request: no payout was made, the mark is replaced by the error and the money is returned
+                // A 4xx answer to the first request: no payout was made, so the money is returned
+                transaction.PayoutState = PayoutState.Refused;
                 await RefundFailedWithdrawalAsync(transaction, payout.Error ?? "The payout was refused");
 
                 _logger.LogError("Error while creating a payout for player {PlayerId}: {ErrorMessage}", transaction.PlayerId, payout.Error);
@@ -206,7 +223,7 @@ namespace BottleGame.Infrastructure.Services.Payments
             }
 
             transaction.ProcessingOrderId = payout.PayoutId;
-            transaction.ProcessingError = null;
+            transaction.PayoutState = PayoutState.Completed;
             transaction.TransactionStatusId = TransactionStatuses.APPROVED;
 
             return Result.Success();

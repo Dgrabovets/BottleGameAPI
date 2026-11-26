@@ -1,4 +1,5 @@
 ﻿using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -67,6 +68,19 @@ namespace BottleGame.Infrastructure.Data.Configurations
             builder.Property(t => t.ProcessingError)
                 .HasColumnName("ProcessingError")
                 .HasMaxLength(500);
+
+            // Payout fields
+            builder.Property(t => t.PayoutState)
+                .HasColumnName("PayoutState")
+                .HasDefaultValue(PayoutState.NotRequested)
+                .IsRequired();
+
+            builder.Property(t => t.PayoutRequestedAt)
+                .HasColumnName("PayoutRequestedAt");
+
+            builder.Property(t => t.PayoutWallet)
+                .HasColumnName("PayoutWallet")
+                .HasMaxLength(100);
 
             // Time fields
             builder.Property(t => t.CreatedAt)

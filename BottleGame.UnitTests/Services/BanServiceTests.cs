@@ -1,8 +1,8 @@
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Services;
-using BottleGame.Infrastructure.Services.Payments;
 using BottleGame.UnitTests.Fixtures;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -218,7 +218,7 @@ public class BanServiceTests : IDisposable
     {
         // Arrange
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var marked = new MoneyTransaction { PlayerId = player.Id, Amount = 300, TransactionTypeId = TransactionTypes.WITHDRAWAL, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow, ProcessingError = LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN };
+        var marked = new MoneyTransaction { PlayerId = player.Id, Amount = 300, TransactionTypeId = TransactionTypes.WITHDRAWAL, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow, PayoutState = PayoutState.OutcomeUnknown };
         var plain = new MoneyTransaction { PlayerId = player.Id, Amount = 200, TransactionTypeId = TransactionTypes.WITHDRAWAL, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow };
         _context.MoneyTransactions.AddRange(marked, plain);
         await _context.SaveChangesAsync();

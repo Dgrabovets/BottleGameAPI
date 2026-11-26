@@ -2,11 +2,14 @@ using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Data;
+using BottleGame.Infrastructure.External.Processing;
 using BottleGame.Infrastructure.Services;
 using BottleGame.Infrastructure.Services.Payments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace BottleGame.IntegrationTests;
 
@@ -288,7 +291,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
     }
 
     /// <summary>
-    /// A reject that arrives while the payout request is in flight sees the saved mark and is refused, so the player is not refunded for a payout that may be real
+    /// A reject that arrives while the payout request is in flight sees the saved payout state and is refused, so the player is not refunded for a payout that may be real
     /// </summary>
     [PostgresFact]
     public async Task RejectDuringPayoutRequest_IsRefusedWithoutRefund()
@@ -301,7 +304,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
             new(context,
                 NullLogger<TransactionService>.Instance,
                 new FixedCache(await context.GameParams.AsNoTracking().FirstAsync()),
-                new LiveTransactionProcessor(context, NullLogger<LiveTransactionProcessor>.Instance, provider));
+                new LiveTransactionProcessor(context, NullLogger<LiveTransactionProcessor>.Instance, provider, Options.Create(new ProcessingOptions())));
 
         var provider = new TimeoutPayoutProvider(async () =>
         {
@@ -322,7 +325,11 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
         await using var verify = _database.CreateContext();
         var transaction = await verify.MoneyTransactions.AsNoTracking().SingleAsync(t => t.Id == transactionId);
         Assert.Equal(TransactionStatuses.PENDING, transaction.TransactionStatusId);
-        Assert.Equal(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN, transaction.ProcessingError);
+        Assert.Equal(PayoutState.OutcomeUnknown, transaction.PayoutState);
+        Assert.NotNull(transaction.PayoutRequestedAt);
+        Assert.Equal("sbp", transaction.PaymentGateway);
+        Assert.Equal("79001234567:100000000111", transaction.PayoutWallet);
+        Assert.Null(transaction.ProcessingError);
         Assert.Equal(1000, (await verify.PlayersBalances.AsNoTracking().SingleAsync(b => b.PlayerId == playerId)).Amount);
     }
 }

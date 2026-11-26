@@ -4,6 +4,7 @@ using BottleGame.Application.DTOs.Responses;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Data;
 using BottleGame.Infrastructure.Services.Payments;
 using Microsoft.EntityFrameworkCore;
@@ -269,10 +270,10 @@ namespace BottleGame.Infrastructure.Services
             if (request.TransactionStatusId == rejectedStatusId)
             {
                 // The payout may already exist at the provider, so a refund here could pay the player twice
-                if (transaction.ProcessingError == LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN)
+                if (transaction.PayoutState == PayoutState.OutcomeUnknown)
                 {
                     _logger.LogWarning("Transaction {TransactionId} has a payout with an unknown outcome and cannot be rejected", transactionId);
-                    return Result.Conflict(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN);
+                    return Result.Conflict("The payout outcome is unknown, so the withdrawal cannot be rejected: the player may already have received the money");
                 }
 
                 transaction.Player.Balance.Amount += transaction.Amount;

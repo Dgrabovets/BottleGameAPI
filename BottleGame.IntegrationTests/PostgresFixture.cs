@@ -146,7 +146,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     /// </summary>
     /// <param name="connectionString">Connection string</param>
     /// <param name="sql">Sql</param>
-    private static async Task ExecuteAsync(string connectionString, string sql)
+    internal static async Task ExecuteAsync(string connectionString, string sql)
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
@@ -158,7 +158,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     /// Finds the repository's database folder by walking up from the test output
     /// </summary>
     /// <returns>The created value</returns>
-    private static string FindDatabaseFolder()
+    internal static string FindDatabaseFolder()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
         {
