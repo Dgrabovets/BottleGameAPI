@@ -130,8 +130,8 @@ public sealed class StatisticsTestDataBuilder
     {
         return AddTransaction(
             playerId,
-            TransactionTypes.Deposit,
-            TransactionStatuses.Approved,
+            TransactionTypes.DEPOSIT,
+            TransactionStatuses.APPROVED,
             amount,
             isProcessingSuccess: true,
             processedAt: processedAt,
@@ -148,8 +148,8 @@ public sealed class StatisticsTestDataBuilder
     {
         return AddTransaction(
             playerId,
-            TransactionTypes.Withdrawal,
-            TransactionStatuses.Approved,
+            TransactionTypes.WITHDRAWAL,
+            TransactionStatuses.APPROVED,
             amount,
             isProcessingSuccess: true,
             processedAt: processedAt,
@@ -163,8 +163,8 @@ public sealed class StatisticsTestDataBuilder
     {
         return AddTransaction(
             playerId,
-            TransactionTypes.Withdrawal,
-            TransactionStatuses.Pending,
+            TransactionTypes.WITHDRAWAL,
+            TransactionStatuses.PENDING,
             amount,
             isProcessingSuccess: null,
             processedAt: null);
@@ -177,8 +177,8 @@ public sealed class StatisticsTestDataBuilder
     {
         return AddTransaction(
             playerId,
-            TransactionTypes.Withdrawal,
-            TransactionStatuses.Approved,
+            TransactionTypes.WITHDRAWAL,
+            TransactionStatuses.APPROVED,
             amount,
             isProcessingSuccess: null,
             processedAt: null);
@@ -191,8 +191,8 @@ public sealed class StatisticsTestDataBuilder
     {
         return AddTransaction(
             playerId,
-            TransactionTypes.Deposit,
-            TransactionStatuses.Pending,
+            TransactionTypes.DEPOSIT,
+            TransactionStatuses.PENDING,
             amount,
             isProcessingSuccess: null,
             processedAt: null);
@@ -205,8 +205,8 @@ public sealed class StatisticsTestDataBuilder
     {
         return AddTransaction(
             playerId,
-            TransactionTypes.Deposit,
-            TransactionStatuses.Rejected,
+            TransactionTypes.DEPOSIT,
+            TransactionStatuses.REJECTED,
             amount,
             isProcessingSuccess: false,
             processedAt: processedAt);

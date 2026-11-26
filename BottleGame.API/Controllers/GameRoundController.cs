@@ -50,7 +50,7 @@ namespace BottleGame.API.Controllers
         /// <response code="403">The player is banned</response>
         /// <response code="404">The player was not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -66,7 +66,7 @@ namespace BottleGame.API.Controllers
             }
 
             var requestingPlayerId = User.GetUserId();
-            var isAdmin = User.IsInRole(RoleNames.Admin);
+            var isAdmin = User.IsInRole(RoleNames.ADMIN);
 
             var result = await _gameRoundService.FinishGameRound(playerId, request, requestingPlayerId, isAdmin);
             return ToActionResult(result);
@@ -80,7 +80,7 @@ namespace BottleGame.API.Controllers
         /// <response code="404">The player was not found</response>
         /// <response code="403">The player is banned</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(typeof(GetPlayerPlayedRoundsResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -99,7 +99,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">Profit</response>
         /// <response code="404">No rounds were found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(typeof(GetProfitResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

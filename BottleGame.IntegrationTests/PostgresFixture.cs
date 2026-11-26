@@ -35,7 +35,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     /// </summary>
     public async Task InitializeAsync()
     {
-        _serverConnection = Environment.GetEnvironmentVariable(PostgresFactAttribute.EnvironmentVariable);
+        _serverConnection = Environment.GetEnvironmentVariable(PostgresFactAttribute.ENVIRONMENT_VARIABLE);
         if (string.IsNullOrWhiteSpace(_serverConnection))
         {
             return;
@@ -131,7 +131,7 @@ public sealed class PostgresFixture : IAsyncLifetime
             PlayerId = playerId,
             Amount = amount,
             TransactionTypeId = typeId,
-            TransactionStatusId = Domain.Constants.TransactionStatuses.Pending,
+            TransactionStatusId = Domain.Constants.TransactionStatuses.PENDING,
             CreatedAt = DateTime.UtcNow
         };
 

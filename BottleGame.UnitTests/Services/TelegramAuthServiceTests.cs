@@ -16,7 +16,7 @@ public class TelegramAuthServiceTests
     /// <summary>
     /// Bot token used to sign the test data
     /// </summary>
-    private const string BotToken = "123456:test-bot-token";
+    private const string BOT_TOKEN = "123456:test-bot-token";
 
     /// <summary>
     /// Creates the service with the test bot token and an optional maximum age of initData
@@ -25,7 +25,7 @@ public class TelegramAuthServiceTests
     /// <returns>The service under test</returns>
     private static TelegramAuthService CreateService(int? maxAgeMinutes = null)
     {
-        var settings = new Dictionary<string, string?> { ["TelegramBotToken"] = BotToken };
+        var settings = new Dictionary<string, string?> { ["TelegramBotToken"] = BOT_TOKEN };
         if (maxAgeMinutes is not null)
         {
             settings["Telegram:InitDataMaxAgeMinutes"] = maxAgeMinutes.Value.ToString();
@@ -41,7 +41,7 @@ public class TelegramAuthServiceTests
     /// <param name="authDate">Time Telegram signed the data</param>
     /// <param name="botToken">Token to sign with</param>
     /// <returns>Signed initData as a query string</returns>
-    private static string SignedInitData(DateTimeOffset authDate, string botToken = BotToken)
+    private static string SignedInitData(DateTimeOffset authDate, string botToken = BOT_TOKEN)
     {
         var fields = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {

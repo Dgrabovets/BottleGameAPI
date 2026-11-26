@@ -87,9 +87,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(RoleNames.Admin, policy => policy.RequireRole(RoleNames.Admin))
-    .AddPolicy(RoleNames.Moderator, policy => policy.RequireRole(RoleNames.Moderator))
-    .AddPolicy(RoleNames.Player, policy => policy.RequireRole(RoleNames.Player));
+    .AddPolicy(RoleNames.ADMIN, policy => policy.RequireRole(RoleNames.ADMIN))
+    .AddPolicy(RoleNames.MODERATOR, policy => policy.RequireRole(RoleNames.MODERATOR))
+    .AddPolicy(RoleNames.PLAYER, policy => policy.RequireRole(RoleNames.PLAYER));
 
 #endregion
 
@@ -155,7 +155,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .WithExposedHeaders(BaseApiController.TotalCountHeader)
+              .WithExposedHeaders(BaseApiController.TOTAL_COUNT_HEADER)
               .AllowCredentials();
     });
 });

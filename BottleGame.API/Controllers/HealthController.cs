@@ -30,7 +30,7 @@ namespace BottleGame.API.Controllers
         /// <summary>
         /// Prefix of the log messages
         /// </summary>
-        private const string Prefix = "[Health Controller]";
+        private const string PREFIX = "[Health Controller]";
 
         #endregion Fields
 
@@ -60,7 +60,7 @@ namespace BottleGame.API.Controllers
         {
             try
             {
-                _logger.LogInformation("{Prefix} Health check initiated", Prefix);
+                _logger.LogInformation("{Prefix} Health check initiated", PREFIX);
 
                 var version = Assembly.GetExecutingAssembly().GetVersionText();
                 var checks = new Dictionary<string, object>
@@ -72,12 +72,12 @@ namespace BottleGame.API.Controllers
                     ["uptime"] = Environment.TickCount64 / 1000
                 };
 
-                _logger.LogInformation("{Prefix} Health check completed successfully", Prefix);
+                _logger.LogInformation("{Prefix} Health check completed successfully", PREFIX);
                 return Ok(checks);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Health check failed", Prefix);
+                _logger.LogError(ex, "{Prefix} Health check failed", PREFIX);
                 return StatusCode(500, new
                 {
                     status = "unhealthy",

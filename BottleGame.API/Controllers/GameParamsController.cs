@@ -40,7 +40,7 @@ namespace BottleGame.API.Controllers
         /// <summary>
         /// Log prefix
         /// </summary>
-        private const string Prefix = "[GameParams Controller]";
+        private const string PREFIX = "[GameParams Controller]";
 
         #endregion Fields
 
@@ -65,7 +65,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">Game parameters</response>
         /// <response code="404">The parameters were not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -79,17 +79,17 @@ namespace BottleGame.API.Controllers
 
                 if (gameParams is null)
                 {
-                    _logger.LogWarning("{Prefix} Game parameters not found", Prefix);
+                    _logger.LogWarning("{Prefix} Game parameters not found", PREFIX);
                     return NotFound($"Game parameters not found");
                 }
 
-                _logger.LogInformation("{Prefix} Game parameters found (from the cache)", Prefix);
+                _logger.LogInformation("{Prefix} Game parameters found (from the cache)", PREFIX);
 
                 return Ok(gameParams);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while getting the game parameters", Prefix);
+                _logger.LogError(ex, "{Prefix} Error while getting the game parameters", PREFIX);
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -101,7 +101,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">The parameters were changed</response>
         /// <response code="404">The parameters were not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -113,7 +113,7 @@ namespace BottleGame.API.Controllers
                 // Check the input data
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("{Prefix} Invalid data for changing the game parameters", Prefix);
+                    _logger.LogWarning("{Prefix} Invalid data for changing the game parameters", PREFIX);
                     return BadRequest(ModelState);
                 }
 
@@ -122,7 +122,7 @@ namespace BottleGame.API.Controllers
 
                 if (gameParams is null)
                 {
-                    _logger.LogWarning("{Prefix} Game parameters not found", Prefix);
+                    _logger.LogWarning("{Prefix} Game parameters not found", PREFIX);
                     return NotFound($"Game parameters not found");
                 }
 
@@ -133,13 +133,13 @@ namespace BottleGame.API.Controllers
                 // Invalidate the cache after the update
                 _cacheService.InvalidateGameParams();
 
-                _logger.LogInformation("{Prefix} Game parameters updated, cache invalidated", Prefix);
+                _logger.LogInformation("{Prefix} Game parameters updated, cache invalidated", PREFIX);
 
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while updating the game parameters", Prefix);
+                _logger.LogError(ex, "{Prefix} Error while updating the game parameters", PREFIX);
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -149,7 +149,7 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <response code="200">List of all payout methods</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [HttpGet("get-all-payout-methods")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -171,7 +171,7 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <response code="200">List of all deposit methods</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [HttpGet("get-all-payment-methods")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -193,7 +193,7 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <response code="200">List of all currencies</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [HttpGet("get-all-currencies")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

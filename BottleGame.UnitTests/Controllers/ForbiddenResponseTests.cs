@@ -29,7 +29,7 @@ public class ForbiddenResponseTests
         HttpContext = new DefaultHttpContext
         {
             User = new ClaimsPrincipal(new ClaimsIdentity(
-                [new Claim(ClaimTypes.NameIdentifier, playerId.ToString()), new Claim(ClaimTypes.Role, RoleNames.Player)],
+                [new Claim(ClaimTypes.NameIdentifier, playerId.ToString()), new Claim(ClaimTypes.Role, RoleNames.PLAYER)],
                 "Test"))
         }
     };

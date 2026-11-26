@@ -23,7 +23,7 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Prefix of the log messages
         /// </summary>
-        private const string Prefix = "[Database Health]";
+        private const string PREFIX = "[Database Health]";
 
         #endregion Fields
 
@@ -47,16 +47,16 @@ namespace BottleGame.Infrastructure.Services
         {
             try
             {
-                _logger.LogDebug("{Prefix} Checking database connection", Prefix);
+                _logger.LogDebug("{Prefix} Checking database connection", PREFIX);
 
                 if (!await _context.Database.CanConnectAsync())
                 {
-                    _logger.LogWarning("{Prefix} Database connection failed", Prefix);
+                    _logger.LogWarning("{Prefix} Database connection failed", PREFIX);
                     return new { status = "error", message = "Cannot connect to database" };
                 }
 
                 var playerCount = await _context.Players.CountAsync();
-                _logger.LogDebug("{Prefix} Database check passed. Players: {Count}", Prefix, playerCount);
+                _logger.LogDebug("{Prefix} Database check passed. Players: {Count}", PREFIX, playerCount);
 
                 return new
                 {
@@ -67,7 +67,7 @@ namespace BottleGame.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Database health check failed", Prefix);
+                _logger.LogError(ex, "{Prefix} Database health check failed", PREFIX);
                 return new { status = "error", message = "Database query failed" };
             }
         }

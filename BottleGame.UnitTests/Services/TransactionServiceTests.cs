@@ -51,16 +51,16 @@ public class TransactionServiceTests : IDisposable
         _cacheServiceMock.Setup(x => x.GetTransactionTypesAsync()).ReturnsAsync(
             new Dictionary<int, string>
             {
-                { TransactionTypes.Deposit, "Пополнение" },
-                { TransactionTypes.Withdrawal, "Вывод" }
+                { TransactionTypes.DEPOSIT, "Пополнение" },
+                { TransactionTypes.WITHDRAWAL, "Вывод" }
             });
 
         _cacheServiceMock.Setup(x => x.GetTransactionStatusesAsync()).ReturnsAsync(
             new Dictionary<int, string>
             {
-                { TransactionStatuses.Pending, "В ожидании" },
-                { TransactionStatuses.Approved, "Одобрено" },
-                { TransactionStatuses.Rejected, "Отклонено" }
+                { TransactionStatuses.PENDING, "В ожидании" },
+                { TransactionStatuses.APPROVED, "Одобрено" },
+                { TransactionStatuses.REJECTED, "Отклонено" }
             });
 
         var processor = new SimulatedTransactionProcessor(_context, new Mock<ILogger<SimulatedTransactionProcessor>>().Object);
@@ -138,7 +138,7 @@ public class TransactionServiceTests : IDisposable
     public async Task UpdateTransactionStatus_TransactionNotFound_ReturnsNotFound()
     {
         // Arrange
-        var request = new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.Approved };
+        var request = new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.APPROVED };
 
         // Act
         var result = await _service.UpdateTransactionStatus(999, request);
@@ -160,15 +160,15 @@ public class TransactionServiceTests : IDisposable
         {
             PlayerId = player.Id,
             Amount = 100,
-            TransactionTypeId = TransactionTypes.Withdrawal,
-            TransactionStatusId = TransactionStatuses.Pending,
+            TransactionTypeId = TransactionTypes.WITHDRAWAL,
+            TransactionStatusId = TransactionStatuses.PENDING,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.MoneyTransactions.Add(transaction);
         await _context.SaveChangesAsync();
 
-        var request = new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.Pending };
+        var request = new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.PENDING };
 
         // Act
         var result = await _service.UpdateTransactionStatus(transaction.Id, request);
@@ -207,8 +207,8 @@ public class TransactionServiceTests : IDisposable
         {
             PlayerId = player.Id,
             Amount = 100,
-            TransactionTypeId = TransactionTypes.Deposit,
-            TransactionStatusId = TransactionStatuses.Pending,
+            TransactionTypeId = TransactionTypes.DEPOSIT,
+            TransactionStatusId = TransactionStatuses.PENDING,
             CreatedAt = DateTime.UtcNow
         });
 
@@ -256,16 +256,16 @@ public class TransactionServiceTests : IDisposable
             {
                 PlayerId = player.Id,
                 Amount = 100,
-                TransactionTypeId = TransactionTypes.Deposit,
-                TransactionStatusId = TransactionStatuses.Pending,
+                TransactionTypeId = TransactionTypes.DEPOSIT,
+                TransactionStatusId = TransactionStatuses.PENDING,
                 CreatedAt = DateTime.UtcNow
             },
             new MoneyTransaction
             {
                 PlayerId = player.Id,
                 Amount = 50,
-                TransactionTypeId = TransactionTypes.Withdrawal,
-                TransactionStatusId = TransactionStatuses.Pending,
+                TransactionTypeId = TransactionTypes.WITHDRAWAL,
+                TransactionStatusId = TransactionStatuses.PENDING,
                 CreatedAt = DateTime.UtcNow
             }
         );
@@ -299,16 +299,16 @@ public class TransactionServiceTests : IDisposable
             {
                 PlayerId = player.Id,
                 Amount = 2000,
-                TransactionTypeId = TransactionTypes.Deposit,
-                TransactionStatusId = TransactionStatuses.Approved,
+                TransactionTypeId = TransactionTypes.DEPOSIT,
+                TransactionStatusId = TransactionStatuses.APPROVED,
                 CreatedAt = DateTime.UtcNow
             },
             new MoneyTransaction
             {
                 PlayerId = player.Id,
                 Amount = 10000,
-                TransactionTypeId = TransactionTypes.Withdrawal,
-                TransactionStatusId = TransactionStatuses.Pending,
+                TransactionTypeId = TransactionTypes.WITHDRAWAL,
+                TransactionStatusId = TransactionStatuses.PENDING,
                 CreatedAt = DateTime.UtcNow
             }
         );
@@ -337,16 +337,16 @@ public class TransactionServiceTests : IDisposable
             {
                 PlayerId = active.Id,
                 Amount = 100,
-                TransactionTypeId = TransactionTypes.Deposit,
-                TransactionStatusId = TransactionStatuses.Pending,
+                TransactionTypeId = TransactionTypes.DEPOSIT,
+                TransactionStatusId = TransactionStatuses.PENDING,
                 CreatedAt = DateTime.UtcNow
             },
             new MoneyTransaction
             {
                 PlayerId = banned.Id,
                 Amount = 500,
-                TransactionTypeId = TransactionTypes.Deposit,
-                TransactionStatusId = TransactionStatuses.Pending,
+                TransactionTypeId = TransactionTypes.DEPOSIT,
+                TransactionStatusId = TransactionStatuses.PENDING,
                 CreatedAt = DateTime.UtcNow
             }
         );
@@ -374,16 +374,16 @@ public class TransactionServiceTests : IDisposable
             {
                 PlayerId = player.Id,
                 Amount = 100,
-                TransactionTypeId = TransactionTypes.Deposit,
-                TransactionStatusId = TransactionStatuses.Pending,
+                TransactionTypeId = TransactionTypes.DEPOSIT,
+                TransactionStatusId = TransactionStatuses.PENDING,
                 CreatedAt = DateTime.UtcNow
             },
             new MoneyTransaction
             {
                 PlayerId = player.Id,
                 Amount = 50,
-                TransactionTypeId = TransactionTypes.Withdrawal,
-                TransactionStatusId = TransactionStatuses.Pending,
+                TransactionTypeId = TransactionTypes.WITHDRAWAL,
+                TransactionStatusId = TransactionStatuses.PENDING,
                 CreatedAt = DateTime.UtcNow
             }
         );
@@ -391,11 +391,11 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _service.GetAllTransactions(TransactionTypes.Deposit);
+        var result = await _service.GetAllTransactions(TransactionTypes.DEPOSIT);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value!.All(r => r.Transactions.All(t => t.TypeId == TransactionTypes.Deposit)).Should().BeTrue();
+        result.Value!.All(r => r.Transactions.All(t => t.TypeId == TransactionTypes.DEPOSIT)).Should().BeTrue();
     }
 
     /// <summary>
@@ -412,8 +412,8 @@ public class TransactionServiceTests : IDisposable
             {
                 PlayerId = player.Id,
                 Amount = i * 100,
-                TransactionTypeId = TransactionTypes.Deposit,
-                TransactionStatusId = TransactionStatuses.Pending,
+                TransactionTypeId = TransactionTypes.DEPOSIT,
+                TransactionStatusId = TransactionStatuses.PENDING,
                 CreatedAt = DateTime.UtcNow.AddHours(i)
             });
         }
@@ -439,13 +439,13 @@ public class TransactionServiceTests : IDisposable
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
         _context.MoneyTransactions.AddRange(
-            new MoneyTransaction { PlayerId = player.Id, Amount = 1, TransactionTypeId = TransactionTypes.Deposit, TransactionStatusId = TransactionStatuses.Pending, CreatedAt = DateTime.UtcNow },
-            new MoneyTransaction { PlayerId = player.Id, Amount = 2, TransactionTypeId = TransactionTypes.Withdrawal, TransactionStatusId = TransactionStatuses.Pending, CreatedAt = DateTime.UtcNow },
-            new MoneyTransaction { PlayerId = player.Id, Amount = 3, TransactionTypeId = TransactionTypes.Withdrawal, TransactionStatusId = TransactionStatuses.Pending, CreatedAt = DateTime.UtcNow });
+            new MoneyTransaction { PlayerId = player.Id, Amount = 1, TransactionTypeId = TransactionTypes.DEPOSIT, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow },
+            new MoneyTransaction { PlayerId = player.Id, Amount = 2, TransactionTypeId = TransactionTypes.WITHDRAWAL, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow },
+            new MoneyTransaction { PlayerId = player.Id, Amount = 3, TransactionTypeId = TransactionTypes.WITHDRAWAL, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow });
 
         await _context.SaveChangesAsync();
 
-        (await _service.CountTransactions(TransactionTypes.Withdrawal)).Should().Be(2);
+        (await _service.CountTransactions(TransactionTypes.WITHDRAWAL)).Should().Be(2);
         (await _service.CountTransactions(null)).Should().Be(3);
     }
 

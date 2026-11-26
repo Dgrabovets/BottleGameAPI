@@ -12,7 +12,7 @@ namespace BottleGame.API.Options
         /// <summary>
         /// Start of the development placeholders in docker-compose.yml
         /// </summary>
-        public const string ComposePlaceholderPrefix = "local-development";
+        public const string COMPOSE_PLACEHOLDER_PREFIX = "local-development";
 
         /// <summary>
         /// Hosting environment
@@ -47,7 +47,7 @@ namespace BottleGame.API.Options
                 return ValidateOptionsResult.Fail("TelegramBotToken still holds the ENV_ placeholder from appsettings.json. Set the TelegramBotToken environment variable.");
             }
 
-            if (!_environment.IsDevelopment() && token.StartsWith(ComposePlaceholderPrefix, StringComparison.OrdinalIgnoreCase))
+            if (!_environment.IsDevelopment() && token.StartsWith(COMPOSE_PLACEHOLDER_PREFIX, StringComparison.OrdinalIgnoreCase))
             {
                 return ValidateOptionsResult.Fail("TelegramBotToken holds the docker-compose placeholder, which is allowed only in Development. Set the real bot token.");
             }

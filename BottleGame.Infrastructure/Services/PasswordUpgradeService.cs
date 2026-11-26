@@ -26,7 +26,7 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Prefix of the log messages
         /// </summary>
-        private const string Prefix = "[Password Upgrade]";
+        private const string PREFIX = "[Password Upgrade]";
 
         #endregion Fields
 
@@ -61,11 +61,11 @@ namespace BottleGame.Infrastructure.Services
                 admin.PasswordHash = hash;
                 admin.Salt = salt;
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("{Prefix} Password hash of {Login} upgraded", Prefix, admin.Login);
+                _logger.LogInformation("{Prefix} Password hash of {Login} upgraded", PREFIX, admin.Login);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "{Prefix} Could not upgrade the password hash of {Login}", Prefix, admin.Login);
+                _logger.LogWarning(ex, "{Prefix} Could not upgrade the password hash of {Login}", PREFIX, admin.Login);
             }
         }
 

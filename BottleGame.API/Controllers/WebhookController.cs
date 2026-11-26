@@ -22,7 +22,7 @@ namespace BottleGame.API.Controllers
         /// <summary>
         /// Largest accepted notification body in bytes. A YooKassa notification takes a few kilobytes
         /// </summary>
-        private const long MaxBodySize = 64 * 1024;
+        private const long MAX_BODY_SIZE = 64 * 1024;
 
         #endregion Fields
 
@@ -43,7 +43,7 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <returns>Result of handling the notification</returns>
         [HttpPost("yookassa")]
-        [RequestSizeLimit(MaxBodySize)]
+        [RequestSizeLimit(MAX_BODY_SIZE)]
         [EnableRateLimiting("webhook")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

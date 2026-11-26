@@ -30,7 +30,7 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Log prefix
         /// </summary>
-        private const string Prefix = "[StatisticsService]";
+        private const string PREFIX = "[StatisticsService]";
 
         #endregion Fields
 
@@ -84,7 +84,7 @@ namespace BottleGame.Infrastructure.Services
 
             var depositsQuery = FilterSuccessfullyProcessedTransactions(
                 _context.MoneyTransactions.AsNoTracking().WherePlayerNotActivelyBanned(bannedPlayerIds),
-                TransactionTypes.Deposit);
+                TransactionTypes.DEPOSIT);
 
             if (rangeFrom.HasValue && rangeTill.HasValue)
             {
@@ -97,7 +97,7 @@ namespace BottleGame.Infrastructure.Services
 
             var withdrawalsQuery = FilterSuccessfullyProcessedTransactions(
                 _context.MoneyTransactions.AsNoTracking().WherePlayerNotActivelyBanned(bannedPlayerIds),
-                TransactionTypes.Withdrawal);
+                TransactionTypes.WITHDRAWAL);
 
             if (rangeFrom.HasValue && rangeTill.HasValue)
             {
@@ -119,8 +119,8 @@ namespace BottleGame.Infrastructure.Services
             var pendingWithdrawalsTotal = await _context.MoneyTransactions
                 .AsNoTracking()
                 .WherePlayerNotActivelyBanned(bannedPlayerIds)
-                .Where(t => t.TransactionTypeId == TransactionTypes.Withdrawal
-                         && t.TransactionStatusId == TransactionStatuses.Pending)
+                .Where(t => t.TransactionTypeId == TransactionTypes.WITHDRAWAL
+                         && t.TransactionStatusId == TransactionStatuses.PENDING)
                 .SumAsync(t => t.Amount);
 
             var response = new GetAppGeneralStatisticsResponse
@@ -133,7 +133,7 @@ namespace BottleGame.Infrastructure.Services
                 PendingWithdrawalsTotal = pendingWithdrawalsTotal
             };
 
-            _logger.LogInformation("{Prefix} Administrator statistics retrieved successfully", Prefix);
+            _logger.LogInformation("{Prefix} Administrator statistics retrieved successfully", PREFIX);
 
             return Result<GetAppGeneralStatisticsResponse>.Success(response);
         }
@@ -163,11 +163,11 @@ namespace BottleGame.Infrastructure.Services
             var transactions = await _context.MoneyTransactions
                 .AsNoTracking()
                 .WherePlayerNotActivelyBanned(bannedPlayerIds)
-                .Where(t => t.TransactionStatusId == TransactionStatuses.Approved
+                .Where(t => t.TransactionStatusId == TransactionStatuses.APPROVED
                          && t.IsProcessingSuccess == true
                          && t.ProcessedAt != null
-                         && (t.TransactionTypeId == TransactionTypes.Deposit
-                             || t.TransactionTypeId == TransactionTypes.Withdrawal))
+                         && (t.TransactionTypeId == TransactionTypes.DEPOSIT
+                             || t.TransactionTypeId == TransactionTypes.WITHDRAWAL))
                 .Where(t => t.ProcessedAt >= rangeFrom && t.ProcessedAt <= rangeTill)
                 .Select(t => new TransactionTimelineItem(
                     t.TransactionTypeId,
@@ -182,13 +182,13 @@ namespace BottleGame.Infrastructure.Services
                 var bucketEnd = GetBucketEnd(bucketStart, bucket, rangeTill);
 
                 var depositsAmount = transactions
-                    .Where(t => t.TypeId == TransactionTypes.Deposit
+                    .Where(t => t.TypeId == TransactionTypes.DEPOSIT
                              && t.EffectiveAt >= bucketStart
                              && t.EffectiveAt <= bucketEnd)
                     .Sum(t => t.Amount);
 
                 var withdrawalsAmount = transactions
-                    .Where(t => t.TypeId == TransactionTypes.Withdrawal
+                    .Where(t => t.TypeId == TransactionTypes.WITHDRAWAL
                              && t.EffectiveAt >= bucketStart
                              && t.EffectiveAt <= bucketEnd)
                     .Sum(t => t.Amount);
@@ -211,7 +211,7 @@ namespace BottleGame.Infrastructure.Services
                 Points = points
             };
 
-            _logger.LogInformation("{Prefix} Statistics timeline retrieved successfully", Prefix);
+            _logger.LogInformation("{Prefix} Statistics timeline retrieved successfully", PREFIX);
 
             return Result<GetAppStatisticsTimelineResponse>.Success(response);
         }
@@ -223,7 +223,7 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Maximum length of the requested statistics period in days (100 years)
         /// </summary>
-        private const int MaxStatisticsRangeDays = 36_500;
+        private const int MAX_STATISTICS_RANGE_DAYS = 36_500;
 
         /// <summary>
         /// Checks that the date range for the statistics is valid
@@ -242,9 +242,9 @@ namespace BottleGame.Infrastructure.Services
             }
 
             var days = (till - from).Days + 1;
-            if (days > MaxStatisticsRangeDays)
+            if (days > MAX_STATISTICS_RANGE_DAYS)
             {
-                return $"The maximum period is {MaxStatisticsRangeDays} days";
+                return $"The maximum period is {MAX_STATISTICS_RANGE_DAYS} days";
             }
 
             return null;
@@ -280,7 +280,7 @@ namespace BottleGame.Infrastructure.Services
         {
             return query.Where(t =>
                 t.TransactionTypeId == transactionTypeId
-                && t.TransactionStatusId == TransactionStatuses.Approved
+                && t.TransactionStatusId == TransactionStatuses.APPROVED
                 && t.IsProcessingSuccess == true
                 && t.ProcessedAt != null);
         }

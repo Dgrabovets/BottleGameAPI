@@ -218,8 +218,8 @@ public class BanServiceTests : IDisposable
     {
         // Arrange
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var marked = new MoneyTransaction { PlayerId = player.Id, Amount = 300, TransactionTypeId = TransactionTypes.Withdrawal, TransactionStatusId = TransactionStatuses.Pending, CreatedAt = DateTime.UtcNow, ProcessingError = LiveTransactionProcessor.PayoutOutcomeUnknown };
-        var plain = new MoneyTransaction { PlayerId = player.Id, Amount = 200, TransactionTypeId = TransactionTypes.Withdrawal, TransactionStatusId = TransactionStatuses.Pending, CreatedAt = DateTime.UtcNow };
+        var marked = new MoneyTransaction { PlayerId = player.Id, Amount = 300, TransactionTypeId = TransactionTypes.WITHDRAWAL, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow, ProcessingError = LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN };
+        var plain = new MoneyTransaction { PlayerId = player.Id, Amount = 200, TransactionTypeId = TransactionTypes.WITHDRAWAL, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow };
         _context.MoneyTransactions.AddRange(marked, plain);
         await _context.SaveChangesAsync();
 
@@ -228,8 +228,8 @@ public class BanServiceTests : IDisposable
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        _context.MoneyTransactions.Single(t => t.Id == marked.Id).TransactionStatusId.Should().Be(TransactionStatuses.Pending);
-        _context.MoneyTransactions.Single(t => t.Id == plain.Id).TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        _context.MoneyTransactions.Single(t => t.Id == marked.Id).TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
+        _context.MoneyTransactions.Single(t => t.Id == plain.Id).TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
     }
 
     #endregion BanPlayer Tests

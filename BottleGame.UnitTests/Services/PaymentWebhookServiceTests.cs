@@ -22,12 +22,12 @@ public class PaymentWebhookServiceTests : IDisposable
     /// <summary>
     /// Payment id
     /// </summary>
-    private const string PaymentId = "pay-1";
+    private const string PAYMENT_ID = "pay-1";
 
     /// <summary>
     /// Payout id
     /// </summary>
-    private const string PayoutId = "payout-1";
+    private const string PAYOUT_ID = "payout-1";
 
     /// <summary>
     /// Database context of the test
@@ -78,7 +78,7 @@ public class PaymentWebhookServiceTests : IDisposable
             PlayerId = player.Id,
             Amount = amount,
             TransactionTypeId = typeId,
-            TransactionStatusId = TransactionStatuses.Pending,
+            TransactionStatusId = TransactionStatuses.PENDING,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -106,8 +106,8 @@ public class PaymentWebhookServiceTests : IDisposable
     /// <param name="transactionId">Transaction id</param>
     private void ProviderReportsPayment(MoneyTransaction transaction, ProviderOperationStatus status, decimal? amount = null, int? transactionId = null) =>
         _providerMock
-            .Setup(x => x.GetPaymentAsync(PaymentId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProviderOperation(PaymentId, status, amount ?? transaction.Amount, "rub", transactionId ?? transaction.Id, null));
+            .Setup(x => x.GetPaymentAsync(PAYMENT_ID, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProviderOperation(PAYMENT_ID, status, amount ?? transaction.Amount, "rub", transactionId ?? transaction.Id, null));
 
     /// <summary>
     /// Makes the provider report the given status for the payout
@@ -117,8 +117,8 @@ public class PaymentWebhookServiceTests : IDisposable
     /// <param name="reason">Reason</param>
     private void ProviderReportsPayout(MoneyTransaction transaction, ProviderOperationStatus status, string? reason = null) =>
         _providerMock
-            .Setup(x => x.GetPayoutAsync(PayoutId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProviderOperation(PayoutId, status, transaction.Amount, "rub", transaction.Id, reason));
+            .Setup(x => x.GetPayoutAsync(PAYOUT_ID, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProviderOperation(PAYOUT_ID, status, transaction.Amount, "rub", transaction.Id, reason));
 
     /// <summary>
     /// Player balance
@@ -162,17 +162,17 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PaymentSucceeded_CreditsPlayerAndAppBalance()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Deposit, 500);
+        var transaction = AddTransaction(player, TransactionTypes.DEPOSIT, 500);
         ProviderReportsPayment(transaction, ProviderOperationStatus.Succeeded);
 
-        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PaymentId));
+        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PAYMENT_ID));
 
         result.IsSuccess.Should().BeTrue();
         PlayerBalance(player).Should().Be(1500);
         AppBalance().Should().Be(100500);
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.APPROVED);
         transaction.IsProcessingSuccess.Should().BeTrue();
-        transaction.ProcessingOrderId.Should().Be(PaymentId);
+        transaction.ProcessingOrderId.Should().Be(PAYMENT_ID);
     }
 
     /// <summary>
@@ -182,9 +182,9 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PaymentSucceeded_DeliveredTwice_CreditsOnlyOnce()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Deposit, 500);
+        var transaction = AddTransaction(player, TransactionTypes.DEPOSIT, 500);
         ProviderReportsPayment(transaction, ProviderOperationStatus.Succeeded);
-        var request = Notification("payment.succeeded", PaymentId);
+        var request = Notification("payment.succeeded", PAYMENT_ID);
 
         await _service.HandleNotificationAsync(request);
         var second = await _service.HandleNotificationAsync(request);
@@ -203,13 +203,13 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PaymentCanceled_RejectsTransactionWithoutChangingBalances()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Deposit, 500);
+        var transaction = AddTransaction(player, TransactionTypes.DEPOSIT, 500);
         ProviderReportsPayment(transaction, ProviderOperationStatus.Canceled);
 
-        var result = await _service.HandleNotificationAsync(Notification("payment.canceled", PaymentId));
+        var result = await _service.HandleNotificationAsync(Notification("payment.canceled", PAYMENT_ID));
 
         result.IsSuccess.Should().BeTrue();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
         PlayerBalance(player).Should().Be(1000);
         AppBalance().Should().Be(100000);
     }
@@ -221,13 +221,13 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PaymentStillPending_LeavesTransactionUntouched()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Deposit, 500);
+        var transaction = AddTransaction(player, TransactionTypes.DEPOSIT, 500);
         ProviderReportsPayment(transaction, ProviderOperationStatus.Pending);
 
-        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PaymentId));
+        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PAYMENT_ID));
 
         result.IsSuccess.Should().BeTrue();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
         transaction.IsProcessingSuccess.Should().BeNull();
     }
 
@@ -238,7 +238,7 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task ForgedNotification_ProviderDoesNotKnowThePayment_ReturnsBadRequestAndKeepsBalances()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        AddTransaction(player, TransactionTypes.Deposit, 500);
+        AddTransaction(player, TransactionTypes.DEPOSIT, 500);
         _providerMock
             .Setup(x => x.GetPaymentAsync("forged", It.IsAny<CancellationToken>()))
             .ReturnsAsync((ProviderOperation?)null);
@@ -257,10 +257,10 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PaymentAmountDiffersFromTransaction_ReturnsBadRequestAndKeepsBalances()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Deposit, 500);
+        var transaction = AddTransaction(player, TransactionTypes.DEPOSIT, 500);
         ProviderReportsPayment(transaction, ProviderOperationStatus.Succeeded, amount: 5000);
 
-        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PaymentId));
+        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PAYMENT_ID));
 
         result.IsSuccess.Should().BeFalse();
         PlayerBalance(player).Should().Be(1000);
@@ -274,10 +274,10 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PaymentEventForWithdrawalTransaction_ReturnsBadRequest()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var withdrawal = AddTransaction(player, TransactionTypes.Withdrawal, 300);
+        var withdrawal = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
         ProviderReportsPayment(withdrawal, ProviderOperationStatus.Succeeded);
 
-        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PaymentId));
+        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PAYMENT_ID));
 
         result.IsSuccess.Should().BeFalse();
         PlayerBalance(player).Should().Be(1000);
@@ -290,12 +290,12 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PaymentWithoutTransactionId_ReturnsBadRequest()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Deposit, 500);
+        var transaction = AddTransaction(player, TransactionTypes.DEPOSIT, 500);
         _providerMock
-            .Setup(x => x.GetPaymentAsync(PaymentId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProviderOperation(PaymentId, ProviderOperationStatus.Succeeded, 500, "rub", null, null));
+            .Setup(x => x.GetPaymentAsync(PAYMENT_ID, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProviderOperation(PAYMENT_ID, ProviderOperationStatus.Succeeded, 500, "rub", null, null));
 
-        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PaymentId));
+        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PAYMENT_ID));
 
         result.IsSuccess.Should().BeFalse();
         transaction.IsProcessingSuccess.Should().BeNull();
@@ -310,10 +310,10 @@ public class PaymentWebhookServiceTests : IDisposable
         var inviter = TestDbContextFactory.CreateTestPlayer(_context, telegramId: 1);
         var invited = TestDbContextFactory.CreateTestPlayer(_context, telegramId: 2);
         AddInvitation(invited, inviter);
-        var transaction = AddTransaction(invited, TransactionTypes.Deposit, 500);
+        var transaction = AddTransaction(invited, TransactionTypes.DEPOSIT, 500);
         ProviderReportsPayment(transaction, ProviderOperationStatus.Succeeded);
 
-        await _service.HandleNotificationAsync(Notification("payment.succeeded", PaymentId));
+        await _service.HandleNotificationAsync(Notification("payment.succeeded", PAYMENT_ID));
 
         PlayerBalance(invited).Should().Be(1500);
         PlayerBalance(inviter).Should().Be(1050);
@@ -329,10 +329,10 @@ public class PaymentWebhookServiceTests : IDisposable
         var invited = TestDbContextFactory.CreateTestPlayer(_context, telegramId: 2);
         AddInvitation(invited, inviter);
         TestDbContextFactory.AddActiveBan(_context, inviter.Id);
-        var transaction = AddTransaction(invited, TransactionTypes.Deposit, 500);
+        var transaction = AddTransaction(invited, TransactionTypes.DEPOSIT, 500);
         ProviderReportsPayment(transaction, ProviderOperationStatus.Succeeded);
 
-        await _service.HandleNotificationAsync(Notification("payment.succeeded", PaymentId));
+        await _service.HandleNotificationAsync(Notification("payment.succeeded", PAYMENT_ID));
 
         PlayerBalance(inviter).Should().Be(1000);
     }
@@ -348,14 +348,14 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PayoutSucceeded_ReducesAppBalance()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
+        var transaction = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
         ProviderReportsPayout(transaction, ProviderOperationStatus.Succeeded);
 
-        var result = await _service.HandleNotificationAsync(Notification("payout.succeeded", PayoutId));
+        var result = await _service.HandleNotificationAsync(Notification("payout.succeeded", PAYOUT_ID));
 
         result.IsSuccess.Should().BeTrue();
         AppBalance().Should().Be(99700);
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.APPROVED);
     }
 
     /// <summary>
@@ -365,15 +365,15 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PayoutCanceled_DeliveredTwice_RefundsPlayerOnce()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
+        var transaction = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
         ProviderReportsPayout(transaction, ProviderOperationStatus.Canceled, "payout_network/recipient_not_found");
-        var request = Notification("payout.canceled", PayoutId);
+        var request = Notification("payout.canceled", PAYOUT_ID);
 
         await _service.HandleNotificationAsync(request);
         await _service.HandleNotificationAsync(request);
 
         PlayerBalance(player).Should().Be(1300);
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
         transaction.ProcessingError.Should().Be("payout_network/recipient_not_found");
     }
 
@@ -384,17 +384,17 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PayoutSucceeded_AfterUnknownOutcome_ApprovesAndStoresProviderId()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
-        transaction.ProcessingError = LiveTransactionProcessor.PayoutOutcomeUnknown;
+        var transaction = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
+        transaction.ProcessingError = LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN;
         _context.SaveChanges();
         ProviderReportsPayout(transaction, ProviderOperationStatus.Succeeded);
 
-        var result = await _service.HandleNotificationAsync(Notification("payout.succeeded", PayoutId));
+        var result = await _service.HandleNotificationAsync(Notification("payout.succeeded", PAYOUT_ID));
 
         result.IsSuccess.Should().BeTrue();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.APPROVED);
         transaction.IsProcessingSuccess.Should().BeTrue();
-        transaction.ProcessingOrderId.Should().Be(PayoutId);
+        transaction.ProcessingOrderId.Should().Be(PAYOUT_ID);
         transaction.ProcessingError.Should().BeNull();
         PlayerBalance(player).Should().Be(1000);
         AppBalance().Should().Be(99700);
@@ -407,17 +407,17 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PayoutCanceled_AfterUnknownOutcome_RefundsPlayer()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
-        transaction.ProcessingError = LiveTransactionProcessor.PayoutOutcomeUnknown;
+        var transaction = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
+        transaction.ProcessingError = LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN;
         _context.SaveChanges();
         ProviderReportsPayout(transaction, ProviderOperationStatus.Canceled, "yoo_money/rejected_by_payee");
 
-        var result = await _service.HandleNotificationAsync(Notification("payout.canceled", PayoutId));
+        var result = await _service.HandleNotificationAsync(Notification("payout.canceled", PAYOUT_ID));
 
         result.IsSuccess.Should().BeTrue();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
         transaction.IsProcessingSuccess.Should().BeFalse();
-        transaction.ProcessingOrderId.Should().Be(PayoutId);
+        transaction.ProcessingOrderId.Should().Be(PAYOUT_ID);
         PlayerBalance(player).Should().Be(1300);
         AppBalance().Should().Be(100000);
     }
@@ -433,14 +433,14 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PayoutOutcome_ForRejectedWithdrawal_IsLeftForManualCheck(ProviderOperationStatus status, string @event)
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
-        transaction.TransactionStatusId = TransactionStatuses.Rejected;
+        var transaction = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
+        transaction.TransactionStatusId = TransactionStatuses.REJECTED;
         _context.SaveChanges();
         ProviderReportsPayout(transaction, status);
 
-        await _service.HandleNotificationAsync(Notification(@event, PayoutId));
+        await _service.HandleNotificationAsync(Notification(@event, PAYOUT_ID));
 
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
         transaction.IsProcessingSuccess.Should().BeNull();
         PlayerBalance(player).Should().Be(1000);
         AppBalance().Should().Be(100000);
@@ -454,14 +454,14 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PayoutNotification_ForAnotherProviderId_IsLeftForManualCheck()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
-        transaction.TransactionStatusId = TransactionStatuses.Approved;
+        var transaction = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
+        transaction.TransactionStatusId = TransactionStatuses.APPROVED;
         transaction.IsProcessingSuccess = true;
         transaction.ProcessingOrderId = "payout-other";
         _context.SaveChanges();
         ProviderReportsPayout(transaction, ProviderOperationStatus.Succeeded);
 
-        await _service.HandleNotificationAsync(Notification("payout.succeeded", PayoutId));
+        await _service.HandleNotificationAsync(Notification("payout.succeeded", PAYOUT_ID));
 
         AppBalance().Should().Be(100000);
         _context.ProcessingWebhookLogs.Single().ProcessingStatus.Should().Be("ManualCheck");
@@ -474,13 +474,13 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task PayoutSucceeded_AfterRefund_IsLeftForManualCheck()
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
-        transaction.TransactionStatusId = TransactionStatuses.Rejected;
+        var transaction = AddTransaction(player, TransactionTypes.WITHDRAWAL, 300);
+        transaction.TransactionStatusId = TransactionStatuses.REJECTED;
         transaction.IsProcessingSuccess = false;
         _context.SaveChanges();
         ProviderReportsPayout(transaction, ProviderOperationStatus.Succeeded);
 
-        await _service.HandleNotificationAsync(Notification("payout.succeeded", PayoutId));
+        await _service.HandleNotificationAsync(Notification("payout.succeeded", PAYOUT_ID));
 
         AppBalance().Should().Be(100000);
         _context.ProcessingWebhookLogs.Single().ProcessingStatus.Should().Be("ManualCheck");
@@ -540,13 +540,13 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task Notification_IsStoredInFullOnlyAfterProviderConfirmsIt(bool confirmed)
     {
         var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var transaction = AddTransaction(player, TransactionTypes.Deposit, 500);
+        var transaction = AddTransaction(player, TransactionTypes.DEPOSIT, 500);
         if (confirmed)
         {
             ProviderReportsPayment(transaction, ProviderOperationStatus.Succeeded);
         }
 
-        var body = "{\"type\":\"notification\",\"event\":\"payment.succeeded\",\"object\":{\"id\":\"" + PaymentId + "\",\"description\":\"" + new string('d', 500) + "\"}}";
+        var body = "{\"type\":\"notification\",\"event\":\"payment.succeeded\",\"object\":{\"id\":\"" + PAYMENT_ID + "\",\"description\":\"" + new string('d', 500) + "\"}}";
 
         await _service.HandleNotificationAsync(new(body, "POST", "application/json", "127.0.0.1", "tests"));
 
@@ -568,10 +568,10 @@ public class PaymentWebhookServiceTests : IDisposable
     public async Task ProviderUnavailable_ReturnsInternalError()
     {
         _providerMock
-            .Setup(x => x.GetPaymentAsync(PaymentId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetPaymentAsync(PAYMENT_ID, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("down"));
 
-        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PaymentId));
+        var result = await _service.HandleNotificationAsync(Notification("payment.succeeded", PAYMENT_ID));
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(500);

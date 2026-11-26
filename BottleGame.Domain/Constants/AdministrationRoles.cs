@@ -8,20 +8,20 @@ namespace BottleGame.Domain.Constants
         /// <summary>
         /// Administrator (full access)
         /// </summary>
-        public const int Admin = 1;
+        public const int ADMIN = 1;
 
         /// <summary>
         /// Moderator (limited access)
         /// </summary>
-        public const int Moderator = 2;
+        public const int MODERATOR = 2;
 
         /// <summary>
         /// Role name for JWT claims
         /// </summary>
         public static string GetRoleName(int roleId) => roleId switch
         {
-            Admin => "Admin",
-            Moderator => "Moderator",
+            ADMIN => "Admin",
+            MODERATOR => "Moderator",
             _ => "Unknown"
         };
     }

@@ -40,7 +40,7 @@ namespace BottleGame.API.Controllers
         /// <summary>
         /// Prefix of the log messages
         /// </summary>
-        const string Prefix = "[Referral Controller]";
+        const string PREFIX = "[Referral Controller]";
 
         #endregion Fields
 
@@ -67,7 +67,7 @@ namespace BottleGame.API.Controllers
         /// <response code="403">The player is banned</response>
         /// <response code="404">The player was not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [ProducesResponseType(typeof(GetReferralLinkResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -77,7 +77,7 @@ namespace BottleGame.API.Controllers
         {
             try
             {
-                if (User.IsInRole(RoleNames.Player) && User.GetUserId() != playerId)
+                if (User.IsInRole(RoleNames.PLAYER) && User.GetUserId() != playerId)
                 {
                     return Unauthorized();
                 }
@@ -87,13 +87,13 @@ namespace BottleGame.API.Controllers
 
                 if (player is null)
                 {
-                    _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                    _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
                     return NotFound($"Player with id {playerId} not found");
                 }
 
-                if (User.IsInRole(RoleNames.Player) && player.Ban is not null && player.Ban.IsActive)
+                if (User.IsInRole(RoleNames.PLAYER) && player.Ban is not null && player.Ban.IsActive)
                 {
-                    _logger.LogWarning("{Prefix} The player is banned", Prefix);
+                    _logger.LogWarning("{Prefix} The player is banned", PREFIX);
                     return StatusCode(403, "The player is banned");
                 }
 
@@ -114,13 +114,13 @@ namespace BottleGame.API.Controllers
                 }
 
                 // Return the link
-                _logger.LogInformation("{Prefix} Link received for player {PlayerId}", Prefix, playerId);
+                _logger.LogInformation("{Prefix} Link received for player {PlayerId}", PREFIX, playerId);
 
                 return Ok(new GetReferralLinkResponse { ReferralLink = referralLink.Link });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while getting the referral link for player {PlayerId}", Prefix, playerId);
+                _logger.LogError(ex, "{Prefix} Error while getting the referral link for player {PlayerId}", PREFIX, playerId);
                 return StatusCode(500, "Internal server error");
             }
         }

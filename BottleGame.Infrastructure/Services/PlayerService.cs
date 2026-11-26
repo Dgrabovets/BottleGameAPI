@@ -35,7 +35,7 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Log prefix
         /// </summary>
-        private const string Prefix = "[PlayerService]";
+        private const string PREFIX = "[PlayerService]";
 
         #endregion Fields
 
@@ -64,7 +64,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
                 return Result<IsBannedResponse>.NotFound($"Player with id {playerId} not found");
             }
 
@@ -87,7 +87,7 @@ namespace BottleGame.Infrastructure.Services
             };
 
             _logger.LogInformation("{Prefix} Ban check for player {PlayerId}. Result: {IsBanned}",
-                Prefix, playerId, response.IsBanned);
+                PREFIX, playerId, response.IsBanned);
 
             return Result<IsBannedResponse>.Success(response);
         }
@@ -116,13 +116,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
                 return Result<PlayerInfoByIdResponse>.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isStaff && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                _logger.LogWarning("{Prefix} User is banned", PREFIX);
                 return Result<PlayerInfoByIdResponse>.Forbidden("User is banned");
             }
 
@@ -153,7 +153,7 @@ namespace BottleGame.Infrastructure.Services
                 PlayersInvited = invitedPlayers.Select(MapToPlayerDTO)
             };
 
-            _logger.LogInformation("{Prefix} Got the data of the player with PlayerId - {PlayerId}", Prefix, playerId);
+            _logger.LogInformation("{Prefix} Got the data of the player with PlayerId - {PlayerId}", PREFIX, playerId);
 
             return Result<PlayerInfoByIdResponse>.Success(response);
         }
@@ -189,13 +189,13 @@ namespace BottleGame.Infrastructure.Services
                     return Result<IEnumerable<PlayerInfoResponse>>.Success([]);
                 }
 
-                _logger.LogWarning("{Prefix} Players not found", Prefix);
+                _logger.LogWarning("{Prefix} Players not found", PREFIX);
                 return Result<IEnumerable<PlayerInfoResponse>>.NotFound("Players not found");
             }
 
             var response = players.Select(MapToPlayerInfoResponse);
 
-            _logger.LogInformation("{Prefix} Got the data of the players", Prefix);
+            _logger.LogInformation("{Prefix} Got the data of the players", PREFIX);
 
             return Result<IEnumerable<PlayerInfoResponse>>.Success(response);
         }
@@ -222,13 +222,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (players.Count == 0)
             {
-                _logger.LogWarning("{Prefix} Players not found", Prefix);
+                _logger.LogWarning("{Prefix} Players not found", PREFIX);
                 return Result<IEnumerable<PlayerInfoResponse>>.NotFound("Players not found");
             }
 
             var response = players.Select(MapToPlayerInfoResponse);
 
-            _logger.LogInformation("{Prefix} Got the data of the top 100 players", Prefix);
+            _logger.LogInformation("{Prefix} Got the data of the top 100 players", PREFIX);
 
             return Result<IEnumerable<PlayerInfoResponse>>.Success(response);
         }
@@ -278,7 +278,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
                 return Result.NotFound($"Player with id {playerId} not found");
             }
 
@@ -302,7 +302,7 @@ namespace BottleGame.Infrastructure.Services
                 {
                     var availableCurrencies = await _currencyService.GetAvailableCurrenciesAsync();
                     var currencyCodes = string.Join(", ", availableCurrencies.Select(c => c.Code));
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid currency: {Currency}", Prefix, LogSanitizer.Clean(request.Currency));
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid currency: {Currency}", PREFIX, LogSanitizer.Clean(request.Currency));
                     return Result.Failure($"Currency '{request.Currency}' is not supported. Available: {currencyCodes}");
                 }
 
@@ -312,7 +312,7 @@ namespace BottleGame.Infrastructure.Services
                 if (selectedGateway is null)
                 {
                     var gatewayCodes = string.Join(", ", paymentGateways.Select(g => g.Code));
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid payment method: {PaymentMethod}", Prefix, LogSanitizer.Clean(request.PaymentMethod));
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid payment method: {PaymentMethod}", PREFIX, LogSanitizer.Clean(request.PaymentMethod));
                     return Result.Failure($"Payment method '{request.PaymentMethod}' is not supported for currency '{request.Currency}'. Available: {gatewayCodes}");
                 }
 
@@ -326,7 +326,7 @@ namespace BottleGame.Infrastructure.Services
                     !selectedGateway.DetailTypes.Any(dt => dt.Equals(detailType, StringComparison.OrdinalIgnoreCase)))
                 {
                     var availableTypes = string.Join(", ", selectedGateway.DetailTypes);
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", Prefix, LogSanitizer.Clean(detailType));
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", PREFIX, LogSanitizer.Clean(detailType));
                     return Result.Failure($"Detail type '{detailType}' is not supported by payment method '{request.PaymentMethod}'. Available: {availableTypes}");
                 }
 
@@ -348,7 +348,7 @@ namespace BottleGame.Infrastructure.Services
                 {
                     var availableTypes = await _currencyService.GetDetailTypesForGatewayAsync(currentPaymentMethod);
                     var typesStr = availableTypes.Any() ? string.Join(", ", availableTypes) : "any";
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", Prefix, LogSanitizer.Clean(request.PaymentDetailType));
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid detail type: {DetailType}", PREFIX, LogSanitizer.Clean(request.PaymentDetailType));
                     return Result.Failure($"Detail type '{request.PaymentDetailType}' is not supported by payment method '{currentPaymentMethod}'. Available: {typesStr}");
                 }
 
@@ -368,7 +368,7 @@ namespace BottleGame.Infrastructure.Services
                 if (!isValidPayoutGateway)
                 {
                     var gatewayCodes = string.Join(", ", payoutGateways.Select(g => g.Code));
-                    _logger.LogWarning("{Prefix} Attempt to set an invalid payout method: {PayoutMethod}", Prefix, LogSanitizer.Clean(request.PayoutMethod));
+                    _logger.LogWarning("{Prefix} Attempt to set an invalid payout method: {PayoutMethod}", PREFIX, LogSanitizer.Clean(request.PayoutMethod));
                     return Result.Failure($"Payout method '{request.PayoutMethod}' is not supported for currency '{currency}'. Available: {gatewayCodes}");
                 }
 
@@ -391,7 +391,7 @@ namespace BottleGame.Infrastructure.Services
                 var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
                 if (appBalance is null)
                 {
-                    _logger.LogWarning("{Prefix} Application balance data not found", Prefix);
+                    _logger.LogWarning("{Prefix} Application balance data not found", PREFIX);
                     return Result.Failure("Application balance data not found");
                 }
 
@@ -403,7 +403,7 @@ namespace BottleGame.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Player {PlayerId} changed", Prefix, playerId);
+            _logger.LogInformation("{Prefix} Player {PlayerId} changed", PREFIX, playerId);
 
             return Result.Success();
         }

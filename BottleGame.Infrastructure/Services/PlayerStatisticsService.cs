@@ -33,7 +33,7 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Log prefix
         /// </summary>
-        private const string Prefix = "[PlayerStatisticsService]";
+        private const string PREFIX = "[PlayerStatisticsService]";
 
         #endregion Fields
 
@@ -74,7 +74,7 @@ namespace BottleGame.Infrastructure.Services
                 LossAmount = p.GameRounds.Where(r => !r.IsWin).Sum(r => r.Bet)
             }).ToList();
 
-            _logger.LogInformation("{Prefix} Got the statistics of {Count} players", Prefix, response.Count);
+            _logger.LogInformation("{Prefix} Got the statistics of {Count} players", PREFIX, response.Count);
 
             return Result<IEnumerable<PlayerStatisticsResponse>>.Success(response);
         }
@@ -96,7 +96,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
                 return Result<PlayerStatisticsResponse>.NotFound($"Player with id {playerId} not found");
             }
 
@@ -112,7 +112,7 @@ namespace BottleGame.Infrastructure.Services
                 LossAmount = player.GameRounds.Where(r => !r.IsWin).Sum(r => r.Bet)
             };
 
-            _logger.LogInformation("{Prefix} Got the statistics of player - {PlayerId}", Prefix, playerId);
+            _logger.LogInformation("{Prefix} Got the statistics of player - {PlayerId}", PREFIX, playerId);
 
             return Result<PlayerStatisticsResponse>.Success(response);
         }
@@ -133,13 +133,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
                 return Result<PlayerRoundsStatisticsForWithdrawalDTO>.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                _logger.LogWarning("{Prefix} User is banned", PREFIX);
                 return Result<PlayerRoundsStatisticsForWithdrawalDTO>.Forbidden("User is banned");
             }
 
@@ -150,7 +150,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (stat is null)
             {
-                _logger.LogWarning("{Prefix} Statistics of the played rounds for player {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Statistics of the played rounds for player {PlayerId} not found", PREFIX, playerId);
                 return Result<PlayerRoundsStatisticsForWithdrawalDTO>.NotFound($"Statistics of the played rounds for player {playerId} not found");
             }
 
@@ -159,7 +159,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (transactionStatuses.Count == 0 || transactionTypes.Count == 0)
             {
-                _logger.LogWarning("{Prefix} Transaction types or statuses not found", Prefix);
+                _logger.LogWarning("{Prefix} Transaction types or statuses not found", PREFIX);
                 return Result<PlayerRoundsStatisticsForWithdrawalDTO>.InternalError("Transaction types or statuses not found");
             }
 
@@ -200,7 +200,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (stats.Count == 0)
             {
-                _logger.LogWarning("{Prefix} Statistics of the played rounds not found", Prefix);
+                _logger.LogWarning("{Prefix} Statistics of the played rounds not found", PREFIX);
                 return Result<IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>>.NotFound("Statistics of the played rounds not found");
             }
 
@@ -209,7 +209,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (transactionStatuses.Count == 0 || transactionTypes.Count == 0)
             {
-                _logger.LogWarning("{Prefix} Transaction types or statuses not found", Prefix);
+                _logger.LogWarning("{Prefix} Transaction types or statuses not found", PREFIX);
                 return Result<IEnumerable<PlayerRoundsStatisticsForWithdrawalDTO>>.InternalError("Transaction types or statuses not found");
             }
 

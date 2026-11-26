@@ -59,7 +59,7 @@ namespace BottleGame.API.Controllers
         /// <summary>
         /// Gets the current application balance
         /// </summary>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [HttpGet("get-app-balance")]
         [ProducesResponseType(typeof(AppBalanceDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -76,7 +76,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">The lower threshold was updated</response>
         /// <response code="400">No data to update was found, most likely the data integrity is broken or the request data is invalid</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -113,7 +113,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">The balance was topped up</response>
         /// <response code="400">No data to update was found or the request data is invalid</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -158,7 +158,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">Statistics</response>
         /// <response code="400">The required data was not found, most likely the data integrity is broken</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(typeof(GetAppGeneralStatisticsResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -179,7 +179,7 @@ namespace BottleGame.API.Controllers
         /// <summary>
         /// Gets the statistics timeline for charts
         /// </summary>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(typeof(GetAppStatisticsTimelineResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -210,7 +210,7 @@ namespace BottleGame.API.Controllers
         /// <response code="400">Invalid request data</response>
         /// <response code="409">The moderator already exists</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -243,7 +243,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">Successful request</response>
         /// <response code="404">The moderator was not found (when requested by id)</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(typeof(IEnumerable<ModeratorDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ModeratorDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -265,7 +265,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">The moderator was deleted</response>
         /// <response code="404">The moderator was not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

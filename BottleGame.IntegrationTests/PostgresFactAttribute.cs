@@ -8,16 +8,16 @@ public sealed class PostgresFactAttribute : FactAttribute
     /// <summary>
     /// Environment variable
     /// </summary>
-    public const string EnvironmentVariable = "BOTTLEGAME_TEST_POSTGRES";
+    public const string ENVIRONMENT_VARIABLE = "BOTTLEGAME_TEST_POSTGRES";
 
     /// <summary>
     /// Skips the test when no PostgreSQL connection string is configured
     /// </summary>
     public PostgresFactAttribute()
     {
-        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(EnvironmentVariable)))
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(ENVIRONMENT_VARIABLE)))
         {
-            Skip = $"Set {EnvironmentVariable}, for example Host=localhost;Port=5432;Username=postgres;Password=postgres";
+            Skip = $"Set {ENVIRONMENT_VARIABLE}, for example Host=localhost;Port=5432;Username=postgres;Password=postgres";
         }
     }
 }

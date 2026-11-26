@@ -34,7 +34,7 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Log prefix
         /// </summary>
-        private const string Prefix = "[GameRoundService]";
+        private const string PREFIX = "[GameRoundService]";
 
         #endregion Fields
 
@@ -70,19 +70,19 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
                 return Result.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                _logger.LogWarning("{Prefix} User is banned", PREFIX);
                 return Result.Forbidden("User is banned");
             }
 
             if (player.Balance.Amount < request.Bet && !request.IsWin)
             {
-                _logger.LogWarning("{Prefix} Insufficient balance for withdrawal for player {PlayerId}", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Insufficient balance for withdrawal for player {PlayerId}", PREFIX, playerId);
                 return Result.Failure("Insufficient funds!");
             }
 
@@ -91,7 +91,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (roundsPlayedStat is null)
             {
-                _logger.LogWarning("{Prefix} Statistics of the played rounds not found for player {PlayerId}", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Statistics of the played rounds not found for player {PlayerId}", PREFIX, playerId);
                 return Result.Failure("Statistics of the played rounds of the player not found");
             }
 
@@ -119,13 +119,13 @@ namespace BottleGame.Infrastructure.Services
             catch (DbUpdateConcurrencyException)
             {
                 // The balance was changed by another request after it was read, so the check above may be stale.
-                _logger.LogWarning("{Prefix} Concurrent balance update for player {PlayerId}", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Concurrent balance update for player {PlayerId}", PREFIX, playerId);
                 return Result.Conflict("The balance was changed by another request, try again");
             }
 
             _logger.LogInformation(
                 "{Prefix} Round finished for player {PlayerId}. Status: {Status}, Amount: {Bet}",
-                Prefix,
+                PREFIX,
                 playerId,
                 request.IsWin ? "Win" : "Loss",
                 request.Bet);
@@ -144,7 +144,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
                 return Result<GetPlayerPlayedRoundsResponse>.NotFound($"Player with id {playerId} not found");
             }
 
@@ -168,7 +168,7 @@ namespace BottleGame.Infrastructure.Services
                 })]
             };
 
-            _logger.LogInformation("{Prefix} Got the list of rounds played by player {PlayerId}", Prefix, playerId);
+            _logger.LogInformation("{Prefix} Got the list of rounds played by player {PlayerId}", PREFIX, playerId);
 
             return Result<GetPlayerPlayedRoundsResponse>.Success(response);
         }
@@ -193,7 +193,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (!hasRounds)
             {
-                _logger.LogWarning("{Prefix} Rounds of the players not found", Prefix);
+                _logger.LogWarning("{Prefix} Rounds of the players not found", PREFIX);
                 return Result<GetProfitResponse>.NotFound("Rounds of the players not found, the profit cannot be calculated");
             }
 
@@ -206,7 +206,7 @@ namespace BottleGame.Infrastructure.Services
             var dateTill = await query.MaxAsync(r => r.FinishedAt);
 
             _logger.LogInformation("{Prefix} Profit calculated for the period {DateFrom} - {DateTill}",
-                Prefix, dateFrom, dateTill);
+                PREFIX, dateFrom, dateTill);
 
             var response = new GetProfitResponse
             {

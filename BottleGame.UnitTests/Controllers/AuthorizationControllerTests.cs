@@ -23,7 +23,7 @@ public class AuthorizationControllerTests : IDisposable
     /// <summary>
     /// Telegram id of the player who signs in
     /// </summary>
-    private const long NewTelegramId = 777001;
+    private const long NEW_TELEGRAM_ID = 777001;
 
     /// <summary>
     /// Database context of the test
@@ -48,7 +48,7 @@ public class AuthorizationControllerTests : IDisposable
         _context = TestDbContextFactory.CreateWithReferenceData();
 
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["TelegramBotToken"] = TelegramInitData.BotToken })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["TelegramBotToken"] = TelegramInitData.BOT_TOKEN })
             .Build();
 
         var tokenServiceMock = new Mock<ITokenService>();
@@ -92,7 +92,7 @@ public class AuthorizationControllerTests : IDisposable
         .AsNoTracking()
         .Include(p => p.Balance)
         .Include(p => p.PlayerOptions)
-        .FirstOrDefault(p => p.TelegramId == NewTelegramId);
+        .FirstOrDefault(p => p.TelegramId == NEW_TELEGRAM_ID);
 
     #endregion Helpers
 
@@ -106,7 +106,7 @@ public class AuthorizationControllerTests : IDisposable
     {
         var inviter = TestDbContextFactory.CreateTestPlayer(_context);
 
-        var response = await _controller.TelegramLogin(TelegramInitData.Signed(NewTelegramId, $"ref_{inviter.Id}"));
+        var response = await _controller.TelegramLogin(TelegramInitData.Signed(NEW_TELEGRAM_ID, $"ref_{inviter.Id}"));
 
         response.Result.Should().BeOfType<OkObjectResult>();
         NewPlayer()!.Balance.Amount.Should().Be(0);
@@ -121,7 +121,7 @@ public class AuthorizationControllerTests : IDisposable
     {
         AddReferralLink(999);
 
-        var response = await _controller.TelegramLogin(TelegramInitData.Signed(NewTelegramId, "ref_999"));
+        var response = await _controller.TelegramLogin(TelegramInitData.Signed(NEW_TELEGRAM_ID, "ref_999"));
 
         response.Result.Should().BeOfType<OkObjectResult>();
         var player = NewPlayer();
@@ -141,7 +141,7 @@ public class AuthorizationControllerTests : IDisposable
         var inviter = TestDbContextFactory.CreateTestPlayer(_context);
         AddReferralLink(inviter.Id);
 
-        var response = await _controller.TelegramLogin(TelegramInitData.Signed(NewTelegramId, $"ref_{inviter.Id}"));
+        var response = await _controller.TelegramLogin(TelegramInitData.Signed(NEW_TELEGRAM_ID, $"ref_{inviter.Id}"));
 
         response.Result.Should().BeOfType<OkObjectResult>();
         var player = NewPlayer()!;
@@ -155,7 +155,7 @@ public class AuthorizationControllerTests : IDisposable
     [Fact]
     public async Task TelegramLogin_TamperedData_ReturnsUnauthorizedWithoutCreatingPlayer()
     {
-        var tampered = TelegramInitData.Signed(NewTelegramId).Replace("Demo", "Evil");
+        var tampered = TelegramInitData.Signed(NEW_TELEGRAM_ID).Replace("Demo", "Evil");
 
         var response = await _controller.TelegramLogin(tampered);
 
@@ -169,10 +169,10 @@ public class AuthorizationControllerTests : IDisposable
     [Fact]
     public async Task TelegramLogin_BannedPlayer_Returns403WithMessage()
     {
-        var player = TestDbContextFactory.CreateTestPlayer(_context, NewTelegramId);
+        var player = TestDbContextFactory.CreateTestPlayer(_context, NEW_TELEGRAM_ID);
         TestDbContextFactory.AddActiveBan(_context, player.Id);
 
-        var response = await _controller.TelegramLogin(TelegramInitData.Signed(NewTelegramId));
+        var response = await _controller.TelegramLogin(TelegramInitData.Signed(NEW_TELEGRAM_ID));
 
         var result = response.Result.Should().BeOfType<ObjectResult>().Subject;
         result.StatusCode.Should().Be(403);

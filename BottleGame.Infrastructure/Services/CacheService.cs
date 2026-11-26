@@ -18,17 +18,17 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Cache key for the game parameters
         /// </summary>
-        private const string GameParamsCacheKey = "GameParams";
+        private const string GAME_PARAMS_CACHE_KEY = "GameParams";
 
         /// <summary>
         /// Cache key for the transaction types
         /// </summary>
-        private const string TransactionTypesCacheKey = "TransactionTypes";
+        private const string TRANSACTION_TYPES_CACHE_KEY = "TransactionTypes";
 
         /// <summary>
         /// Cache key for the transaction statuses
         /// </summary>
-        private const string TransactionStatusesCacheKey = "TransactionStatuses";
+        private const string TRANSACTION_STATUSES_CACHE_KEY = "TransactionStatuses";
 
         /// <summary>
         /// Default cache lifetime (5 minutes)
@@ -77,7 +77,7 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public async Task<GameParams?> GetGameParamsAsync()
         {
-            return await _cache.GetOrCreateAsync(GameParamsCacheKey, async entry =>
+            return await _cache.GetOrCreateAsync(GAME_PARAMS_CACHE_KEY, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = DefaultCacheDuration;
 
@@ -97,7 +97,7 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public async Task<Dictionary<int, string>> GetTransactionTypesAsync()
         {
-            return await _cache.GetOrCreateAsync(TransactionTypesCacheKey, async entry =>
+            return await _cache.GetOrCreateAsync(TRANSACTION_TYPES_CACHE_KEY, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = ReferenceCacheDuration;
 
@@ -117,7 +117,7 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public async Task<Dictionary<int, string>> GetTransactionStatusesAsync()
         {
-            return await _cache.GetOrCreateAsync(TransactionStatusesCacheKey, async entry =>
+            return await _cache.GetOrCreateAsync(TRANSACTION_STATUSES_CACHE_KEY, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = ReferenceCacheDuration;
 
@@ -137,21 +137,21 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public void InvalidateGameParams()
         {
-            _cache.Remove(GameParamsCacheKey);
+            _cache.Remove(GAME_PARAMS_CACHE_KEY);
             _logger.LogDebug("[CacheService] GameParams cache invalidated");
         }
 
         /// <inheritdoc/>
         public void InvalidateTransactionTypes()
         {
-            _cache.Remove(TransactionTypesCacheKey);
+            _cache.Remove(TRANSACTION_TYPES_CACHE_KEY);
             _logger.LogDebug("[CacheService] TransactionTypes cache invalidated");
         }
 
         /// <inheritdoc/>
         public void InvalidateTransactionStatuses()
         {
-            _cache.Remove(TransactionStatusesCacheKey);
+            _cache.Remove(TRANSACTION_STATUSES_CACHE_KEY);
             _logger.LogDebug("[CacheService] TransactionStatuses cache invalidated");
         }
 

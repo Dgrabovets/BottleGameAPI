@@ -12,7 +12,7 @@ public static class TelegramInitData
     /// <summary>
     /// Bot token the test data is signed with
     /// </summary>
-    public const string BotToken = "123456:test-bot-token";
+    public const string BOT_TOKEN = "123456:test-bot-token";
 
     /// <summary>
     /// Builds signed initData for a user, with an optional start_param
@@ -21,7 +21,7 @@ public static class TelegramInitData
     /// <param name="startParam">start_param of the mini-app link, null leaves it out</param>
     /// <param name="botToken">Token to sign with</param>
     /// <returns>Signed initData as a query string</returns>
-    public static string Signed(long telegramId, string? startParam = null, string botToken = BotToken)
+    public static string Signed(long telegramId, string? startParam = null, string botToken = BOT_TOKEN)
     {
         var fields = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {

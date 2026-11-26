@@ -79,8 +79,8 @@ public class TransactionServiceLiveModeTests : IDisposable
         {
             PlayerId = player.Id,
             Amount = amount,
-            TransactionTypeId = TransactionTypes.Withdrawal,
-            TransactionStatusId = TransactionStatuses.Pending,
+            TransactionTypeId = TransactionTypes.WITHDRAWAL,
+            TransactionStatusId = TransactionStatuses.PENDING,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -113,7 +113,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     /// </summary>
     /// <returns>The created value</returns>
     private static ChangeTransactionStatusRequest Approve() =>
-        new() { TransactionStatusId = TransactionStatuses.Approved };
+        new() { TransactionStatusId = TransactionStatuses.APPROVED };
 
     /// <summary>
     /// Verifies how many times the provider was asked to create a payout
@@ -144,7 +144,7 @@ public class TransactionServiceLiveModeTests : IDisposable
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEquivalentTo(new { PaymentLink = "https://pay.example/1", OrderId = "pay-1" });
         var transaction = _context.MoneyTransactions.Single();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
         transaction.ProcessingOrderId.Should().Be("pay-1");
         transaction.IsProcessingSuccess.Should().BeNull();
         PlayerBalance(player).Should().Be(1000);
@@ -187,7 +187,7 @@ public class TransactionServiceLiveModeTests : IDisposable
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(500);
         var transaction = _context.MoneyTransactions.Single();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
         transaction.ProcessingError.Should().Be("gateway down");
         PlayerBalance(player).Should().Be(1000);
     }
@@ -227,7 +227,7 @@ public class TransactionServiceLiveModeTests : IDisposable
         var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
 
         result.IsSuccess.Should().BeTrue();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.APPROVED);
         transaction.ProcessingOrderId.Should().Be("payout-1");
         transaction.IsProcessingSuccess.Should().BeNull();
         _context.AppBalance.Single().Amount.Should().Be(100000);
@@ -278,7 +278,7 @@ public class TransactionServiceLiveModeTests : IDisposable
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(500);
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
         transaction.ProcessingError.Should().Be("no funds");
         PlayerBalance(player).Should().Be(1300);
     }
@@ -299,9 +299,9 @@ public class TransactionServiceLiveModeTests : IDisposable
         var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
 
         result.IsSuccess.Should().BeFalse();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
         transaction.IsProcessingSuccess.Should().BeNull();
-        transaction.ProcessingError.Should().Be(LiveTransactionProcessor.PayoutOutcomeUnknown);
+        transaction.ProcessingError.Should().Be(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN);
         PlayerBalance(player).Should().Be(1000);
     }
 
@@ -321,7 +321,7 @@ public class TransactionServiceLiveModeTests : IDisposable
             .ThrowsAsync(new HttpRequestException("YooKassa responded 500"));
 
         await _service.UpdateTransactionStatus(transaction.Id, Approve());
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
 
         _providerMock
             .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
@@ -331,7 +331,7 @@ public class TransactionServiceLiveModeTests : IDisposable
         var retry = await _service.UpdateTransactionStatus(transaction.Id, Approve());
 
         retry.IsSuccess.Should().BeTrue();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.APPROVED);
         transaction.ProcessingOrderId.Should().Be("payout-1");
         transaction.ProcessingError.Should().BeNull();
         sent.Should().Equal(transaction.Id, transaction.Id);
@@ -356,7 +356,7 @@ public class TransactionServiceLiveModeTests : IDisposable
         var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
 
         result.IsSuccess.Should().BeTrue();
-        savedAtCall.Should().Be(LiveTransactionProcessor.PayoutOutcomeUnknown);
+        savedAtCall.Should().Be(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN);
         transaction.ProcessingError.Should().BeNull();
     }
 
@@ -383,7 +383,7 @@ public class TransactionServiceLiveModeTests : IDisposable
         var retry = await _service.UpdateTransactionStatus(transaction.Id, Approve());
 
         retry.IsSuccess.Should().BeTrue();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.APPROVED);
     }
 
     /// <summary>
@@ -392,7 +392,7 @@ public class TransactionServiceLiveModeTests : IDisposable
     [Fact]
     public void PayoutOutcomeUnknown_ValueIsStable()
     {
-        LiveTransactionProcessor.PayoutOutcomeUnknown.Should().Be(
+        LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN.Should().Be(
             "Payout outcome unknown: wait for the YooKassa notification or approve again to repeat the request with the same idempotence key");
     }
 
@@ -416,9 +416,9 @@ public class TransactionServiceLiveModeTests : IDisposable
         var retry = await _service.UpdateTransactionStatus(transaction.Id, Approve());
 
         retry.IsSuccess.Should().BeFalse();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
         transaction.IsProcessingSuccess.Should().BeNull();
-        transaction.ProcessingError.Should().Be(LiveTransactionProcessor.PayoutOutcomeUnknown);
+        transaction.ProcessingError.Should().Be(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN);
         PlayerBalance(player).Should().Be(1000);
     }
 
@@ -436,11 +436,11 @@ public class TransactionServiceLiveModeTests : IDisposable
             .ThrowsAsync(new HttpRequestException("connection reset"));
         await _service.UpdateTransactionStatus(transaction.Id, Approve());
 
-        var result = await _service.UpdateTransactionStatus(transaction.Id, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.Rejected });
+        var result = await _service.UpdateTransactionStatus(transaction.Id, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.REJECTED });
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(409);
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
         PlayerBalance(player).Should().Be(1000);
     }
 
@@ -457,7 +457,7 @@ public class TransactionServiceLiveModeTests : IDisposable
         var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
 
         result.IsSuccess.Should().BeFalse();
-        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
         PayoutVerify(Times.Never());
     }
 

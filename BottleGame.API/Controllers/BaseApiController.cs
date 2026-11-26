@@ -16,7 +16,7 @@ namespace BottleGame.API.Controllers
         /// <summary>
         /// Response header with the number of items in the whole list when a page was asked for
         /// </summary>
-        public const string TotalCountHeader = "X-Total-Count";
+        public const string TOTAL_COUNT_HEADER = "X-Total-Count";
 
         #region Protected Methods
 

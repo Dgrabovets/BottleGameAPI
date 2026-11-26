@@ -21,7 +21,7 @@ namespace BottleGame.Infrastructure.Services.Payments
         /// Such a withdrawal is resolved by the payout notification or by approving it again, never by a manual rejection or a ban.
         /// The text is stored in the database and compared exactly, so it must never change
         /// </summary>
-        public const string PayoutOutcomeUnknown = "Payout outcome unknown: wait for the YooKassa notification or approve again to repeat the request with the same idempotence key";
+        public const string PAYOUT_OUTCOME_UNKNOWN = "Payout outcome unknown: wait for the YooKassa notification or approve again to repeat the request with the same idempotence key";
 
         /// <summary>
         /// Database context
@@ -41,17 +41,17 @@ namespace BottleGame.Infrastructure.Services.Payments
         /// <summary>
         /// Log prefix
         /// </summary>
-        private const string Prefix = "[LiveTransactionProcessor]";
+        private const string PREFIX = "[LiveTransactionProcessor]";
 
         /// <summary>
         /// Maximum share of the lower threshold of the application balance available for a single payout
         /// </summary>
-        private const decimal MaxPayoutShareOfLowerThreshold = 0.1m;
+        private const decimal MAX_PAYOUT_SHARE_OF_LOWER_THRESHOLD = 0.1m;
 
         /// <summary>
         /// Default currency if the player has none set
         /// </summary>
-        private const string DefaultCurrency = "rub";
+        private const string DEFAULT_CURRENCY = "rub";
 
         #endregion Fields
 
@@ -78,13 +78,13 @@ namespace BottleGame.Infrastructure.Services.Payments
 
             if (roundsPlayedStat is null)
             {
-                _logger.LogWarning("{Prefix} Statistics of the played rounds not found for player {PlayerId}", Prefix, player.Id);
+                _logger.LogWarning("{Prefix} Statistics of the played rounds not found for player {PlayerId}", PREFIX, player.Id);
                 return Result.Failure("Statistics of the played rounds of the player not found");
             }
 
             if (!isDeposit && roundsPlayedStat.PlayedRoundsCount < gameParams.MinRoundsCountForWithdrawal)
             {
-                _logger.LogWarning("{Prefix} Not enough played rounds to withdraw for player {PlayerId}", Prefix, player.Id);
+                _logger.LogWarning("{Prefix} Not enough played rounds to withdraw for player {PlayerId}", PREFIX, player.Id);
                 return Result.Failure($"To withdraw, you need to play at least {gameParams.MinRoundsCountForWithdrawal} rounds. Played so far: {roundsPlayedStat.PlayedRoundsCount}");
             }
 
@@ -96,9 +96,9 @@ namespace BottleGame.Infrastructure.Services.Payments
         {
             try
             {
-                _logger.LogInformation("{Prefix} Creating a payment request for player {PlayerId}, amount {Amount}", Prefix, player.Id, transaction.Amount);
+                _logger.LogInformation("{Prefix} Creating a payment request for player {PlayerId}, amount {Amount}", PREFIX, player.Id, transaction.Amount);
 
-                var currency = player.PlayerOptions?.Currency ?? DefaultCurrency;
+                var currency = player.PlayerOptions?.Currency ?? DEFAULT_CURRENCY;
                 var paymentRequest = new CreatePaymentRequest(
                     transaction.Id,
                     transaction.Amount,
@@ -111,7 +111,7 @@ namespace BottleGame.Infrastructure.Services.Payments
                 {
                     await RejectFailedTransactionAsync(transaction, payment.Error);
 
-                    _logger.LogError("{Prefix} Error while creating a payment for player {PlayerId}: {ErrorMessage}", Prefix, player.Id, payment.Error);
+                    _logger.LogError("{Prefix} Error while creating a payment for player {PlayerId}: {ErrorMessage}", PREFIX, player.Id, payment.Error);
                     return Result<object?>.InternalError("Error while creating the payment:" + payment.Error);
                 }
 
@@ -131,7 +131,7 @@ namespace BottleGame.Infrastructure.Services.Payments
             {
                 await RejectFailedTransactionAsync(transaction, null);
 
-                _logger.LogError(ex, "{Prefix} Error while creating a payment for player {PlayerId}", Prefix, player.Id);
+                _logger.LogError(ex, "{Prefix} Error while creating a payment for player {PlayerId}", PREFIX, player.Id);
                 return Result<object?>.InternalError("Error while creating the payment");
             }
         }
@@ -141,7 +141,7 @@ namespace BottleGame.Infrastructure.Services.Payments
         {
             // A marked row has already been sent once. The checks below only guard the first request: a deposit or a new threshold
             // in between must not strand a payout that may already exist
-            var isRepeat = transaction.ProcessingError == PayoutOutcomeUnknown;
+            var isRepeat = transaction.ProcessingError == PAYOUT_OUTCOME_UNKNOWN;
 
             if (!isRepeat)
             {
@@ -153,20 +153,20 @@ namespace BottleGame.Infrastructure.Services.Payments
             }
 
             var playerOptions = transaction.Player.PlayerOptions!;
-            var currency = playerOptions.Currency ?? DefaultCurrency;
+            var currency = playerOptions.Currency ?? DEFAULT_CURRENCY;
 
             // The mark is saved before the request. A crash, a failed final save or a concurrent reject then cannot hide a payout
             // that really happened: a reject that read the row earlier loses on the row version, a later one sees the mark
             transaction.PaymentGateway = playerOptions.PayoutMethod;
             transaction.Currency = currency;
-            transaction.ProcessingError = PayoutOutcomeUnknown;
+            transaction.ProcessingError = PAYOUT_OUTCOME_UNKNOWN;
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                _logger.LogWarning("{Prefix} Transaction {TransactionId} was changed by another request before the payout", Prefix, transaction.Id);
+                _logger.LogWarning("{Prefix} Transaction {TransactionId} was changed by another request before the payout", PREFIX, transaction.Id);
                 return Result.Conflict("The transaction was already changed by another request");
             }
 
@@ -189,16 +189,16 @@ namespace BottleGame.Infrastructure.Services.Payments
             catch (Exception ex)
             {
                 // A timeout, a network error or a 5xx answer: the payout may already exist, so the mark stays and the money is not returned
-                _logger.LogError(ex, "{Prefix} Outcome of the payout for transaction {TransactionId} is unknown, the withdrawal stays pending", Prefix, transaction.Id);
-                return Result.InternalError(PayoutOutcomeUnknown);
+                _logger.LogError(ex, "{Prefix} Outcome of the payout for transaction {TransactionId} is unknown, the withdrawal stays pending", PREFIX, transaction.Id);
+                return Result.InternalError(PAYOUT_OUTCOME_UNKNOWN);
             }
 
             if (!payout.IsSuccess && isRepeat)
             {
                 // A refused repeat only proves that the repeat was refused (for example, the wallet changed since the first request),
                 // the first request may still have made the payout, so the mark stays
-                _logger.LogError("{Prefix} The repeated payout for transaction {TransactionId} was refused: {ErrorMessage}. The withdrawal stays pending", Prefix, transaction.Id, payout.Error);
-                return Result.InternalError(PayoutOutcomeUnknown);
+                _logger.LogError("{Prefix} The repeated payout for transaction {TransactionId} was refused: {ErrorMessage}. The withdrawal stays pending", PREFIX, transaction.Id, payout.Error);
+                return Result.InternalError(PAYOUT_OUTCOME_UNKNOWN);
             }
 
             if (!payout.IsSuccess)
@@ -206,13 +206,13 @@ namespace BottleGame.Infrastructure.Services.Payments
                 // A 4xx answer to the first request: no payout was made, the mark is replaced by the error and the money is returned
                 await RefundFailedWithdrawalAsync(transaction, payout.Error ?? "The payout was refused");
 
-                _logger.LogError("{Prefix} Error while creating a payout for player {PlayerId}: {ErrorMessage}", Prefix, transaction.PlayerId, payout.Error);
+                _logger.LogError("{Prefix} Error while creating a payout for player {PlayerId}: {ErrorMessage}", PREFIX, transaction.PlayerId, payout.Error);
                 return Result.InternalError("Error while creating the payout:" + payout.Error);
             }
 
             transaction.ProcessingOrderId = payout.PayoutId;
             transaction.ProcessingError = null;
-            transaction.TransactionStatusId = TransactionStatuses.Approved;
+            transaction.TransactionStatusId = TransactionStatuses.APPROVED;
 
             return Result.Success();
         }
@@ -237,13 +237,13 @@ namespace BottleGame.Infrastructure.Services.Payments
             var minRoundsCount = gameParams.MinRoundsCountForWithdrawal;
             if (roundsPlayedStat.PlayedRoundsCount < minRoundsCount)
             {
-                _logger.LogWarning("{Prefix} Not enough played rounds to withdraw for player {PlayerId}", Prefix, transaction.PlayerId);
+                _logger.LogWarning("{Prefix} Not enough played rounds to withdraw for player {PlayerId}", PREFIX, transaction.PlayerId);
                 return Result.Failure($"To withdraw, you need to play at least {minRoundsCount} rounds. Played so far: {roundsPlayedStat.PlayedRoundsCount}");
             }
 
-            if (transaction.Amount > appBalance.LowerThreshold * MaxPayoutShareOfLowerThreshold)
+            if (transaction.Amount > appBalance.LowerThreshold * MAX_PAYOUT_SHARE_OF_LOWER_THRESHOLD)
             {
-                _logger.LogWarning("{Prefix} Transaction cannot be approved - the amount exceeds the threshold", Prefix);
+                _logger.LogWarning("{Prefix} Transaction cannot be approved - the amount exceeds the threshold", PREFIX);
                 return Result.Failure("Transaction cannot be approved - the withdrawal amount exceeds the lower threshold of the application balance!");
             }
 
@@ -257,7 +257,7 @@ namespace BottleGame.Infrastructure.Services.Payments
         /// <param name="error">Text of the processing error</param>
         private async Task RejectFailedTransactionAsync(MoneyTransaction transaction, string? error)
         {
-            transaction.TransactionStatusId = TransactionStatuses.Rejected;
+            transaction.TransactionStatusId = TransactionStatuses.REJECTED;
             transaction.IsProcessingSuccess = false;
             transaction.ProcessingError = error;
             await _context.SaveChangesAsync();

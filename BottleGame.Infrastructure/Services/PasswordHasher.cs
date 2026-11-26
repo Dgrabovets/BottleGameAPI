@@ -21,23 +21,23 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Marker of the current hash format
         /// </summary>
-        private const string CurrentPrefix = "v2";
+        private const string CURRENT_PREFIX = "v2";
 
         /// <summary>
         /// Number of PBKDF2 rounds for new hashes
         /// </summary>
-        private const int Iterations = 600_000;
+        private const int ITERATIONS = 600_000;
 
         /// <summary>
         /// Smallest and largest number of rounds accepted when a stored hash is checked,
         /// so a damaged row cannot make a sign-in run for minutes
         /// </summary>
-        private const int MinIterations = 100_000, MaxIterations = 5_000_000;
+        private const int MIN_ITERATIONS = 100_000, MAX_ITERATIONS = 5_000_000;
 
         /// <summary>
         /// Length of the derived key in bytes
         /// </summary>
-        private const int KeySize = 32;
+        private const int KEY_SIZE = 32;
 
         /// <summary>
         /// Secret key mixed into every password hash
@@ -64,9 +64,9 @@ namespace BottleGame.Infrastructure.Services
         {
             // Generate a random salt
             var saltBytes = RandomNumberGenerator.GetBytes(16);
-            var hash = Derive(password, saltBytes, Iterations);
+            var hash = Derive(password, saltBytes, ITERATIONS);
 
-            return ($"{CurrentPrefix}${Iterations}${Convert.ToBase64String(hash)}", Convert.ToBase64String(saltBytes));
+            return ($"{CURRENT_PREFIX}${ITERATIONS}${Convert.ToBase64String(hash)}", Convert.ToBase64String(saltBytes));
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         public bool Verify(string hashedPassword, string providedPassword, string salt)
         {
-            if (!hashedPassword.StartsWith(CurrentPrefix + "$", StringComparison.Ordinal))
+            if (!hashedPassword.StartsWith(CURRENT_PREFIX + "$", StringComparison.Ordinal))
             {
                 // Hash of the first version
                 var legacy = Hash(providedPassword + salt);
@@ -98,7 +98,7 @@ namespace BottleGame.Infrastructure.Services
             var parts = hashedPassword.Split('$');
             if (parts.Length != 3
                 || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var iterations)
-                || iterations is < MinIterations or > MaxIterations)
+                || iterations is < MIN_ITERATIONS or > MAX_ITERATIONS)
             {
                 return false;
             }
@@ -122,9 +122,9 @@ namespace BottleGame.Infrastructure.Services
         {
             var parts = hashedPassword.Split('$');
             return parts.Length != 3
-                || parts[0] != CurrentPrefix
+                || parts[0] != CURRENT_PREFIX
                 || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var iterations)
-                || iterations < Iterations;
+                || iterations < ITERATIONS;
         }
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace BottleGame.Infrastructure.Services
         private byte[] Derive(string password, byte[] salt, int iterations)
         {
             var mixed = HMACSHA256.HashData(_secretKey, Encoding.UTF8.GetBytes(password));
-            return Rfc2898DeriveBytes.Pbkdf2(mixed, salt, iterations, HashAlgorithmName.SHA256, KeySize);
+            return Rfc2898DeriveBytes.Pbkdf2(mixed, salt, iterations, HashAlgorithmName.SHA256, KEY_SIZE);
         }
 
         #endregion Methods

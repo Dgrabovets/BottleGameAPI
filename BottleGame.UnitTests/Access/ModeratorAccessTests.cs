@@ -47,7 +47,7 @@ public class ModeratorAccessTests
     public void ModeratorMayCallOnlyTheModerationEndpoints()
     {
         var moderatorActions = RolesByAction()
-            .Where(pair => pair.Value.Contains(RoleNames.Moderator))
+            .Where(pair => pair.Value.Contains(RoleNames.MODERATOR))
             .Select(pair => pair.Key);
 
         moderatorActions.Should().BeEquivalentTo(
@@ -79,6 +79,6 @@ public class ModeratorAccessTests
     public void AdministrativeEndpointsStayAdminOnly(string action)
     {
         RolesByAction().Should().ContainKey(action);
-        RolesByAction()[action].Should().NotContain(RoleNames.Moderator);
+        RolesByAction()[action].Should().NotContain(RoleNames.MODERATOR);
     }
 }

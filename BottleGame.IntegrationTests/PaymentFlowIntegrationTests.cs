@@ -18,7 +18,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
     /// <summary>
     /// Payment id
     /// </summary>
-    private const string PaymentId = "pay-1";
+    private const string PAYMENT_ID = "pay-1";
 
     /// <summary>
     /// Database
@@ -92,8 +92,8 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
     public async Task PaymentSucceeded_CreditsBalanceOnce_EvenWhenDeliveredTwice()
     {
         var playerId = await _database.AddPlayerAsync(balance: 1000);
-        var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.Deposit, 500);
-        var provider = new StubPaymentProvider(PaymentId, transactionId, 500);
+        var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.DEPOSIT, 500);
+        var provider = new StubPaymentProvider(PAYMENT_ID, transactionId, 500);
 
         for (var delivery = 0; delivery < 2; delivery++)
         {
@@ -104,7 +104,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
 
         await using var verify = _database.CreateContext();
         Assert.Equal(1500, (await verify.PlayersBalances.SingleAsync(b => b.PlayerId == playerId)).Amount);
-        Assert.Equal(TransactionStatuses.Approved, (await verify.MoneyTransactions.SingleAsync(t => t.Id == transactionId)).TransactionStatusId);
+        Assert.Equal(TransactionStatuses.APPROVED, (await verify.MoneyTransactions.SingleAsync(t => t.Id == transactionId)).TransactionStatusId);
     }
 
     /// <summary>
@@ -116,10 +116,10 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
         for (var attempt = 0; attempt < 15; attempt++)
         {
             var playerId = await _database.AddPlayerAsync(balance: 1000);
-            var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.Deposit, 500);
+            var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.DEPOSIT, 500);
 
             // Both handlers get the provider's answer at the same moment and then read the transaction at the same moment.
-            var provider = new StubPaymentProvider(PaymentId, transactionId, 500, rendezvousParticipants: 2);
+            var provider = new StubPaymentProvider(PAYMENT_ID, transactionId, 500, rendezvousParticipants: 2);
 
             async Task DeliverAsync()
             {
@@ -162,8 +162,8 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
             await context.SaveChangesAsync();
         }
 
-        var transactionId = await _database.AddPendingTransactionAsync(invitedId, TransactionTypes.Deposit, 500);
-        var provider = new StubPaymentProvider(PaymentId, transactionId, 500);
+        var transactionId = await _database.AddPendingTransactionAsync(invitedId, TransactionTypes.DEPOSIT, 500);
+        var provider = new StubPaymentProvider(PAYMENT_ID, transactionId, 500);
 
         await using (var context = _database.CreateContext())
         {
@@ -183,7 +183,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
     public async Task ConcurrentWithdrawalApproval_AppliesOnlyOnce()
     {
         var playerId = await _database.AddPlayerAsync(balance: 1000);
-        var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.Withdrawal, 300);
+        var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.WITHDRAWAL, 300);
 
         async Task<bool> ApproveAsync()
         {
@@ -195,7 +195,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
                 new BottleGame.Infrastructure.Services.Payments.SimulatedTransactionProcessor(
                     context, NullLogger<BottleGame.Infrastructure.Services.Payments.SimulatedTransactionProcessor>.Instance));
 
-            var result = await service.UpdateTransactionStatus(transactionId, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.Approved });
+            var result = await service.UpdateTransactionStatus(transactionId, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.APPROVED });
             return result.IsSuccess;
         }
 
@@ -204,7 +204,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
         Assert.Single(outcomes, succeeded => succeeded);
 
         await using var verify = _database.CreateContext();
-        Assert.Equal(TransactionStatuses.Approved, (await verify.MoneyTransactions.SingleAsync(t => t.Id == transactionId)).TransactionStatusId);
+        Assert.Equal(TransactionStatuses.APPROVED, (await verify.MoneyTransactions.SingleAsync(t => t.Id == transactionId)).TransactionStatusId);
     }
 
     /// <summary>
@@ -236,7 +236,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
 
         await using var verify = _database.CreateContext();
         Assert.Equal(0, (await verify.PlayersBalances.SingleAsync(b => b.PlayerId == playerId)).Amount);
-        Assert.Equal(1, await verify.MoneyTransactions.CountAsync(t => t.PlayerId == playerId && t.TransactionTypeId == TransactionTypes.Withdrawal));
+        Assert.Equal(1, await verify.MoneyTransactions.CountAsync(t => t.PlayerId == playerId && t.TransactionTypeId == TransactionTypes.WITHDRAWAL));
     }
 
     /// <summary>
@@ -272,7 +272,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
     {
         var playerId = await _database.AddPlayerAsync(balance: 100);
         var before = DateTime.UtcNow;
-        var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.Deposit, 100);
+        var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.DEPOSIT, 100);
         var after = DateTime.UtcNow;
 
         await using var verify = _database.CreateContext();
@@ -294,7 +294,7 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
     public async Task RejectDuringPayoutRequest_IsRefusedWithoutRefund()
     {
         var playerId = await _database.AddPlayerAsync(balance: 1000);
-        var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.Withdrawal, 300);
+        var transactionId = await _database.AddPendingTransactionAsync(playerId, TransactionTypes.WITHDRAWAL, 300);
         BottleGame.Application.Common.Result? rejectResult = null;
 
         async Task<TransactionService> CreateLiveServiceAsync(ApplicationDbContext context, IPaymentProvider provider) =>
@@ -307,13 +307,13 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
         {
             await using var rejectContext = _database.CreateContext();
             var rejectService = await CreateLiveServiceAsync(rejectContext, new TimeoutPayoutProvider(() => Task.CompletedTask));
-            rejectResult = await rejectService.UpdateTransactionStatus(transactionId, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.Rejected });
+            rejectResult = await rejectService.UpdateTransactionStatus(transactionId, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.REJECTED });
         });
 
         await using (var context = _database.CreateContext())
         {
             var service = await CreateLiveServiceAsync(context, provider);
-            await service.UpdateTransactionStatus(transactionId, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.Approved });
+            await service.UpdateTransactionStatus(transactionId, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.APPROVED });
         }
 
         Assert.NotNull(rejectResult);
@@ -321,8 +321,8 @@ public class PaymentFlowIntegrationTests : IClassFixture<PostgresFixture>
 
         await using var verify = _database.CreateContext();
         var transaction = await verify.MoneyTransactions.AsNoTracking().SingleAsync(t => t.Id == transactionId);
-        Assert.Equal(TransactionStatuses.Pending, transaction.TransactionStatusId);
-        Assert.Equal(LiveTransactionProcessor.PayoutOutcomeUnknown, transaction.ProcessingError);
+        Assert.Equal(TransactionStatuses.PENDING, transaction.TransactionStatusId);
+        Assert.Equal(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN, transaction.ProcessingError);
         Assert.Equal(1000, (await verify.PlayersBalances.AsNoTracking().SingleAsync(b => b.PlayerId == playerId)).Amount);
     }
 }

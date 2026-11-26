@@ -35,7 +35,7 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Log prefix
         /// </summary>
-        private const string Prefix = "[ModeratorService]";
+        private const string PREFIX = "[ModeratorService]";
 
         #endregion Fields
 
@@ -59,7 +59,7 @@ namespace BottleGame.Infrastructure.Services
         {
             if (await _context.AdminCreds.AnyAsync(a => a.Login == request.Login))
             {
-                _logger.LogWarning("{Prefix} Moderator already exists", Prefix);
+                _logger.LogWarning("{Prefix} Moderator already exists", PREFIX);
                 return Result.Conflict("Moderator already exists");
             }
 
@@ -71,13 +71,13 @@ namespace BottleGame.Infrastructure.Services
                 PasswordHash = hash,
                 Salt = salt,
                 CreatedAt = DateTime.UtcNow,
-                Role = AdministrationRoles.Moderator
+                Role = AdministrationRoles.MODERATOR
             };
 
             _context.AdminCreds.Add(moderator);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} New moderator registered: {Login}", Prefix, LogSanitizer.Clean(request.Login));
+            _logger.LogInformation("{Prefix} New moderator registered: {Login}", PREFIX, LogSanitizer.Clean(request.Login));
 
             return Result.Success();
         }
@@ -88,7 +88,7 @@ namespace BottleGame.Infrastructure.Services
             if (moderatorId.HasValue)
             {
                 var moderator = await _context.AdminCreds
-                    .Where(a => a.Role == AdministrationRoles.Moderator && a.Id == moderatorId.Value)
+                    .Where(a => a.Role == AdministrationRoles.MODERATOR && a.Id == moderatorId.Value)
                     .Select(a => new ModeratorDTO
                     {
                         Id = a.Id,
@@ -99,7 +99,7 @@ namespace BottleGame.Infrastructure.Services
 
                 if (moderator is null)
                 {
-                    _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", Prefix, moderatorId.Value);
+                    _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", PREFIX, moderatorId.Value);
                     return Result<object>.NotFound("Moderator not found");
                 }
 
@@ -107,7 +107,7 @@ namespace BottleGame.Infrastructure.Services
             }
 
             var moderators = await _context.AdminCreds
-                .Where(a => a.Role == AdministrationRoles.Moderator)
+                .Where(a => a.Role == AdministrationRoles.MODERATOR)
                 .Select(a => new ModeratorDTO
                 {
                     Id = a.Id,
@@ -123,18 +123,18 @@ namespace BottleGame.Infrastructure.Services
         public async Task<Result> DeleteModerator(int moderatorId)
         {
             var moderator = await _context.AdminCreds
-                .FirstOrDefaultAsync(a => a.Id == moderatorId && a.Role == AdministrationRoles.Moderator);
+                .FirstOrDefaultAsync(a => a.Id == moderatorId && a.Role == AdministrationRoles.MODERATOR);
 
             if (moderator is null)
             {
-                _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", Prefix, moderatorId);
+                _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", PREFIX, moderatorId);
                 return Result.NotFound("Moderator not found");
             }
 
             _context.AdminCreds.Remove(moderator);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Moderator with ID {Id} deleted", Prefix, moderatorId);
+            _logger.LogInformation("{Prefix} Moderator with ID {Id} deleted", PREFIX, moderatorId);
 
             return Result.Success();
         }

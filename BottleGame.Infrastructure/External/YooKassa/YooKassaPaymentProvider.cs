@@ -37,32 +37,32 @@ namespace BottleGame.Infrastructure.External.YooKassa
         /// <summary>
         /// Log prefix
         /// </summary>
-        private const string Prefix = "[YooKassa]";
+        private const string PREFIX = "[YooKassa]";
 
         /// <summary>
         /// Code of the only supported currency
         /// </summary>
-        private const string RubCode = "rub";
+        private const string RUB_CODE = "rub";
 
         /// <summary>
         /// Code of the way of accepting payments: the player chooses the method on the YooKassa page
         /// </summary>
-        private const string PaymentGatewayCode = "yookassa";
+        private const string PAYMENT_GATEWAY_CODE = "yookassa";
 
         /// <summary>
         /// Code of the payout method through SBP
         /// </summary>
-        private const string SbpGatewayCode = "sbp";
+        private const string SBP_GATEWAY_CODE = "sbp";
 
         /// <summary>
         /// Maximum length of a payment description in YooKassa
         /// </summary>
-        private const int MaxDescriptionLength = 128;
+        private const int MAX_DESCRIPTION_LENGTH = 128;
 
         /// <summary>
         /// Metadata key with the application transaction identifier
         /// </summary>
-        private const string TransactionIdKey = "transaction_id";
+        private const string TRANSACTION_ID_KEY = "transaction_id";
 
         /// <summary>
         /// JSON settings
@@ -88,24 +88,24 @@ namespace BottleGame.Infrastructure.External.YooKassa
 
         /// <inheritdoc/>
         public Task<IEnumerable<CurrencyInfo>> GetCurrenciesAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IEnumerable<CurrencyInfo>>([new CurrencyInfo(RubCode, "Russian ruble", isActive: true)]);
+            Task.FromResult<IEnumerable<CurrencyInfo>>([new CurrencyInfo(RUB_CODE, "Russian ruble", isActive: true)]);
 
         /// <inheritdoc/>
         public Task<IEnumerable<PaymentGatewayInfo>> GetPaymentGatewaysAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<IEnumerable<PaymentGatewayInfo>>(
             [
                 new PaymentGatewayInfo(
-                    code: PaymentGatewayCode,
+                    code: PAYMENT_GATEWAY_CODE,
                     name: "YooKassa",
-                    currency: RubCode,
+                    currency: RUB_CODE,
                     supportsPayments: true,
                     supportsPayouts: false,
                     minAmount: null,
                     maxAmount: null),
                 new PaymentGatewayInfo(
-                    code: SbpGatewayCode,
+                    code: SBP_GATEWAY_CODE,
                     name: "SBP",
-                    currency: RubCode,
+                    currency: RUB_CODE,
                     supportsPayments: false,
                     supportsPayouts: true,
                     minAmount: 1m,
@@ -115,7 +115,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
 
         /// <inheritdoc/>
         public Task<decimal> GetExchangeRateAsync(string currency, CancellationToken cancellationToken = default) =>
-            Task.FromResult(currency.Equals(RubCode, StringComparison.OrdinalIgnoreCase) ? 1m : 0m);
+            Task.FromResult(currency.Equals(RUB_CODE, StringComparison.OrdinalIgnoreCase) ? 1m : 0m);
 
         #endregion Catalog
 
@@ -127,8 +127,8 @@ namespace BottleGame.Infrastructure.External.YooKassa
             var body = new YooKassaCreateRequest
             {
                 Amount = ToYooKassaAmount(request.Amount, request.Currency),
-                Description = Truncate(request.Description, MaxDescriptionLength),
-                Metadata = new() { [TransactionIdKey] = request.TransactionId.ToString(CultureInfo.InvariantCulture) },
+                Description = Truncate(request.Description, MAX_DESCRIPTION_LENGTH),
+                Metadata = new() { [TRANSACTION_ID_KEY] = request.TransactionId.ToString(CultureInfo.InvariantCulture) },
                 Capture = true,
                 Confirmation = new YooKassaConfirmation { ReturnUrl = _options.ReturnUrl }
             };
@@ -159,7 +159,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
                 return new CreatePayoutResult(false, null, "Payouts are not configured: set Processing:PayoutAgentId and Processing:PayoutSecretKey");
             }
 
-            if (!request.Gateway.Equals(SbpGatewayCode, StringComparison.OrdinalIgnoreCase))
+            if (!request.Gateway.Equals(SBP_GATEWAY_CODE, StringComparison.OrdinalIgnoreCase))
             {
                 return new CreatePayoutResult(false, null, $"Payout method '{request.Gateway}' is not supported");
             }
@@ -172,8 +172,8 @@ namespace BottleGame.Infrastructure.External.YooKassa
             var body = new YooKassaCreateRequest
             {
                 Amount = ToYooKassaAmount(request.Amount, request.Currency),
-                Description = Truncate(request.Description, MaxDescriptionLength),
-                Metadata = new() { [TransactionIdKey] = request.TransactionId.ToString(CultureInfo.InvariantCulture) },
+                Description = Truncate(request.Description, MAX_DESCRIPTION_LENGTH),
+                Metadata = new() { [TRANSACTION_ID_KEY] = request.TransactionId.ToString(CultureInfo.InvariantCulture) },
                 PayoutDestination = destination
             };
 
@@ -225,7 +225,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
             // The id comes from an unsigned notification, so only the characters of a real id are let into the request path
             if (!IsValidObjectId(id))
             {
-                _logger.LogWarning("{Prefix} Refused to look up {Collection} with a malformed id", Prefix, collection);
+                _logger.LogWarning("{Prefix} Refused to look up {Collection} with a malformed id", PREFIX, collection);
                 return null;
             }
 
@@ -233,7 +233,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
 
             if (status is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
             {
-                _logger.LogWarning("{Prefix} Object {Collection}/{Id} not found: {Error}", Prefix, collection, id, ReadError(json));
+                _logger.LogWarning("{Prefix} Object {Collection}/{Id} not found: {Error}", PREFIX, collection, id, ReadError(json));
                 return null;
             }
 
@@ -269,7 +269,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
             };
 
             int? transactionId = operation.Metadata is not null
-                && operation.Metadata.TryGetValue(TransactionIdKey, out var raw)
+                && operation.Metadata.TryGetValue(TRANSACTION_ID_KEY, out var raw)
                 && int.TryParse(raw, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed)
                     ? parsed
                     : null;
@@ -325,7 +325,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("{Prefix} {Method} {Path} -> {Status}: {Body}", Prefix, method, path, (int)response.StatusCode, json);
+                _logger.LogWarning("{Prefix} {Method} {Path} -> {Status}: {Body}", PREFIX, method, path, (int)response.StatusCode, json);
             }
 
             return (response.StatusCode, json);
