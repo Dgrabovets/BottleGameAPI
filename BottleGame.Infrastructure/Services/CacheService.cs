@@ -88,7 +88,7 @@ namespace BottleGame.Infrastructure.Services
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
 
-                _logger.LogDebug("[CacheService] GameParams loaded into the cache");
+                _logger.LogDebug("GameParams loaded into the cache");
 
                 return gameParams;
             });
@@ -108,7 +108,7 @@ namespace BottleGame.Infrastructure.Services
                     .AsNoTracking()
                     .ToDictionaryAsync(t => t.Id, t => t.Name);
 
-                _logger.LogDebug("[CacheService] TransactionTypes loaded into the cache ({Count} records)", types.Count);
+                _logger.LogDebug("TransactionTypes loaded into the cache ({Count} records)", types.Count);
 
                 return types;
             }) ?? [];
@@ -128,7 +128,7 @@ namespace BottleGame.Infrastructure.Services
                     .AsNoTracking()
                     .ToDictionaryAsync(s => s.Id, s => s.Name);
 
-                _logger.LogDebug("[CacheService] TransactionStatuses loaded into the cache ({Count} records)", statuses.Count);
+                _logger.LogDebug("TransactionStatuses loaded into the cache ({Count} records)", statuses.Count);
 
                 return statuses;
             }) ?? [];
@@ -138,21 +138,21 @@ namespace BottleGame.Infrastructure.Services
         public void InvalidateGameParams()
         {
             _cache.Remove(GAME_PARAMS_CACHE_KEY);
-            _logger.LogDebug("[CacheService] GameParams cache invalidated");
+            _logger.LogDebug("GameParams cache invalidated");
         }
 
         /// <inheritdoc/>
         public void InvalidateTransactionTypes()
         {
             _cache.Remove(TRANSACTION_TYPES_CACHE_KEY);
-            _logger.LogDebug("[CacheService] TransactionTypes cache invalidated");
+            _logger.LogDebug("TransactionTypes cache invalidated");
         }
 
         /// <inheritdoc/>
         public void InvalidateTransactionStatuses()
         {
             _cache.Remove(TRANSACTION_STATUSES_CACHE_KEY);
-            _logger.LogDebug("[CacheService] TransactionStatuses cache invalidated");
+            _logger.LogDebug("TransactionStatuses cache invalidated");
         }
 
         #endregion Public Methods

@@ -1,4 +1,5 @@
 using BottleGame.API.Controllers;
+using BottleGame.API.Logging;
 using BottleGame.API.Middleware;
 using BottleGame.API.Options;
 using BottleGame.Application;
@@ -34,8 +35,11 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Infrastructure", LogEventLevel.Warning)
     // The request and routing logs carry the path, and the Telegram sign-in route has initData in it
     .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
-    .WriteTo.Console()
-    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    // Prefix names the class of this solution that wrote the entry
+    .Enrich.With(new LogPrefixEnricher())
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Prefix}{Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Prefix}{Message:lj}{NewLine}{Exception}")
     .CreateLogger();
 builder.Host.UseSerilog();
 

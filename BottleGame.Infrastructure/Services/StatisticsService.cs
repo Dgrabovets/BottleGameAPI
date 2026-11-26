@@ -27,11 +27,6 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         private readonly ILogger<StatisticsService> _logger;
 
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[StatisticsService]";
-
         #endregion Fields
 
         /// <summary>
@@ -133,7 +128,7 @@ namespace BottleGame.Infrastructure.Services
                 PendingWithdrawalsTotal = pendingWithdrawalsTotal
             };
 
-            _logger.LogInformation("{Prefix} Administrator statistics retrieved successfully", PREFIX);
+            _logger.LogInformation("Administrator statistics retrieved successfully");
 
             return Result<GetAppGeneralStatisticsResponse>.Success(response);
         }
@@ -211,7 +206,7 @@ namespace BottleGame.Infrastructure.Services
                 Points = points
             };
 
-            _logger.LogInformation("{Prefix} Statistics timeline retrieved successfully", PREFIX);
+            _logger.LogInformation("Statistics timeline retrieved successfully");
 
             return Result<GetAppStatisticsTimelineResponse>.Success(response);
         }

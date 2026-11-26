@@ -32,11 +32,6 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         private readonly IPasswordHasher _passwordHasher;
 
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[ModeratorService]";
-
         #endregion Fields
 
         /// <summary>
@@ -59,7 +54,7 @@ namespace BottleGame.Infrastructure.Services
         {
             if (await _context.AdminCreds.AnyAsync(a => a.Login == request.Login))
             {
-                _logger.LogWarning("{Prefix} Moderator already exists", PREFIX);
+                _logger.LogWarning("Moderator already exists");
                 return Result.Conflict("Moderator already exists");
             }
 
@@ -77,7 +72,7 @@ namespace BottleGame.Infrastructure.Services
             _context.AdminCreds.Add(moderator);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} New moderator registered: {Login}", PREFIX, LogSanitizer.Clean(request.Login));
+            _logger.LogInformation("New moderator registered: {Login}", LogSanitizer.Clean(request.Login));
 
             return Result.Success();
         }
@@ -99,7 +94,7 @@ namespace BottleGame.Infrastructure.Services
 
                 if (moderator is null)
                 {
-                    _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", PREFIX, moderatorId.Value);
+                    _logger.LogWarning("Moderator with ID {Id} not found", moderatorId.Value);
                     return Result<object>.NotFound("Moderator not found");
                 }
 
@@ -127,14 +122,14 @@ namespace BottleGame.Infrastructure.Services
 
             if (moderator is null)
             {
-                _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", PREFIX, moderatorId);
+                _logger.LogWarning("Moderator with ID {Id} not found", moderatorId);
                 return Result.NotFound("Moderator not found");
             }
 
             _context.AdminCreds.Remove(moderator);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Moderator with ID {Id} deleted", PREFIX, moderatorId);
+            _logger.LogInformation("Moderator with ID {Id} deleted", moderatorId);
 
             return Result.Success();
         }

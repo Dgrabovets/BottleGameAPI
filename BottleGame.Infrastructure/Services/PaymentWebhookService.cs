@@ -39,11 +39,6 @@ namespace BottleGame.Infrastructure.Services
         private readonly ILogger<PaymentWebhookService> _logger;
 
         /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[Webhook]";
-
-        /// <summary>
         /// Share of the referral bonus from the deposit amount of the invited player
         /// </summary>
         private const decimal REFERRAL_BONUS_RATE = 0.1m;
@@ -88,7 +83,7 @@ namespace BottleGame.Infrastructure.Services
                     return await LogAndFailAsync(webhookLog, $"Failed to parse the notification ({request.Body.Length} characters)");
                 }
 
-                _logger.LogInformation("{Prefix} Notification received: {Event} {ObjectId}", PREFIX, LogSanitizer.Clean(notification.Event), LogSanitizer.Clean(notification.Object.Id));
+                _logger.LogInformation("Notification received: {Event} {ObjectId}", LogSanitizer.Clean(notification.Event), LogSanitizer.Clean(notification.Object.Id));
 
                 webhookLog.WebhookType = notification.Event;
                 webhookLog.OrderId = notification.Object.Id;
@@ -103,7 +98,7 @@ namespace BottleGame.Infrastructure.Services
             catch (Exception ex)
             {
                 webhookLog.ErrorMessage = ex.ToString();
-                _logger.LogError(ex, "{Prefix} Error while handling the notification", PREFIX);
+                _logger.LogError(ex, "Error while handling the notification");
                 await SaveLogAsync(webhookLog, "Error", Result.InternalError());
                 return Result.InternalError();
             }
@@ -175,7 +170,7 @@ namespace BottleGame.Infrastructure.Services
                     return await ManualCheckAsync(webhookLog, $"The provider reports {operation.Status} for transaction {transactionId}, but it is recorded as {(recordedSuccess ? "succeeded" : "failed")}");
                 }
 
-                _logger.LogWarning("{Prefix} Repeated notification for transaction {TransactionId} ignored", PREFIX, transaction.Id);
+                _logger.LogWarning("Repeated notification for transaction {TransactionId} ignored", transaction.Id);
                 return await SaveLogAsync(webhookLog, "Duplicate", Result.Success());
             }
 
@@ -214,11 +209,11 @@ namespace BottleGame.Infrastructure.Services
 
                 if (alreadyHandled)
                 {
-                    _logger.LogWarning("{Prefix} Transaction {TransactionId} was handled by a concurrent request, the repeat is ignored", PREFIX, transactionId);
+                    _logger.LogWarning("Transaction {TransactionId} was handled by a concurrent request, the repeat is ignored", transactionId);
                     return await SaveLogAsync(webhookLog, "Duplicate", Result.Success());
                 }
 
-                _logger.LogWarning("{Prefix} Concurrent update while handling transaction {TransactionId}, the provider will retry", PREFIX, transactionId);
+                _logger.LogWarning("Concurrent update while handling transaction {TransactionId}, the provider will retry", transactionId);
                 return await LogAndFailAsync(webhookLog, "Concurrent update, try again");
             }
 
@@ -261,14 +256,14 @@ namespace BottleGame.Infrastructure.Services
 
             if (roundsPlayedStat is null)
             {
-                _logger.LogWarning("{Prefix} Statistics of the played rounds not found for player {PlayerId}", PREFIX, transaction.PlayerId);
+                _logger.LogWarning("Statistics of the played rounds not found for player {PlayerId}", transaction.PlayerId);
                 return Result.Failure("Statistics of the played rounds of the player not found");
             }
 
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} Application balance not found", PREFIX);
+                _logger.LogWarning("Application balance not found");
                 return Result.Failure("Application balance not found");
             }
 
@@ -287,7 +282,7 @@ namespace BottleGame.Infrastructure.Services
             transaction.ProcessedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Transaction {TransactionId} handled successfully", PREFIX, transaction.Id);
+            _logger.LogInformation("Transaction {TransactionId} handled successfully", transaction.Id);
             return Result.Success();
         }
 
@@ -304,7 +299,7 @@ namespace BottleGame.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Transaction {TransactionId} finished with an error", PREFIX, transaction.Id);
+            _logger.LogInformation("Transaction {TransactionId} finished with an error", transaction.Id);
             return Result.Success();
         }
 
@@ -319,7 +314,7 @@ namespace BottleGame.Infrastructure.Services
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} Application balance not found", PREFIX);
+                _logger.LogWarning("Application balance not found");
                 return Result.Failure("Application balance not found");
             }
 
@@ -333,7 +328,7 @@ namespace BottleGame.Infrastructure.Services
             transaction.ProcessedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Payout {TransactionId} handled successfully", PREFIX, transaction.Id);
+            _logger.LogInformation("Payout {TransactionId} handled successfully", transaction.Id);
             return Result.Success();
         }
 
@@ -355,7 +350,7 @@ namespace BottleGame.Infrastructure.Services
             transaction.ProcessedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogWarning("{Prefix} Payout {TransactionId} canceled: {Reason}", PREFIX, transaction.Id, reason);
+            _logger.LogWarning("Payout {TransactionId} canceled: {Reason}", transaction.Id, reason);
             return Result.Success();
         }
 
@@ -388,8 +383,8 @@ namespace BottleGame.Infrastructure.Services
             }
 
             _logger.LogInformation(
-                "{Prefix} Credited {BonusAmount} to referrer {ReferrerId} for the deposit of invited player {PlayerId}",
-                PREFIX, bonusAmount, referrer.Id, transaction.PlayerId);
+                "Credited {BonusAmount} to referrer {ReferrerId} for the deposit of invited player {PlayerId}",
+                bonusAmount, referrer.Id, transaction.PlayerId);
         }
 
         /// <summary>
@@ -444,7 +439,7 @@ namespace BottleGame.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while saving the webhook log", PREFIX);
+                _logger.LogError(ex, "Error while saving the webhook log");
             }
 
             return result;
@@ -460,7 +455,7 @@ namespace BottleGame.Infrastructure.Services
         private async Task<Result> ManualCheckAsync(ProcessingWebhookLog log, string message)
         {
             log.ErrorMessage = message;
-            _logger.LogCritical("{Prefix} Manual check needed: {Message}", PREFIX, message);
+            _logger.LogCritical("Manual check needed: {Message}", message);
             return await SaveLogAsync(log, "ManualCheck", Result.Success());
         }
 
@@ -473,7 +468,7 @@ namespace BottleGame.Infrastructure.Services
         private async Task<Result> LogAndFailAsync(ProcessingWebhookLog log, string errorMessage)
         {
             log.ErrorMessage = errorMessage;
-            _logger.LogWarning("{Prefix} {ErrorMessage}", PREFIX, errorMessage);
+            _logger.LogWarning("{ErrorMessage}", errorMessage);
             return await SaveLogAsync(log, "Error", Result.Failure(errorMessage));
         }
 

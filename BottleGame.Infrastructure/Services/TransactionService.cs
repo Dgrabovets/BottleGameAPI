@@ -38,11 +38,6 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         private readonly ITransactionProcessor _processor;
 
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[TransactionService]";
-
         #endregion Fields
 
         /// <summary>
@@ -80,13 +75,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
+                _logger.LogWarning("Player with id {PlayerId} not found", playerId);
                 return Result<GetPlayerBalanceResponse>.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} User is banned", PREFIX);
+                _logger.LogWarning("User is banned");
                 return Result<GetPlayerBalanceResponse>.Forbidden("User is banned");
             }
 
@@ -98,10 +93,10 @@ namespace BottleGame.Infrastructure.Services
 
             if (balance == default)
             {
-                _logger.LogError("{Prefix} Player balance not found! Data integrity is broken", PREFIX);
+                _logger.LogError("Player balance not found! Data integrity is broken");
             }
 
-            _logger.LogInformation("{Prefix} Balance of player {PlayerId} retrieved successfully: {Amount}", PREFIX, playerId, balance);
+            _logger.LogInformation("Balance of player {PlayerId} retrieved successfully: {Amount}", playerId, balance);
 
             return Result<GetPlayerBalanceResponse>.Success(new GetPlayerBalanceResponse { PlayerId = playerId, Balance = balance });
         }
@@ -126,26 +121,26 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
+                _logger.LogWarning("Player with id {PlayerId} not found", playerId);
                 return Result<object?>.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} User is banned", PREFIX);
+                _logger.LogWarning("User is banned");
                 return Result<object?>.Forbidden("User is banned");
             }
 
             if (!request.IsDeposit && player.Balance.Amount < request.Amount)
             {
-                _logger.LogWarning("{Prefix} Insufficient balance for withdrawal for player {PlayerId}", PREFIX, playerId);
+                _logger.LogWarning("Insufficient balance for withdrawal for player {PlayerId}", playerId);
                 return Result<object?>.Failure("Insufficient funds!");
             }
 
             var gameParams = await _cacheService.GetGameParamsAsync();
             if (gameParams is null)
             {
-                _logger.LogWarning("{Prefix} Game parameters not found", PREFIX);
+                _logger.LogWarning("Game parameters not found");
                 return Result<object?>.Failure("Game parameters not found");
             }
 
@@ -184,7 +179,7 @@ namespace BottleGame.Infrastructure.Services
             catch (DbUpdateConcurrencyException)
             {
                 // Another request changed the balance after the funds check above, so the check may be stale.
-                _logger.LogWarning("{Prefix} Concurrent balance update for player {PlayerId}", PREFIX, playerId);
+                _logger.LogWarning("Concurrent balance update for player {PlayerId}", playerId);
                 return Result<object?>.Conflict("The balance was changed by another request, try again");
             }
 
@@ -202,8 +197,7 @@ namespace BottleGame.Infrastructure.Services
             }
 
             _logger.LogInformation(
-                "{Prefix} Transaction created for player {PlayerId}. Type: {Status}, Amount: {Bet}",
-                PREFIX,
+                "Transaction created for player {PlayerId}. Type: {Status}, Amount: {Bet}",
                 playerId,
                 request.IsDeposit ? "Deposit" : "Withdrawal",
                 request.Amount);
@@ -221,7 +215,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (request.TransactionStatusId == inWaitStatusId)
             {
-                _logger.LogWarning("{Prefix} Invalid transaction status: {StatusId}", PREFIX, request.TransactionStatusId);
+                _logger.LogWarning("Invalid transaction status: {StatusId}", request.TransactionStatusId);
                 return Result.Failure($"Allowed statuses: {approvedStatusId}-Approved, {rejectedStatusId}-Rejected");
             }
 
@@ -232,31 +226,31 @@ namespace BottleGame.Infrastructure.Services
 
             if (transaction is null)
             {
-                _logger.LogWarning("{Prefix} Transaction with ID {TransactionId} not found", PREFIX, transactionId);
+                _logger.LogWarning("Transaction with ID {TransactionId} not found", transactionId);
                 return Result.NotFound($"Transaction with ID {transactionId} not found");
             }
 
             if (transaction.Player is null || transaction.Player.Balance is null || transaction.Player.PlayerOptions is null)
             {
-                _logger.LogWarning("{Prefix} Data of transaction {TransactionId} is incomplete", PREFIX, transaction.Id);
+                _logger.LogWarning("Data of transaction {TransactionId} is incomplete", transaction.Id);
                 return Result.NotFound($"Data of transaction {transaction.Id} is incomplete");
             }
 
             if (transaction.TransactionTypeId != withdrawalTypeId)
             {
-                _logger.LogWarning("{Prefix} Type of transaction {TransactionId} does not support manual approval/rejection", PREFIX, transactionId);
+                _logger.LogWarning("Type of transaction {TransactionId} does not support manual approval/rejection", transactionId);
                 return Result.Failure("The status can only be changed for transactions of type \"Withdrawal\"");
             }
 
             if (transaction.TransactionStatusId != inWaitStatusId)
             {
-                _logger.LogWarning("{Prefix} Transaction {TransactionId} is already handled (status {StatusId})", PREFIX, transactionId, transaction.TransactionStatusId);
+                _logger.LogWarning("Transaction {TransactionId} is already handled (status {StatusId})", transactionId, transaction.TransactionStatusId);
                 return Result.Failure("The status of an already handled transaction cannot be changed");
             }
 
             if (transaction.TransactionStatusId == request.TransactionStatusId)
             {
-                _logger.LogWarning("{Prefix} Transaction {TransactionId} already has status {StatusId}", PREFIX, transactionId, request.TransactionStatusId);
+                _logger.LogWarning("Transaction {TransactionId} already has status {StatusId}", transactionId, request.TransactionStatusId);
                 return Result.Failure("The transaction already has the given status");
             }
 
@@ -277,7 +271,7 @@ namespace BottleGame.Infrastructure.Services
                 // The payout may already exist at the provider, so a refund here could pay the player twice
                 if (transaction.ProcessingError == LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN)
                 {
-                    _logger.LogWarning("{Prefix} Transaction {TransactionId} has a payout with an unknown outcome and cannot be rejected", PREFIX, transactionId);
+                    _logger.LogWarning("Transaction {TransactionId} has a payout with an unknown outcome and cannot be rejected", transactionId);
                     return Result.Conflict(LiveTransactionProcessor.PAYOUT_OUTCOME_UNKNOWN);
                 }
 
@@ -301,11 +295,11 @@ namespace BottleGame.Infrastructure.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                _logger.LogWarning("{Prefix} Transaction {TransactionId} was already changed by another request", PREFIX, transactionId);
+                _logger.LogWarning("Transaction {TransactionId} was already changed by another request", transactionId);
                 return Result.Conflict("The transaction was already changed by another request");
             }
 
-            _logger.LogInformation("{Prefix} Status of transaction {TransactionId} changed to {StatusId}", PREFIX, transactionId, request.TransactionStatusId);
+            _logger.LogInformation("Status of transaction {TransactionId} changed to {StatusId}", transactionId, request.TransactionStatusId);
 
             return Result.Success();
         }
@@ -321,7 +315,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
+                _logger.LogWarning("Player with id {PlayerId} not found", playerId);
                 return Result<GetPlayerTransactionsResponse>.NotFound($"Player with id {playerId} not found");
             }
 
@@ -332,7 +326,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (!isStaff && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} User is banned", PREFIX);
+                _logger.LogWarning("User is banned");
                 return Result<GetPlayerTransactionsResponse>.Forbidden("User is banned");
             }
 
@@ -344,7 +338,7 @@ namespace BottleGame.Infrastructure.Services
                 .AsNoTracking()
                 .ToListAsync();
 
-            _logger.LogInformation("{Prefix} Got {Count} transactions for player {PlayerId}", PREFIX, transactions.Count, playerId);
+            _logger.LogInformation("Got {Count} transactions for player {PlayerId}", transactions.Count, playerId);
 
             var response = new GetPlayerTransactionsResponse
             {
@@ -401,7 +395,7 @@ namespace BottleGame.Infrastructure.Services
                 })
                 .ToListAsync();
 
-            _logger.LogInformation("{Prefix} Got {Count} transactions", PREFIX, rows.Count);
+            _logger.LogInformation("Got {Count} transactions", rows.Count);
 
             var response = rows
                 .GroupBy(t => t.PlayerId)
@@ -473,7 +467,7 @@ namespace BottleGame.Infrastructure.Services
                 Name = s.Value
             }).ToList();
 
-            _logger.LogInformation("{Prefix} Transaction statuses returned (from the cache)", PREFIX);
+            _logger.LogInformation("Transaction statuses returned (from the cache)");
 
             return Result<IEnumerable<TransactionStatusOrTypeDTO>>.Success(statuses);
         }
@@ -489,7 +483,7 @@ namespace BottleGame.Infrastructure.Services
                 Name = t.Value
             }).ToList();
 
-            _logger.LogInformation("{Prefix} Transaction types returned (from the cache)", PREFIX);
+            _logger.LogInformation("Transaction types returned (from the cache)");
 
             return Result<IEnumerable<TransactionStatusOrTypeDTO>>.Success(types);
         }

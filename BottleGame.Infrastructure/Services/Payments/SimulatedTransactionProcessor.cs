@@ -24,11 +24,6 @@ namespace BottleGame.Infrastructure.Services.Payments
         /// </summary>
         private readonly ILogger<SimulatedTransactionProcessor> _logger;
 
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[SimulatedTransactionProcessor]";
-
         #endregion Fields
 
         /// <summary>
@@ -56,7 +51,7 @@ namespace BottleGame.Infrastructure.Services.Payments
         public Task<Result> ApproveWithdrawalAsync(MoneyTransaction transaction, GameParams gameParams, AppBalance appBalance)
         {
             CompleteWithdrawalLocally(transaction, appBalance, TransactionStatuses.APPROVED);
-            _logger.LogInformation("{Prefix} Withdrawal {TransactionId} approved locally without processing", PREFIX, transaction.Id);
+            _logger.LogInformation("Withdrawal {TransactionId} approved locally without processing", transaction.Id);
             return Task.FromResult(Result.Success());
         }
 
@@ -88,8 +83,7 @@ namespace BottleGame.Infrastructure.Services.Payments
             await _context.SaveChangesAsync();
 
             _logger.LogInformation(
-                "{Prefix} [Simulated] Deposit {TransactionId} completed locally without processing",
-                PREFIX,
+                "[Simulated] Deposit {TransactionId} completed locally without processing",
                 transaction.Id);
 
             return new

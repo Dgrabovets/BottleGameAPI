@@ -1,3 +1,4 @@
+using BottleGame.Application.Common;
 using BottleGame.Application.DTOs.Processing;
 using BottleGame.Application.Interfaces;
 using BottleGame.Infrastructure.External.Processing;
@@ -15,6 +16,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
     /// <summary>
     /// Payment provider based on the YooKassa API v3
     /// </summary>
+    [LogPrefix("YooKassa")]
     public class YooKassaPaymentProvider : IPaymentProvider
     {
         #region Fields
@@ -33,11 +35,6 @@ namespace BottleGame.Infrastructure.External.YooKassa
         /// Logger
         /// </summary>
         private readonly ILogger<YooKassaPaymentProvider> _logger;
-
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[YooKassa]";
 
         /// <summary>
         /// Code of the only supported currency
@@ -225,7 +222,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
             // The id comes from an unsigned notification, so only the characters of a real id are let into the request path
             if (!IsValidObjectId(id))
             {
-                _logger.LogWarning("{Prefix} Refused to look up {Collection} with a malformed id", PREFIX, collection);
+                _logger.LogWarning("Refused to look up {Collection} with a malformed id", collection);
                 return null;
             }
 
@@ -233,7 +230,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
 
             if (status is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
             {
-                _logger.LogWarning("{Prefix} Object {Collection}/{Id} not found: {Error}", PREFIX, collection, id, ReadError(json));
+                _logger.LogWarning("Object {Collection}/{Id} not found: {Error}", collection, id, ReadError(json));
                 return null;
             }
 
@@ -325,7 +322,7 @@ namespace BottleGame.Infrastructure.External.YooKassa
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("{Prefix} {Method} {Path} -> {Status}: {Body}", PREFIX, method, path, (int)response.StatusCode, json);
+                _logger.LogWarning("{Method} {Path} -> {Status}: {Body}", method, path, (int)response.StatusCode, json);
             }
 
             return (response.StatusCode, json);

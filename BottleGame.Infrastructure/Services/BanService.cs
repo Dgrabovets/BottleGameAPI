@@ -29,11 +29,6 @@ namespace BottleGame.Infrastructure.Services
         private readonly ILogger<BanService> _logger;
 
         /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[BanService]";
-
-        /// <summary>
         /// Maximum number of attempts on a concurrency conflict
         /// </summary>
         private const int MAX_RETRIES = 3;
@@ -69,7 +64,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
+                _logger.LogWarning("Player with id {PlayerId} not found", playerId);
                 return Result<IsBannedResponse>.NotFound($"Player with id {playerId} not found");
             }
 
@@ -92,8 +87,8 @@ namespace BottleGame.Infrastructure.Services
                 BanHistory = banHistory
             };
 
-            _logger.LogInformation("{Prefix} Ban check for player {PlayerId}. Result: {IsBanned}",
-                PREFIX, playerId, response.IsBanned);
+            _logger.LogInformation("Ban check for player {PlayerId}. Result: {IsBanned}",
+                playerId, response.IsBanned);
 
             return Result<IsBannedResponse>.Success(response);
         }
@@ -114,13 +109,13 @@ namespace BottleGame.Infrastructure.Services
 
                     if (player is null)
                     {
-                        _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, request.PlayerId);
+                        _logger.LogWarning("Player with id {PlayerId} not found", request.PlayerId);
                         return Result.NotFound($"Player with ID {request.PlayerId} not found");
                     }
 
                     if (player.Ban is not null && player.Ban.IsActive)
                     {
-                        _logger.LogWarning("{Prefix} Player {PlayerId} is already banned", PREFIX, request.PlayerId);
+                        _logger.LogWarning("Player {PlayerId} is already banned", request.PlayerId);
                         return Result.Conflict("User already has an active ban");
                     }
 
@@ -171,7 +166,7 @@ namespace BottleGame.Infrastructure.Services
 
                     await _context.SaveChangesAsync();
 
-                    _logger.LogInformation("{Prefix} Player {PlayerId} banned", PREFIX, request.PlayerId);
+                    _logger.LogInformation("Player {PlayerId} banned", request.PlayerId);
                     return Result.Success();
                 }
                 catch (DbUpdateConcurrencyException ex)
@@ -181,8 +176,8 @@ namespace BottleGame.Infrastructure.Services
 
                     if (attempt == MAX_RETRIES)
                     {
-                        _logger.LogError(ex, "{Prefix} Concurrency error while banning player {PlayerId} after {Attempt} attempts",
-                            PREFIX, request.PlayerId, attempt);
+                        _logger.LogError(ex, "Concurrency error while banning player {PlayerId} after {Attempt} attempts",
+                            request.PlayerId, attempt);
 
                         return Result.InternalError("Failed to complete the operation because of a data conflict");
                     }
@@ -210,13 +205,13 @@ namespace BottleGame.Infrastructure.Services
 
                     if (player is null)
                     {
-                        _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", PREFIX, playerId);
+                        _logger.LogWarning("Player with id {PlayerId} not found", playerId);
                         return Result.NotFound($"Player with id {playerId} not found");
                     }
 
                     if (player.Ban is null || !player.Ban.IsActive)
                     {
-                        _logger.LogWarning("{Prefix} Player {PlayerId} has no active ban", PREFIX, playerId);
+                        _logger.LogWarning("Player {PlayerId} has no active ban", playerId);
                         return Result.NotFound("User has no active ban");
                     }
 
@@ -236,7 +231,7 @@ namespace BottleGame.Infrastructure.Services
 
                     await _context.SaveChangesAsync();
 
-                    _logger.LogInformation("{Prefix} Player {PlayerId} unbanned", PREFIX, playerId);
+                    _logger.LogInformation("Player {PlayerId} unbanned", playerId);
                     return Result.Success();
                 }
                 catch (DbUpdateConcurrencyException ex)
@@ -246,8 +241,8 @@ namespace BottleGame.Infrastructure.Services
 
                     if (attempt == MAX_RETRIES)
                     {
-                        _logger.LogError(ex, "{Prefix} Concurrency error while unbanning player {PlayerId} after {Attempt} attempts",
-                            PREFIX, playerId, attempt);
+                        _logger.LogError(ex, "Concurrency error while unbanning player {PlayerId} after {Attempt} attempts",
+                            playerId, attempt);
 
                         return Result.InternalError("Failed to complete the operation because of a data conflict");
                     }

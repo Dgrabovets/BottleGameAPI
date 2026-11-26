@@ -25,11 +25,6 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         private readonly ILogger<AppBalanceService> _logger;
 
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[AppBalanceService]";
-
         #endregion Fields
 
         /// <summary>
@@ -52,7 +47,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (balance is null)
             {
-                _logger.LogWarning("{Prefix} Application balance record not found", PREFIX);
+                _logger.LogWarning("Application balance record not found");
                 return Result<AppBalanceDTO>.NotFound("Application balance is not initialized");
             }
 
@@ -85,7 +80,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} No data found to update, the data integrity is probably broken", PREFIX);
+                _logger.LogWarning("No data found to update, the data integrity is probably broken");
                 return Result.Failure("No data found to update, the data integrity is probably broken");
             }
 
@@ -95,7 +90,7 @@ namespace BottleGame.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Lower threshold of the application balance updated: {LowerThreshold}", PREFIX, request.LowerThreshold);
+            _logger.LogInformation("Lower threshold of the application balance updated: {LowerThreshold}", request.LowerThreshold);
 
             return Result.Success();
         }
@@ -105,7 +100,7 @@ namespace BottleGame.Infrastructure.Services
         {
             if (request.Amount <= 0)
             {
-                _logger.LogWarning("{Prefix} Top-up amount must be positive: {Amount}", PREFIX, request.Amount);
+                _logger.LogWarning("Top-up amount must be positive: {Amount}", request.Amount);
                 return Result<decimal>.Failure("Top-up amount must be positive");
             }
 
@@ -113,7 +108,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} Application balance data not found", PREFIX);
+                _logger.LogWarning("Application balance data not found");
                 return Result<decimal>.Failure("Application balance data not found");
             }
 
@@ -123,8 +118,8 @@ namespace BottleGame.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Application balance topped up by {Amount}. New balance: {NewBalance}",
-                PREFIX, request.Amount, appBalance.Amount);
+            _logger.LogInformation("Application balance topped up by {Amount}. New balance: {NewBalance}",
+                request.Amount, appBalance.Amount);
 
             return Result<decimal>.Success(appBalance.Amount);
         }

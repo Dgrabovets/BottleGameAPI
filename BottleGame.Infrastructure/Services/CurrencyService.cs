@@ -61,11 +61,6 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         private static readonly TimeSpan ExchangeRateCacheExpiration = TimeSpan.FromMinutes(1);
 
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[CurrencyService]";
-
         #endregion Fields
 
         /// <summary>
@@ -105,7 +100,7 @@ namespace BottleGame.Infrastructure.Services
             {
                 entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
 
-                _logger.LogInformation("{Prefix} Loading the list of currencies from the API", PREFIX);
+                _logger.LogInformation("Loading the list of currencies from the API");
                 var result = await _paymentProvider.GetCurrenciesAsync(cancellationToken);
                 return result.ToList();
             });
@@ -130,7 +125,7 @@ namespace BottleGame.Infrastructure.Services
             {
                 entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
 
-                _logger.LogInformation("{Prefix} Loading the list of payment gateways from the API", PREFIX);
+                _logger.LogInformation("Loading the list of payment gateways from the API");
                 var result = await _paymentProvider.GetPaymentGatewaysAsync(cancellationToken);
                 return result.ToList();
             });
@@ -172,7 +167,7 @@ namespace BottleGame.Infrastructure.Services
             {
                 entry.AbsoluteExpirationRelativeToNow = ExchangeRateCacheExpiration;
 
-                _logger.LogDebug("{Prefix} Loading the rate for {Currency} from the API", PREFIX, LogSanitizer.Clean(currencyCode));
+                _logger.LogDebug("Loading the rate for {Currency} from the API", LogSanitizer.Clean(currencyCode));
                 return await _paymentProvider.GetExchangeRateAsync(currencyCode, cancellationToken);
             });
         }
@@ -184,13 +179,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (rate <= 0)
             {
-                _logger.LogWarning("{Prefix} Rate for {Currency} is unavailable, returning the original amount", PREFIX, fromCurrencyCode);
+                _logger.LogWarning("Rate for {Currency} is unavailable, returning the original amount", fromCurrencyCode);
                 return amount;
             }
 
             var converted = amount / rate;
-            _logger.LogDebug("{Prefix} Conversion {Amount} {Currency} -> {Converted} (rate: {Rate})",
-                PREFIX, amount, fromCurrencyCode, converted, rate);
+            _logger.LogDebug("Conversion {Amount} {Currency} -> {Converted} (rate: {Rate})",
+                amount, fromCurrencyCode, converted, rate);
 
             return converted;
         }
@@ -202,13 +197,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (rate <= 0)
             {
-                _logger.LogWarning("{Prefix} Rate for {Currency} is unavailable, returning the original amount", PREFIX, toCurrencyCode);
+                _logger.LogWarning("Rate for {Currency} is unavailable, returning the original amount", toCurrencyCode);
                 return amount;
             }
 
             var converted = amount * rate;
-            _logger.LogDebug("{Prefix} Conversion {Amount} -> {Converted} {Currency} (rate: {Rate})",
-                PREFIX, amount, converted, toCurrencyCode, rate);
+            _logger.LogDebug("Conversion {Amount} -> {Converted} {Currency} (rate: {Rate})",
+                amount, converted, toCurrencyCode, rate);
 
             return converted;
         }
@@ -231,7 +226,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (gateway is null)
             {
-                _logger.LogWarning("{Prefix} Gateway {Gateway} not found", PREFIX, LogSanitizer.Clean(gatewayCode));
+                _logger.LogWarning("Gateway {Gateway} not found", LogSanitizer.Clean(gatewayCode));
                 return false;
             }
 
@@ -249,8 +244,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (!isValid)
             {
-                _logger.LogWarning("{Prefix} Amount {Amount} is outside the allowed range for gateway {Gateway} (min: {Min}, max: {Max})",
-                    PREFIX, amount, LogSanitizer.Clean(gatewayCode), gateway.MinAmount, gateway.MaxAmount);
+                _logger.LogWarning("Amount {Amount} is outside the allowed range for gateway {Gateway} (min: {Min}, max: {Max})",
+                    amount, LogSanitizer.Clean(gatewayCode), gateway.MinAmount, gateway.MaxAmount);
             }
 
             return isValid;
@@ -264,7 +259,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (gateway is null)
             {
-                _logger.LogWarning("{Prefix} Gateway {Gateway} not found", PREFIX, LogSanitizer.Clean(gatewayCode));
+                _logger.LogWarning("Gateway {Gateway} not found", LogSanitizer.Clean(gatewayCode));
                 return [];
             }
 
@@ -279,7 +274,7 @@ namespace BottleGame.Infrastructure.Services
             if (!detailTypes.Any())
             {
                 // If the gateway has no restrictions on detail types, any type is considered valid
-                _logger.LogDebug("{Prefix} Gateway {Gateway} has no restrictions on detail types", PREFIX, LogSanitizer.Clean(gatewayCode));
+                _logger.LogDebug("Gateway {Gateway} has no restrictions on detail types", LogSanitizer.Clean(gatewayCode));
                 return true;
             }
 
@@ -287,8 +282,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (!isValid)
             {
-                _logger.LogWarning("{Prefix} Detail type '{DetailType}' is not supported by gateway {Gateway}. Available: {Available}",
-                    PREFIX, LogSanitizer.Clean(detailType), LogSanitizer.Clean(gatewayCode), string.Join(", ", detailTypes));
+                _logger.LogWarning("Detail type '{DetailType}' is not supported by gateway {Gateway}. Available: {Available}",
+                    LogSanitizer.Clean(detailType), LogSanitizer.Clean(gatewayCode), string.Join(", ", detailTypes));
             }
 
             return isValid;
@@ -299,7 +294,7 @@ namespace BottleGame.Infrastructure.Services
         {
             _cache.Remove(CURRENCIES_CACHE_KEY);
             _cache.Remove(GATEWAYS_CACHE_KEY);
-            _logger.LogInformation("{Prefix} Catalog cache cleared", PREFIX);
+            _logger.LogInformation("Catalog cache cleared");
         }
 
         #endregion Public Methods

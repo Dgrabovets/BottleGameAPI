@@ -48,11 +48,6 @@ namespace BottleGame.API.Controllers
         /// <inheritdoc cref="IPasswordUpgradeService"/>
         private readonly IPasswordUpgradeService _passwordUpgradeService;
 
-        /// <summary>
-        /// Prefix of the log messages
-        /// </summary>
-        const string PREFIX = "[Authorization Controller]";
-
         #endregion Fields
 
         /// <summary>
@@ -102,7 +97,7 @@ namespace BottleGame.API.Controllers
                 // Check that the model is valid
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("{Prefix} Invalid administrator sign-in data", PREFIX);
+                    _logger.LogWarning("Invalid administrator sign-in data");
                     return BadRequest(ModelState);
                 }
 
@@ -119,7 +114,7 @@ namespace BottleGame.API.Controllers
                 // Check the administrator's password
                 if (admin is null || !_passwordHasher.Verify(admin.PasswordHash, authRequest.Password, admin.Salt))
                 {
-                    _logger.LogWarning("{Prefix} Invalid sign-in data for administrator: {Login}", PREFIX, LogSanitizer.Clean(authRequest.Login));
+                    _logger.LogWarning("Invalid sign-in data for administrator: {Login}", LogSanitizer.Clean(authRequest.Login));
                     return Unauthorized("Invalid login or password");
                 }
 
@@ -137,14 +132,14 @@ namespace BottleGame.API.Controllers
                 // Generate the JWT token
                 var token = _tokenService.GenerateToken(claims);
 
-                _logger.LogInformation("{Prefix} Administrator signed in: {Login}", PREFIX, admin.Login);
+                _logger.LogInformation("Administrator signed in: {Login}", admin.Login);
 
                 // Return the token and the administrator data
                 return Ok(new { AdminId = admin.Id, Token = token });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while authorizing the administrator", PREFIX);
+                _logger.LogError(ex, "Error while authorizing the administrator");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -171,13 +166,13 @@ namespace BottleGame.API.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("{Prefix} Invalid administrator registration data", PREFIX);
+                    _logger.LogWarning("Invalid administrator registration data");
                     return BadRequest(ModelState);
                 }
 
                 if (await _context.AdminCreds.AnyAsync(a => a.Login == authRequest.Login))
                 {
-                    _logger.LogWarning("{Prefix} The administrator already exists", PREFIX);
+                    _logger.LogWarning("The administrator already exists");
                     return Conflict("The administrator already exists");
                 }
 
@@ -195,13 +190,13 @@ namespace BottleGame.API.Controllers
                 _context.AdminCreds.Add(admin);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("{Prefix} A new administrator was registered: {Login}", PREFIX, LogSanitizer.Clean(authRequest.Login));
+                _logger.LogInformation("A new administrator was registered: {Login}", LogSanitizer.Clean(authRequest.Login));
 
                 return Ok(new { Message = "The administrator was registered" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while registering the administrator", PREFIX);
+                _logger.LogError(ex, "Error while registering the administrator");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -229,14 +224,14 @@ namespace BottleGame.API.Controllers
                 // Check that the model is valid
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("{Prefix} Empty Telegram InitData", PREFIX);
+                    _logger.LogWarning("Empty Telegram InitData");
                     return BadRequest("Invalid Telegram initialization data");
                 }
 
                 // Check that the Telegram data is authentic, on the string exactly as Telegram signed it
                 if (!_telegramAuthService.ValidateInitData(initData))
                 {
-                    _logger.LogWarning("{Prefix} Unverified Telegram data", PREFIX);
+                    _logger.LogWarning("Unverified Telegram data");
                     return Unauthorized("Invalid Telegram authorization data");
                 }
 
@@ -249,7 +244,7 @@ namespace BottleGame.API.Controllers
                                               or KeyNotFoundException or NullReferenceException or IndexOutOfRangeException)
                 {
                     // Signed data can still miss a field the sign-in needs
-                    _logger.LogWarning("{Prefix} Malformed Telegram initData", PREFIX);
+                    _logger.LogWarning("Malformed Telegram initData");
                     return Unauthorized("Invalid Telegram authorization data");
                 }
 
@@ -258,7 +253,7 @@ namespace BottleGame.API.Controllers
 
                 if (player?.Ban is not null && player?.Ban.IsActive is true)
                 {
-                    _logger.LogWarning("{Prefix} The player is banned", PREFIX);
+                    _logger.LogWarning("The player is banned");
                     return StatusCode(403, "The player is banned");
                 }
 
@@ -273,7 +268,7 @@ namespace BottleGame.API.Controllers
 
                     if (playerData.InvitingPlayerId is not null && inviter is null)
                     {
-                        _logger.LogWarning("{Prefix} The invitation from player {PlayerId} is ignored: no such player with a referral link", PREFIX, playerData.InvitingPlayerId);
+                        _logger.LogWarning("The invitation from player {PlayerId} is ignored: no such player with a referral link", playerData.InvitingPlayerId);
                     }
 
                     // Create a new player
@@ -340,14 +335,14 @@ namespace BottleGame.API.Controllers
 
                 var token = _tokenService.GenerateToken(claims);
 
-                _logger.LogInformation("{Prefix} Telegram player authorized: {TelegramId}", PREFIX, player.TelegramId);
+                _logger.LogInformation("Telegram player authorized: {TelegramId}", player.TelegramId);
 
                 // Return the result
                 return Ok(new AuthResponse { PlayerId = player.Id, Token = token });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while authorizing the Telegram player", PREFIX);
+                _logger.LogError(ex, "Error while authorizing the Telegram player");
                 return StatusCode(500, "Internal server error");
             }
         }

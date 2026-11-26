@@ -37,11 +37,6 @@ namespace BottleGame.API.Controllers
         /// </summary>
         private readonly ICacheService _cacheService;
 
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string PREFIX = "[GameParams Controller]";
-
         #endregion Fields
 
         /// <summary>
@@ -79,17 +74,17 @@ namespace BottleGame.API.Controllers
 
                 if (gameParams is null)
                 {
-                    _logger.LogWarning("{Prefix} Game parameters not found", PREFIX);
+                    _logger.LogWarning("Game parameters not found");
                     return NotFound($"Game parameters not found");
                 }
 
-                _logger.LogInformation("{Prefix} Game parameters found (from the cache)", PREFIX);
+                _logger.LogInformation("Game parameters found (from the cache)");
 
                 return Ok(gameParams);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while getting the game parameters", PREFIX);
+                _logger.LogError(ex, "Error while getting the game parameters");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -113,7 +108,7 @@ namespace BottleGame.API.Controllers
                 // Check the input data
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("{Prefix} Invalid data for changing the game parameters", PREFIX);
+                    _logger.LogWarning("Invalid data for changing the game parameters");
                     return BadRequest(ModelState);
                 }
 
@@ -122,7 +117,7 @@ namespace BottleGame.API.Controllers
 
                 if (gameParams is null)
                 {
-                    _logger.LogWarning("{Prefix} Game parameters not found", PREFIX);
+                    _logger.LogWarning("Game parameters not found");
                     return NotFound($"Game parameters not found");
                 }
 
@@ -133,13 +128,13 @@ namespace BottleGame.API.Controllers
                 // Invalidate the cache after the update
                 _cacheService.InvalidateGameParams();
 
-                _logger.LogInformation("{Prefix} Game parameters updated, cache invalidated", PREFIX);
+                _logger.LogInformation("Game parameters updated, cache invalidated");
 
                 return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while updating the game parameters", PREFIX);
+                _logger.LogError(ex, "Error while updating the game parameters");
                 return StatusCode(500, "Internal server error");
             }
         }
