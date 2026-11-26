@@ -16,34 +16,35 @@ namespace BottleGame.API.Controllers
     /// currencies, payment gateways, exchange rates.
     /// For the local enums (CurrencyType, PaymentMethodType) use GameParamsController
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="CurrencyController"/>
-    /// </remarks>
-    /// <param name="currencyService">Currency service</param>
-    /// <param name="logger">Logger</param>
     [ApiController]
     [Route("api/currencies")]
     [Tags("Currencies and gateways")]
-    public class CurrencyController(ICurrencyService currencyService, ILogger<CurrencyController> logger) : ControllerBase
+    public class CurrencyController : ControllerBase
     {
         #region Fields
 
         /// <summary>
         /// Currency service
         /// </summary>
-        private readonly ICurrencyService _currencyService = currencyService;
+        private readonly ICurrencyService _currencyService;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<CurrencyController> _logger = logger;
-
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string Prefix = "[Currency]";
+        private readonly ILogger<CurrencyController> _logger;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="CurrencyController"/>
+        /// </summary>
+        /// <param name="currencyService">Currency service</param>
+        /// <param name="logger">Logger</param>
+        public CurrencyController(ICurrencyService currencyService, ILogger<CurrencyController> logger)
+        {
+            _currencyService = currencyService;
+            _logger = logger;
+        }
 
         #region Endpoints
 
@@ -58,7 +59,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(IEnumerable<CurrencyInfo>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCurrencies([FromQuery] bool forceRefresh = false)
         {
-            _logger.LogDebug("{Prefix} Currency list requested, forceRefresh={ForceRefresh}", Prefix, forceRefresh);
+            _logger.LogDebug("Currency list requested, forceRefresh={ForceRefresh}", forceRefresh);
             var currencies = await _currencyService.GetAvailableCurrenciesAsync(forceRefresh);
             return Ok(currencies);
         }
@@ -74,7 +75,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(IEnumerable<PaymentGatewayInfo>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetPaymentGateways([FromQuery] bool forceRefresh = false)
         {
-            _logger.LogDebug("{Prefix} Gateway list requested, forceRefresh={ForceRefresh}", Prefix, forceRefresh);
+            _logger.LogDebug("Gateway list requested, forceRefresh={ForceRefresh}", forceRefresh);
             var gateways = await _currencyService.GetPaymentGatewaysAsync(forceRefresh);
             return Ok(gateways);
         }
@@ -90,7 +91,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(IEnumerable<PaymentGatewayInfo>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetPaymentGatewaysForCurrency(string currencyCode)
         {
-            _logger.LogDebug("{Prefix} Payment gateways requested for currency {Currency}", Prefix, LogSanitizer.Clean(currencyCode));
+            _logger.LogDebug("Payment gateways requested for currency {Currency}", LogSanitizer.Clean(currencyCode));
             var gateways = await _currencyService.GetPaymentGatewaysForCurrencyAsync(currencyCode);
             return Ok(gateways);
         }
@@ -106,7 +107,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(IEnumerable<PaymentGatewayInfo>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetPayoutGatewaysForCurrency(string currencyCode)
         {
-            _logger.LogDebug("{Prefix} Payout gateways requested for currency {Currency}", Prefix, LogSanitizer.Clean(currencyCode));
+            _logger.LogDebug("Payout gateways requested for currency {Currency}", LogSanitizer.Clean(currencyCode));
             var gateways = await _currencyService.GetPayoutGatewaysForCurrencyAsync(currencyCode);
             return Ok(gateways);
         }
@@ -122,7 +123,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(ExchangeRateResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetExchangeRate(string currencyCode)
         {
-            _logger.LogDebug("{Prefix} Exchange rate requested for currency {Currency}", Prefix, LogSanitizer.Clean(currencyCode));
+            _logger.LogDebug("Exchange rate requested for currency {Currency}", LogSanitizer.Clean(currencyCode));
             var rate = await _currencyService.GetExchangeRateAsync(currencyCode);
             return Ok(new ExchangeRateResponse(currencyCode, rate));
         }
@@ -138,7 +139,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(CurrencyActiveResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> IsCurrencyActive(string currencyCode)
         {
-            _logger.LogDebug("{Prefix} Activity check for currency {Currency}", Prefix, LogSanitizer.Clean(currencyCode));
+            _logger.LogDebug("Activity check for currency {Currency}", LogSanitizer.Clean(currencyCode));
             var isActive = await _currencyService.IsCurrencyActiveAsync(currencyCode);
             return Ok(new CurrencyActiveResponse(currencyCode, isActive));
         }
@@ -155,7 +156,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(AmountValidationResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> ValidateAmountForGateway(string gatewayCode, [FromQuery] decimal amount)
         {
-            _logger.LogDebug("{Prefix} Validation of amount {Amount} for gateway {Gateway}", Prefix, amount, LogSanitizer.Clean(gatewayCode));
+            _logger.LogDebug("Validation of amount {Amount} for gateway {Gateway}", amount, LogSanitizer.Clean(gatewayCode));
             var isValid = await _currencyService.IsAmountValidForGatewayAsync(gatewayCode, amount);
             return Ok(new AmountValidationResponse(gatewayCode, amount, isValid));
         }
@@ -171,7 +172,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(DetailTypesResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetDetailTypesForGateway(string gatewayCode)
         {
-            _logger.LogDebug("{Prefix} Detail types requested for gateway {Gateway}", Prefix, LogSanitizer.Clean(gatewayCode));
+            _logger.LogDebug("Detail types requested for gateway {Gateway}", LogSanitizer.Clean(gatewayCode));
             var detailTypes = await _currencyService.GetDetailTypesForGatewayAsync(gatewayCode);
             return Ok(new DetailTypesResponse(gatewayCode, detailTypes.ToList()));
         }
@@ -188,7 +189,7 @@ namespace BottleGame.API.Controllers
         [ProducesResponseType(typeof(DetailTypeValidationResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> ValidateDetailTypeForGateway(string gatewayCode, [FromQuery] string detailType)
         {
-            _logger.LogDebug("{Prefix} Validation of detail type '{DetailType}' for gateway {Gateway}", Prefix, LogSanitizer.Clean(detailType), LogSanitizer.Clean(gatewayCode));
+            _logger.LogDebug("Validation of detail type '{DetailType}' for gateway {Gateway}", LogSanitizer.Clean(detailType), LogSanitizer.Clean(gatewayCode));
             var isValid = await _currencyService.IsDetailTypeValidForGatewayAsync(gatewayCode, detailType);
             return Ok(new DetailTypeValidationResponse(gatewayCode, detailType, isValid));
         }
@@ -201,14 +202,14 @@ namespace BottleGame.API.Controllers
         /// <response code="401">Not authorized</response>
         /// <response code="403">Access denied</response>
         [HttpPost("cache/clear")]
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public IActionResult ClearCache()
         {
             _currencyService.ClearCache();
-            _logger.LogInformation("{Prefix} Catalog cache cleared", Prefix);
+            _logger.LogInformation("Catalog cache cleared");
             return Ok(new { message = "Cache cleared" });
         }
 

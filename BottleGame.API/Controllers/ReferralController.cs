@@ -15,37 +15,42 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Manages referral links and invitations
     /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="configuration">Application configuration</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Referral system")]
-    public class ReferralController(ApplicationDbContext context, ILogger<ReferralController> logger, IConfiguration configuration) : Controller
+    public class ReferralController : Controller
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<ReferralController> _logger = logger;
+        private readonly ILogger<ReferralController> _logger;
 
         /// <summary>
         /// Name of the application used to build referral links
         /// </summary>
-        private readonly string _appName = configuration["AppName"]!;
-
-        /// <summary>
-        /// Prefix of the log messages
-        /// </summary>
-        const string Prefix = "[Referral Controller]";
+        private readonly string _appName;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="ReferralController"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="configuration">Application configuration</param>
+        public ReferralController(ApplicationDbContext context, ILogger<ReferralController> logger, IConfiguration configuration)
+        {
+            _context = context;
+            _logger = logger;
+            _appName = configuration["AppName"]!;
+        }
 
         #region ActionMethods
 
@@ -57,7 +62,7 @@ namespace BottleGame.API.Controllers
         /// <response code="403">The player is banned</response>
         /// <response code="404">The player was not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [ProducesResponseType(typeof(GetReferralLinkResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -67,7 +72,7 @@ namespace BottleGame.API.Controllers
         {
             try
             {
-                if (User.IsInRole(RoleNames.Player) && User.GetUserId() != playerId)
+                if (User.IsInRole(RoleNames.PLAYER) && User.GetUserId() != playerId)
                 {
                     return Unauthorized();
                 }
@@ -77,14 +82,14 @@ namespace BottleGame.API.Controllers
 
                 if (player is null)
                 {
-                    _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                    _logger.LogWarning("Player with id {PlayerId} not found", playerId);
                     return NotFound($"Player with id {playerId} not found");
                 }
 
-                if (User.IsInRole(RoleNames.Player) && player.Ban is not null && player.Ban.IsActive)
+                if (User.IsInRole(RoleNames.PLAYER) && player.Ban is not null && player.Ban.IsActive)
                 {
-                    _logger.LogWarning("{Prefix} The player is banned", Prefix);
-                    return Forbid("The player is banned");
+                    _logger.LogWarning("The player is banned");
+                    return StatusCode(403, "The player is banned");
                 }
 
                 var referralLink = player.ReferralLink;
@@ -104,13 +109,13 @@ namespace BottleGame.API.Controllers
                 }
 
                 // Return the link
-                _logger.LogInformation("{Prefix} Link received for player {PlayerId}", Prefix, playerId);
+                _logger.LogInformation("Link received for player {PlayerId}", playerId);
 
                 return Ok(new GetReferralLinkResponse { ReferralLink = referralLink.Link });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while getting the referral link for player {PlayerId}", Prefix, playerId);
+                _logger.LogError(ex, "Error while getting the referral link for player {PlayerId}", playerId);
                 return StatusCode(500, "Internal server error");
             }
         }

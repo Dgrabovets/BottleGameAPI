@@ -11,12 +11,12 @@ namespace BottleGame.Application.Validators
         /// <summary>
         /// Minimum transaction amount
         /// </summary>
-        private const int MinAmount = 100;
+        private const int MIN_AMOUNT = 100;
 
         /// <summary>
         /// Maximum transaction amount
         /// </summary>
-        private const int MaxAmount = 1_000_000;
+        private const int MAX_AMOUNT = 1_000_000;
 
         /// <summary>
         /// Sets up the validation rules
@@ -24,10 +24,10 @@ namespace BottleGame.Application.Validators
         public MoneyTransactionRequestValidator()
         {
             RuleFor(x => x.Amount)
-                .GreaterThanOrEqualTo(MinAmount)
-                .WithMessage($"Minimum transaction amount: {MinAmount}")
-                .LessThanOrEqualTo(MaxAmount)
-                .WithMessage($"Maximum transaction amount: {MaxAmount:N0}");
+                .GreaterThanOrEqualTo(MIN_AMOUNT)
+                .WithMessage($"Minimum transaction amount: {MIN_AMOUNT}")
+                .LessThanOrEqualTo(MAX_AMOUNT)
+                .WithMessage($"Maximum transaction amount: {MAX_AMOUNT:N0}");
         }
     }
 }

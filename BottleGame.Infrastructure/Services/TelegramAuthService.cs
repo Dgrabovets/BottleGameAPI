@@ -13,26 +13,38 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// <inheritdoc cref="ITelegramAuthService"/>
     /// </summary>
-    public class TelegramAuthService(IConfiguration config, ILogger<TelegramAuthService> logger) : ITelegramAuthService
+    public class TelegramAuthService : ITelegramAuthService
     {
         #region Fields
 
         /// <summary>
         /// Token of the Telegram bot used to verify initData
         /// </summary>
-        private readonly string _botToken = config["TelegramBotToken"]!;
+        private readonly string? _botToken;
 
         /// <summary>
         /// How long initData stays valid after Telegram signed it, in minutes. Zero turns the check off
         /// </summary>
-        private readonly int _maxAgeMinutes = config.GetValue("Telegram:InitDataMaxAgeMinutes", 1440);
+        private readonly int _maxAgeMinutes;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<TelegramAuthService> _logger = logger;
+        private readonly ILogger<TelegramAuthService> _logger;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="TelegramAuthService"/>
+        /// </summary>
+        /// <param name="config">Application configuration</param>
+        /// <param name="logger">Logger</param>
+        public TelegramAuthService(IConfiguration config, ILogger<TelegramAuthService> logger)
+        {
+            _botToken = config["TelegramBotToken"];
+            _maxAgeMinutes = config.GetValue("Telegram:InitDataMaxAgeMinutes", 1440);
+            _logger = logger;
+        }
 
         #region Methods
 
@@ -41,6 +53,12 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         public bool ValidateInitData(string initData)
         {
+            // With an empty key anyone can compute the signature. Startup refuses such a token, this is the second line
+            if (string.IsNullOrEmpty(_botToken))
+            {
+                return false;
+            }
+
             try
             {
                 NameValueCollection data = HttpUtility.ParseQueryString(initData);

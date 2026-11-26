@@ -42,15 +42,15 @@ public static class TestDbContextFactory
     {
         // Transaction types
         context.TransactionTypes.AddRange(
-            new TransactionType { Id = TransactionTypes.Deposit, Name = "Пополнение" },
-            new TransactionType { Id = TransactionTypes.Withdrawal, Name = "Вывод" }
+            new TransactionType { Id = TransactionTypes.DEPOSIT, Name = "Пополнение" },
+            new TransactionType { Id = TransactionTypes.WITHDRAWAL, Name = "Вывод" }
         );
 
         // Transaction statuses
         context.TransactionStatuses.AddRange(
-            new TransactionStatus { Id = TransactionStatuses.Pending, Name = "В ожидании" },
-            new TransactionStatus { Id = TransactionStatuses.Approved, Name = "Одобрено" },
-            new TransactionStatus { Id = TransactionStatuses.Rejected, Name = "Отклонено" }
+            new TransactionStatus { Id = TransactionStatuses.PENDING, Name = "В ожидании" },
+            new TransactionStatus { Id = TransactionStatuses.APPROVED, Name = "Одобрено" },
+            new TransactionStatus { Id = TransactionStatuses.REJECTED, Name = "Отклонено" }
         );
 
         // Game parameters

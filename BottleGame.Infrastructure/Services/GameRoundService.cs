@@ -12,37 +12,39 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Service for working with game rounds
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="GameRoundService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="cacheService">Cache service</param>
-    public class GameRoundService(ApplicationDbContext context, ILogger<GameRoundService> logger, ICacheService cacheService) : IGameRoundService
+    public class GameRoundService : IGameRoundService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<GameRoundService> _logger = logger;
+        private readonly ILogger<GameRoundService> _logger;
 
         /// <summary>
         /// Cache service
         /// </summary>
-        private readonly ICacheService _cacheService = cacheService;
-
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string Prefix = "[GameRoundService]";
+        private readonly ICacheService _cacheService;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="GameRoundService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="cacheService">Cache service</param>
+        public GameRoundService(ApplicationDbContext context, ILogger<GameRoundService> logger, ICacheService cacheService)
+        {
+            _context = context;
+            _logger = logger;
+            _cacheService = cacheService;
+        }
 
         #region Public Methods
 
@@ -63,19 +65,19 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("Player with id {PlayerId} not found", playerId);
                 return Result.NotFound($"Player with id {playerId} not found");
             }
 
             if (!isAdmin && player.Ban is not null && player.Ban.IsActive)
             {
-                _logger.LogWarning("{Prefix} User is banned", Prefix);
+                _logger.LogWarning("User is banned");
                 return Result.Forbidden("User is banned");
             }
 
             if (player.Balance.Amount < request.Bet && !request.IsWin)
             {
-                _logger.LogWarning("{Prefix} Insufficient balance for withdrawal for player {PlayerId}", Prefix, playerId);
+                _logger.LogWarning("Insufficient balance for withdrawal for player {PlayerId}", playerId);
                 return Result.Failure("Insufficient funds!");
             }
 
@@ -84,7 +86,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (roundsPlayedStat is null)
             {
-                _logger.LogWarning("{Prefix} Statistics of the played rounds not found for player {PlayerId}", Prefix, playerId);
+                _logger.LogWarning("Statistics of the played rounds not found for player {PlayerId}", playerId);
                 return Result.Failure("Statistics of the played rounds of the player not found");
             }
 
@@ -112,13 +114,12 @@ namespace BottleGame.Infrastructure.Services
             catch (DbUpdateConcurrencyException)
             {
                 // The balance was changed by another request after it was read, so the check above may be stale.
-                _logger.LogWarning("{Prefix} Concurrent balance update for player {PlayerId}", Prefix, playerId);
+                _logger.LogWarning("Concurrent balance update for player {PlayerId}", playerId);
                 return Result.Conflict("The balance was changed by another request, try again");
             }
 
             _logger.LogInformation(
-                "{Prefix} Round finished for player {PlayerId}. Status: {Status}, Amount: {Bet}",
-                Prefix,
+                "Round finished for player {PlayerId}. Status: {Status}, Amount: {Bet}",
                 playerId,
                 request.IsWin ? "Win" : "Loss",
                 request.Bet);
@@ -137,7 +138,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (player is null)
             {
-                _logger.LogWarning("{Prefix} Player with id {PlayerId} not found", Prefix, playerId);
+                _logger.LogWarning("Player with id {PlayerId} not found", playerId);
                 return Result<GetPlayerPlayedRoundsResponse>.NotFound($"Player with id {playerId} not found");
             }
 
@@ -161,7 +162,7 @@ namespace BottleGame.Infrastructure.Services
                 })]
             };
 
-            _logger.LogInformation("{Prefix} Got the list of rounds played by player {PlayerId}", Prefix, playerId);
+            _logger.LogInformation("Got the list of rounds played by player {PlayerId}", playerId);
 
             return Result<GetPlayerPlayedRoundsResponse>.Success(response);
         }
@@ -186,7 +187,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (!hasRounds)
             {
-                _logger.LogWarning("{Prefix} Rounds of the players not found", Prefix);
+                _logger.LogWarning("Rounds of the players not found");
                 return Result<GetProfitResponse>.NotFound("Rounds of the players not found, the profit cannot be calculated");
             }
 
@@ -198,8 +199,8 @@ namespace BottleGame.Infrastructure.Services
             var dateFrom = await query.MinAsync(r => r.FinishedAt);
             var dateTill = await query.MaxAsync(r => r.FinishedAt);
 
-            _logger.LogInformation("{Prefix} Profit calculated for the period {DateFrom} - {DateTill}",
-                Prefix, dateFrom, dateTill);
+            _logger.LogInformation("Profit calculated for the period {DateFrom} - {DateTill}",
+                dateFrom, dateTill);
 
             var response = new GetProfitResponse
             {

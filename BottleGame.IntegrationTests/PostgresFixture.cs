@@ -35,7 +35,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     /// </summary>
     public async Task InitializeAsync()
     {
-        _serverConnection = Environment.GetEnvironmentVariable(PostgresFactAttribute.EnvironmentVariable);
+        _serverConnection = Environment.GetEnvironmentVariable(PostgresFactAttribute.ENVIRONMENT_VARIABLE);
         if (string.IsNullOrWhiteSpace(_serverConnection))
         {
             return;
@@ -131,7 +131,7 @@ public sealed class PostgresFixture : IAsyncLifetime
             PlayerId = playerId,
             Amount = amount,
             TransactionTypeId = typeId,
-            TransactionStatusId = Domain.Constants.TransactionStatuses.Pending,
+            TransactionStatusId = Domain.Constants.TransactionStatuses.PENDING,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -146,7 +146,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     /// </summary>
     /// <param name="connectionString">Connection string</param>
     /// <param name="sql">Sql</param>
-    private static async Task ExecuteAsync(string connectionString, string sql)
+    internal static async Task ExecuteAsync(string connectionString, string sql)
     {
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
@@ -158,7 +158,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     /// Finds the repository's database folder by walking up from the test output
     /// </summary>
     /// <returns>The created value</returns>
-    private static string FindDatabaseFolder()
+    internal static string FindDatabaseFolder()
     {
         for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
         {

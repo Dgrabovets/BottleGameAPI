@@ -68,7 +68,7 @@ public class ModeratorServiceTests : IDisposable
         result.IsSuccess.Should().BeTrue();
         var moderator = _context.AdminCreds.FirstOrDefault(a => a.Login == "moderator");
         moderator.Should().NotBeNull();
-        moderator!.Role.Should().Be(AdministrationRoles.Moderator);
+        moderator!.Role.Should().Be(AdministrationRoles.MODERATOR);
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public class ModeratorServiceTests : IDisposable
             Login = "existing",
             PasswordHash = "hash",
             Salt = "salt",
-            Role = AdministrationRoles.Moderator,
+            Role = AdministrationRoles.MODERATOR,
             CreatedAt = DateTime.UtcNow
         });
 
@@ -111,9 +111,9 @@ public class ModeratorServiceTests : IDisposable
     {
         // Arrange
         _context.AdminCreds.AddRange(
-            new AdministrationRoleUser { Login = "mod1", PasswordHash = "h1", Salt = "s1", Role = AdministrationRoles.Moderator, CreatedAt = DateTime.UtcNow },
-            new AdministrationRoleUser { Login = "mod2", PasswordHash = "h2", Salt = "s2", Role = AdministrationRoles.Moderator, CreatedAt = DateTime.UtcNow },
-            new AdministrationRoleUser { Login = "admin", PasswordHash = "h3", Salt = "s3", Role = AdministrationRoles.Admin, CreatedAt = DateTime.UtcNow }
+            new AdministrationRoleUser { Login = "mod1", PasswordHash = "h1", Salt = "s1", Role = AdministrationRoles.MODERATOR, CreatedAt = DateTime.UtcNow },
+            new AdministrationRoleUser { Login = "mod2", PasswordHash = "h2", Salt = "s2", Role = AdministrationRoles.MODERATOR, CreatedAt = DateTime.UtcNow },
+            new AdministrationRoleUser { Login = "admin", PasswordHash = "h3", Salt = "s3", Role = AdministrationRoles.ADMIN, CreatedAt = DateTime.UtcNow }
         );
 
         await _context.SaveChangesAsync();
@@ -157,7 +157,7 @@ public class ModeratorServiceTests : IDisposable
             Login = "toDelete",
             PasswordHash = "h",
             Salt = "s",
-            Role = AdministrationRoles.Moderator,
+            Role = AdministrationRoles.MODERATOR,
             CreatedAt = DateTime.UtcNow
         };
 

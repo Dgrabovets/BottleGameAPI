@@ -23,7 +23,7 @@ public class PageRequestTests
     [Fact]
     public void Create_OnlyOneParameter_UsesDefaults()
     {
-        PageRequest.Create(3, null).Should().Be(new PageRequest(3, PageRequest.DefaultPageSize));
+        PageRequest.Create(3, null).Should().Be(new PageRequest(3, PageRequest.DEFAULT_PAGE_SIZE));
         PageRequest.Create(null, 50).Should().Be(new PageRequest(1, 50));
     }
 
@@ -33,7 +33,7 @@ public class PageRequestTests
     [Theory]
     [InlineData(0, 0, 1, 1)]
     [InlineData(-5, -5, 1, 1)]
-    [InlineData(2, 100000, 2, PageRequest.MaxPageSize)]
+    [InlineData(2, 100000, 2, PageRequest.MAX_PAGE_SIZE)]
     public void Create_OutOfRange_IsClamped(int page, int pageSize, int expectedPage, int expectedPageSize)
     {
         PageRequest.Create(page, pageSize).Should().Be(new PageRequest(expectedPage, expectedPageSize));

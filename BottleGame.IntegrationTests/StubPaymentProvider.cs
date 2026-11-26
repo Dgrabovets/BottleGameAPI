@@ -6,16 +6,42 @@ namespace BottleGame.IntegrationTests;
 /// <summary>
 /// Payment provider that answers a payment lookup with a prepared success; with several participants the answer is given only after all of them have asked, so parallel handlers reach the database together
 /// </summary>
-/// <param name="paymentId">Payment id</param>
-/// <param name="transactionId">Transaction id</param>
-/// <param name="amount">Amount</param>
-/// <param name="rendezvousParticipants">Rendezvous participants</param>
-public sealed class StubPaymentProvider(string paymentId, int transactionId, decimal amount, int rendezvousParticipants = 1) : IPaymentProvider
+public sealed class StubPaymentProvider : IPaymentProvider
 {
+    /// <summary>
+    /// Payment id
+    /// </summary>
+    private readonly string _paymentId;
+
+    /// <summary>
+    /// Transaction id
+    /// </summary>
+    private readonly int _transactionId;
+
+    /// <summary>
+    /// Amount
+    /// </summary>
+    private readonly decimal _amount;
+
     /// <summary>
     /// Barrier
     /// </summary>
-    private readonly Barrier? _barrier = rendezvousParticipants > 1 ? new Barrier(rendezvousParticipants) : null;
+    private readonly Barrier? _barrier;
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="StubPaymentProvider"/>
+    /// </summary>
+    /// <param name="paymentId">Payment id</param>
+    /// <param name="transactionId">Transaction id</param>
+    /// <param name="amount">Amount</param>
+    /// <param name="rendezvousParticipants">Rendezvous participants</param>
+    public StubPaymentProvider(string paymentId, int transactionId, decimal amount, int rendezvousParticipants = 1)
+    {
+        _paymentId = paymentId;
+        _transactionId = transactionId;
+        _amount = amount;
+        _barrier = rendezvousParticipants > 1 ? new Barrier(rendezvousParticipants) : null;
+    }
 
     /// <summary>
     /// Returns the configured payment; with several participants it first waits for all of them
@@ -27,7 +53,7 @@ public sealed class StubPaymentProvider(string paymentId, int transactionId, dec
     {
         _barrier?.SignalAndWait(TimeSpan.FromSeconds(10), cancellationToken);
         return Task.FromResult<ProviderOperation?>(
-            new ProviderOperation(paymentId, ProviderOperationStatus.Succeeded, amount, "rub", transactionId, null));
+            new ProviderOperation(_paymentId, ProviderOperationStatus.Succeeded, _amount, "rub", _transactionId, null));
     }
 
     /// <summary>

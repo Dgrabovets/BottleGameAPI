@@ -15,23 +15,28 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Manages player balances, deposits, withdrawals and transaction statuses
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="BalanceController"/>
-    /// </remarks>
-    /// <param name="transactionService">Service for working with transactions</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Balance and transactions")]
-    public class BalanceController(ITransactionService transactionService) : BaseApiController
+    public class BalanceController : BaseApiController
     {
         #region Fields
 
         /// <summary>
         /// Service for working with transactions and balances
         /// </summary>
-        private readonly ITransactionService _transactionService = transactionService;
+        private readonly ITransactionService _transactionService;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="BalanceController"/>
+        /// </summary>
+        /// <param name="transactionService">Service for working with transactions</param>
+        public BalanceController(ITransactionService transactionService)
+        {
+            _transactionService = transactionService;
+        }
 
         #region Balance Methods
 
@@ -43,7 +48,7 @@ namespace BottleGame.API.Controllers
         /// <response code="404">The player was not found</response>
         /// <response code="403">The player is banned</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [HttpGet("get-player-balance/{playerId:int}")]
         [ProducesResponseType(typeof(GetPlayerBalanceResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -52,7 +57,7 @@ namespace BottleGame.API.Controllers
         public async Task<ActionResult<GetPlayerBalanceResponse>> GetPlayerBalance([FromRoute] int playerId)
         {
             var requestingPlayerId = User.GetUserId();
-            var isAdmin = User.IsInRole(RoleNames.Admin);
+            var isAdmin = User.IsInRole(RoleNames.ADMIN);
 
             var result = await _transactionService.GetPlayerBalance(playerId, requestingPlayerId, isAdmin);
             return ToActionResult(result);
@@ -72,7 +77,7 @@ namespace BottleGame.API.Controllers
         /// <response code="403">The player is banned</response>
         /// <response code="404">The player was not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -87,7 +92,7 @@ namespace BottleGame.API.Controllers
             }
 
             var requestingPlayerId = User.GetUserId();
-            var isAdmin = User.IsInRole(RoleNames.Admin);
+            var isAdmin = User.IsInRole(RoleNames.ADMIN);
 
             var result = await _transactionService.CreateTransaction(playerId, request, requestingPlayerId, isAdmin);
             return ToActionResultObject(result);
@@ -102,7 +107,7 @@ namespace BottleGame.API.Controllers
         /// <response code="400">Invalid request or invalid status</response>
         /// <response code="404">The transaction was not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrModerator)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_MODERATOR)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -123,7 +128,7 @@ namespace BottleGame.API.Controllers
         /// <response code="404">The player was not found</response>
         /// <response code="403">The player is banned</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.All)]
+        [Authorize(Roles = RoleNames.ALL)]
         [HttpGet("get-player-transactions/{playerId:int}")]
         [ProducesResponseType(typeof(GetPlayerTransactionsResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -148,7 +153,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">List of all transactions of the given type</response>
         /// <response code="400">Invalid request data</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrModerator)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_MODERATOR)]
         [HttpGet("get-all-transactions")]
         [ProducesResponseType(typeof(IEnumerable<GetPlayerTransactionsResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -163,7 +168,7 @@ namespace BottleGame.API.Controllers
 
             if (pageRequest is not null)
             {
-                Response.Headers[TotalCountHeader] = (await _transactionService.CountTransactions(typeId)).ToString();
+                Response.Headers[TOTAL_COUNT_HEADER] = (await _transactionService.CountTransactions(typeId)).ToString();
             }
 
             return ToActionResult(result);
@@ -178,7 +183,7 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <response code="200">List of all transaction statuses</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrModerator)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_MODERATOR)]
         [HttpGet("get-all-transaction-statuses")]
         [ProducesResponseType(typeof(IEnumerable<TransactionStatusOrTypeDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -193,7 +198,7 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <response code="200">List of all transaction types</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrModerator)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_MODERATOR)]
         [HttpGet("get-all-transaction-types")]
         [ProducesResponseType(typeof(IEnumerable<TransactionStatusOrTypeDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

@@ -1,4 +1,5 @@
 using BottleGame.API.Controllers;
+using BottleGame.API.Logging;
 using BottleGame.API.Middleware;
 using BottleGame.API.Options;
 using BottleGame.Application;
@@ -32,8 +33,13 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Transaction", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Infrastructure", LogEventLevel.Warning)
-    .WriteTo.Console()
-    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    // The request and routing logs carry the path, and the Telegram sign-in route has initData in it
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    // Prefix names the class of this solution that wrote the entry
+    .Enrich.With(new LogPrefixEnricher())
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Prefix}{Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Prefix}{Message:lj}{NewLine}{Exception}")
     .CreateLogger();
 builder.Host.UseSerilog();
 
@@ -59,6 +65,12 @@ builder.Services.AddOptions<JwtOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddOptions<TelegramOptions>()
+    .Configure(options => options.BotToken = builder.Configuration["TelegramBotToken"] ?? string.Empty)
+    .ValidateOnStart();
+
+builder.Services.AddSingleton<IValidateOptions<TelegramOptions>, TelegramOptionsValidator>();
+
 var jwtKey = builder.Configuration["JWT:Key"] ?? string.Empty;
 var jwtIssuer = builder.Configuration["JWT:Issuer"] ?? "BottleAppAPI";
 var jwtAudience = builder.Configuration["JWT:Audience"] ?? "BottleGame";
@@ -79,9 +91,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(RoleNames.Admin, policy => policy.RequireRole(RoleNames.Admin))
-    .AddPolicy(RoleNames.Moderator, policy => policy.RequireRole(RoleNames.Moderator))
-    .AddPolicy(RoleNames.Player, policy => policy.RequireRole(RoleNames.Player));
+    .AddPolicy(RoleNames.ADMIN, policy => policy.RequireRole(RoleNames.ADMIN))
+    .AddPolicy(RoleNames.MODERATOR, policy => policy.RequireRole(RoleNames.MODERATOR))
+    .AddPolicy(RoleNames.PLAYER, policy => policy.RequireRole(RoleNames.PLAYER));
 
 #endregion
 
@@ -147,7 +159,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .WithExposedHeaders(BaseApiController.TotalCountHeader)
+              .WithExposedHeaders(BaseApiController.TOTAL_COUNT_HEADER)
               .AllowCredentials();
     });
 });
@@ -192,6 +204,17 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 250,
                 Window = TimeSpan.FromSeconds(30),
                 SegmentsPerWindow = 3,
+            }));
+
+    // webhook (YooKassa notifications): 120 requests per minute per IP
+    options.AddPolicy("webhook", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetClientIpAddress(context),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
             }));
 });
 

@@ -45,5 +45,11 @@ namespace BottleGame.Infrastructure.External.Processing
         /// Maximum time to wait for an API response, in seconds
         /// </summary>
         public int TimeoutSeconds { get; set; } = 30;
+
+        /// <summary>
+        /// How long after the first request a payout with an unknown outcome may be sent again, in hours. Set through Processing__PayoutRepeatWindowHours
+        /// </summary>
+        /// <remarks>Default and maximum: 24, the time YooKassa keeps an idempotence key by its documentation</remarks>
+        public int PayoutRepeatWindowHours { get; set; } = 24;
     }
 }

@@ -14,11 +14,11 @@ public class ClaimsPrincipalExtensionsTests
     /// Staff see any player, a player sees only their own data
     /// </summary>
     [Theory]
-    [InlineData(RoleNames.Admin, "1", true)]
-    [InlineData(RoleNames.Moderator, "1", true)]
-    [InlineData(RoleNames.Player, "7", true)]
-    [InlineData(RoleNames.Player, "8", false)]
-    [InlineData(RoleNames.Player, "not a number", false)]
+    [InlineData(RoleNames.ADMIN, "1", true)]
+    [InlineData(RoleNames.MODERATOR, "1", true)]
+    [InlineData(RoleNames.PLAYER, "7", true)]
+    [InlineData(RoleNames.PLAYER, "8", false)]
+    [InlineData(RoleNames.PLAYER, "not a number", false)]
     public void HasAccessToPlayer_DependsOnRoleAndId(string role, string userId, bool expected)
     {
         var identity = new ClaimsIdentity([new Claim(ClaimTypes.Role, role), new Claim(ClaimTypes.NameIdentifier, userId)], "test");

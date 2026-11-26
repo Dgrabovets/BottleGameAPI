@@ -212,6 +212,30 @@ public class PlayerServiceTests : IDisposable
     }
 
     /// <summary>
+    /// Get player by id: the invited players come with their rounds, so their win rate is not zero
+    /// </summary>
+    [Fact]
+    public async Task GetPlayerById_InvitedPlayers_CarryWinRate()
+    {
+        // Arrange
+        var inviter = TestDbContextFactory.CreateTestPlayer(_context, 1001);
+        var invited = TestDbContextFactory.CreateTestPlayer(_context, 1002);
+        _context.InvitedPlayers.Add(new InvitedPlayer { PlayerIdInvitedBy = inviter.Id, PlayerIdInvited = invited.Id, InvitedAt = DateTime.UtcNow });
+        _context.GameRounds.AddRange(
+            new GameRound { PlayerId = invited.Id, Bet = 10, IsWin = true, FinishedAt = DateTime.UtcNow },
+            new GameRound { PlayerId = invited.Id, Bet = 10, IsWin = false, FinishedAt = DateTime.UtcNow });
+        _context.SaveChanges();
+        _context.ChangeTracker.Clear();
+
+        // Act
+        var result = await _service.GetPlayerById(inviter.Id, null, true);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.PlayersInvited.Should().ContainSingle().Which.WinRate.Should().BeGreaterThan(0);
+    }
+
+    /// <summary>
     /// Get player by id: a banned player reads own data; returns forbidden
     /// </summary>
     [Fact]
@@ -437,6 +461,42 @@ public class PlayerServiceTests : IDisposable
 
         // Assert
         result.IsSuccess.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Edit player: a player sends a win chance for their own profile; the chance is not changed
+    /// </summary>
+    [Fact]
+    public async Task EditPlayer_WinChance_AsPlayer_IsIgnored()
+    {
+        // Arrange
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        var request = new EditPlayerRequest { WinChance = 0.99f };
+
+        // Act
+        var result = await _service.EditPlayer(player.Id, request, false);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _context.PlayersOptions.Single(o => o.PlayerId == player.Id).WinChance.Should().Be(0.5f);
+    }
+
+    /// <summary>
+    /// Edit player: an administrator sets the win chance; the chance is changed
+    /// </summary>
+    [Fact]
+    public async Task EditPlayer_WinChance_AsAdmin_IsApplied()
+    {
+        // Arrange
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        var request = new EditPlayerRequest { WinChance = 0.7f };
+
+        // Act
+        var result = await _service.EditPlayer(player.Id, request, true);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _context.PlayersOptions.Single(o => o.PlayerId == player.Id).WinChance.Should().Be(0.7f);
     }
 
     #endregion EditPlayer Tests

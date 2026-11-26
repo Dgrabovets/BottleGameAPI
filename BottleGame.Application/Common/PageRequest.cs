@@ -10,12 +10,12 @@ namespace BottleGame.Application.Common
         /// <summary>
         /// Largest allowed page size
         /// </summary>
-        public const int MaxPageSize = 200;
+        public const int MAX_PAGE_SIZE = 200;
 
         /// <summary>
         /// Page size used when only the page number is given
         /// </summary>
-        public const int DefaultPageSize = 20;
+        public const int DEFAULT_PAGE_SIZE = 20;
 
         /// <summary>
         /// Number of items before the first item of the page
@@ -37,7 +37,7 @@ namespace BottleGame.Application.Common
 
             return new PageRequest(
                 Math.Max(page ?? 1, 1),
-                Math.Clamp(pageSize ?? DefaultPageSize, 1, MaxPageSize));
+                Math.Clamp(pageSize ?? DEFAULT_PAGE_SIZE, 1, MAX_PAGE_SIZE));
         }
     }
 }

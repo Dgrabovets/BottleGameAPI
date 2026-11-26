@@ -11,31 +11,32 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Application balance service
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="AppBalanceService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    public class AppBalanceService(ApplicationDbContext context, ILogger<AppBalanceService> logger) : IAppBalanceService
+    public class AppBalanceService : IAppBalanceService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<AppBalanceService> _logger = logger;
-
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string Prefix = "[AppBalanceService]";
+        private readonly ILogger<AppBalanceService> _logger;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="AppBalanceService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        public AppBalanceService(ApplicationDbContext context, ILogger<AppBalanceService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
 
         #region App Balance Methods
 
@@ -46,7 +47,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (balance is null)
             {
-                _logger.LogWarning("{Prefix} Application balance record not found", Prefix);
+                _logger.LogWarning("Application balance record not found");
                 return Result<AppBalanceDTO>.NotFound("Application balance is not initialized");
             }
 
@@ -79,7 +80,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} No data found to update, the data integrity is probably broken", Prefix);
+                _logger.LogWarning("No data found to update, the data integrity is probably broken");
                 return Result.Failure("No data found to update, the data integrity is probably broken");
             }
 
@@ -89,7 +90,7 @@ namespace BottleGame.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Lower threshold of the application balance updated: {LowerThreshold}", Prefix, request.LowerThreshold);
+            _logger.LogInformation("Lower threshold of the application balance updated: {LowerThreshold}", request.LowerThreshold);
 
             return Result.Success();
         }
@@ -99,7 +100,7 @@ namespace BottleGame.Infrastructure.Services
         {
             if (request.Amount <= 0)
             {
-                _logger.LogWarning("{Prefix} Top-up amount must be positive: {Amount}", Prefix, request.Amount);
+                _logger.LogWarning("Top-up amount must be positive: {Amount}", request.Amount);
                 return Result<decimal>.Failure("Top-up amount must be positive");
             }
 
@@ -107,7 +108,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} Application balance data not found", Prefix);
+                _logger.LogWarning("Application balance data not found");
                 return Result<decimal>.Failure("Application balance data not found");
             }
 
@@ -117,8 +118,8 @@ namespace BottleGame.Infrastructure.Services
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Application balance topped up by {Amount}. New balance: {NewBalance}",
-                Prefix, request.Amount, appBalance.Amount);
+            _logger.LogInformation("Application balance topped up by {Amount}. New balance: {NewBalance}",
+                request.Amount, appBalance.Amount);
 
             return Result<decimal>.Success(appBalance.Amount);
         }

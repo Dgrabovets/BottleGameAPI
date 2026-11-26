@@ -8,20 +8,20 @@
         /// <summary>
         /// Balance top-up (deposit)
         /// </summary>
-        public const int Deposit = 1;
+        public const int DEPOSIT = 1;
 
         /// <summary>
         /// Withdrawal of funds
         /// </summary>
-        public const int Withdrawal = 2;
+        public const int WITHDRAWAL = 2;
 
         /// <summary>
         /// Type names for logging
         /// </summary>
         public static string GetName(int typeId) => typeId switch
         {
-            Deposit => "Deposit",
-            Withdrawal => "Withdrawal",
+            DEPOSIT => "Deposit",
+            WITHDRAWAL => "Withdrawal",
             _ => "Unknown type"
         };
     }

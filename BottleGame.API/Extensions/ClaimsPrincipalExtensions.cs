@@ -27,7 +27,7 @@ namespace BottleGame.API.Extensions
         /// <returns>true for an administrator or a moderator</returns>
         public static bool IsStaff(this ClaimsPrincipal user)
         {
-            return user.IsInRole(RoleNames.Admin) || user.IsInRole(RoleNames.Moderator);
+            return user.IsInRole(RoleNames.ADMIN) || user.IsInRole(RoleNames.MODERATOR);
         }
 
         /// <summary>

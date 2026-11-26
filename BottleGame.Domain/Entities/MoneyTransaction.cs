@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BottleGame.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BottleGame.Domain.Entities
@@ -110,6 +111,30 @@ namespace BottleGame.Domain.Entities
         public string? ProcessingError { get; set; }
 
         #endregion Processing Fields
+
+        #region Payout Fields
+
+        /// <summary>
+        /// State of the payout at the payment provider (for withdrawals in Live mode)
+        /// </summary>
+        [Required]
+        [Column("PayoutState")]
+        public PayoutState PayoutState { get; set; }
+
+        /// <summary>
+        /// Time of the first payout request; repeats do not change it
+        /// </summary>
+        [Column("PayoutRequestedAt")]
+        public DateTime? PayoutRequestedAt { get; set; }
+
+        /// <summary>
+        /// Wallet sent with the first payout request
+        /// </summary>
+        [Column("PayoutWallet")]
+        [MaxLength(100)]
+        public string? PayoutWallet { get; set; }
+
+        #endregion Payout Fields
 
         #region Date Fields
 

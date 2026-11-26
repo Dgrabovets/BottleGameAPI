@@ -1,6 +1,8 @@
 **/bin
 **/obj
 **/Logs
+# Compose runs the demo in Development, so a local settings file with secrets must not reach the image
+**/appsettings.Development.json
 .git
 .github
 .vs

@@ -22,6 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Schema of the previous version, the starting point of the upgrade script test -->
+    <None Include="Sql\*.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BottleGame.Infrastructure\BottleGame.Infrastructure.csproj" />
   </ItemGroup>
 

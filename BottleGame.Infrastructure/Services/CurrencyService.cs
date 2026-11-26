@@ -12,55 +12,44 @@ namespace BottleGame.Infrastructure.Services
     /// Service for working with currencies and exchange rates.
     /// Uses caching to optimize requests to the payment provider
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="CurrencyService"/>
-    /// </remarks>
-    /// <param name="paymentProvider">Payment provider</param>
-    /// <param name="cache">Cache</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="options">Processing settings</param>
-    public class CurrencyService(
-        IPaymentProvider paymentProvider,
-        IMemoryCache cache,
-        ILogger<CurrencyService> logger,
-        IOptions<ProcessingOptions> options) : ICurrencyService
+    public class CurrencyService : ICurrencyService
     {
         #region Fields
 
         /// <summary>
         /// Payment provider for getting the catalogs
         /// </summary>
-        private readonly IPaymentProvider _paymentProvider = paymentProvider;
+        private readonly IPaymentProvider _paymentProvider;
 
         /// <summary>
         /// Cache for storing the catalogs
         /// </summary>
-        private readonly IMemoryCache _cache = cache;
+        private readonly IMemoryCache _cache;
 
         /// <summary>
         /// Logger for recording events
         /// </summary>
-        private readonly ILogger<CurrencyService> _logger = logger;
+        private readonly ILogger<CurrencyService> _logger;
 
         /// <summary>
         /// Whether the service works with the real processing
         /// </summary>
-        private readonly bool _isLive = options.Value.Mode == ProcessingMode.Live;
+        private readonly bool _isLive;
 
         /// <summary>
         /// Cache key for the list of currencies
         /// </summary>
-        private const string CurrenciesCacheKey = "currencies";
+        private const string CURRENCIES_CACHE_KEY = "currencies";
 
         /// <summary>
         /// Cache key for the list of payment gateways
         /// </summary>
-        private const string GatewaysCacheKey = "payment_gateways";
+        private const string GATEWAYS_CACHE_KEY = "payment_gateways";
 
         /// <summary>
         /// Prefix of the cache key for exchange rates
         /// </summary>
-        private const string ExchangeRateCacheKeyPrefix = "exchange_rate_";
+        private const string EXCHANGE_RATE_CACHE_KEY_PREFIX = "exchange_rate_";
 
         /// <summary>
         /// Lifetime of the catalog cache (5 minutes)
@@ -72,12 +61,25 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         private static readonly TimeSpan ExchangeRateCacheExpiration = TimeSpan.FromMinutes(1);
 
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string Prefix = "[CurrencyService]";
-
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="CurrencyService"/>
+        /// </summary>
+        /// <param name="paymentProvider">Payment provider</param>
+        /// <param name="cache">Cache</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="options">Processing settings</param>
+        public CurrencyService(IPaymentProvider paymentProvider,
+                               IMemoryCache cache,
+                               ILogger<CurrencyService> logger,
+                               IOptions<ProcessingOptions> options)
+        {
+            _paymentProvider = paymentProvider;
+            _cache = cache;
+            _logger = logger;
+            _isLive = options.Value.Mode == ProcessingMode.Live;
+        }
 
         #region Public Methods
 
@@ -91,14 +93,14 @@ namespace BottleGame.Infrastructure.Services
 
             if (forceRefresh)
             {
-                _cache.Remove(CurrenciesCacheKey);
+                _cache.Remove(CURRENCIES_CACHE_KEY);
             }
 
-            var currencies = await _cache.GetOrCreateAsync(CurrenciesCacheKey, async entry =>
+            var currencies = await _cache.GetOrCreateAsync(CURRENCIES_CACHE_KEY, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
 
-                _logger.LogInformation("{Prefix} Loading the list of currencies from the API", Prefix);
+                _logger.LogInformation("Loading the list of currencies from the API");
                 var result = await _paymentProvider.GetCurrenciesAsync(cancellationToken);
                 return result.ToList();
             });
@@ -116,14 +118,14 @@ namespace BottleGame.Infrastructure.Services
 
             if (forceRefresh)
             {
-                _cache.Remove(GatewaysCacheKey);
+                _cache.Remove(GATEWAYS_CACHE_KEY);
             }
 
-            var gateways = await _cache.GetOrCreateAsync(GatewaysCacheKey, async entry =>
+            var gateways = await _cache.GetOrCreateAsync(GATEWAYS_CACHE_KEY, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = CatalogCacheExpiration;
 
-                _logger.LogInformation("{Prefix} Loading the list of payment gateways from the API", Prefix);
+                _logger.LogInformation("Loading the list of payment gateways from the API");
                 var result = await _paymentProvider.GetPaymentGatewaysAsync(cancellationToken);
                 return result.ToList();
             });
@@ -156,16 +158,16 @@ namespace BottleGame.Infrastructure.Services
         {
             if (!_isLive)
             {
-                return SimulatedExchangeRate;
+                return SIMULATED_EXCHANGE_RATE;
             }
 
-            var cacheKey = $"{ExchangeRateCacheKeyPrefix}{currencyCode.ToLowerInvariant()}";
+            var cacheKey = $"{EXCHANGE_RATE_CACHE_KEY_PREFIX}{currencyCode.ToLowerInvariant()}";
 
             return await _cache.GetOrCreateAsync(cacheKey, async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = ExchangeRateCacheExpiration;
 
-                _logger.LogDebug("{Prefix} Loading the rate for {Currency} from the API", Prefix, LogSanitizer.Clean(currencyCode));
+                _logger.LogDebug("Loading the rate for {Currency} from the API", LogSanitizer.Clean(currencyCode));
                 return await _paymentProvider.GetExchangeRateAsync(currencyCode, cancellationToken);
             });
         }
@@ -177,13 +179,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (rate <= 0)
             {
-                _logger.LogWarning("{Prefix} Rate for {Currency} is unavailable, returning the original amount", Prefix, fromCurrencyCode);
+                _logger.LogWarning("Rate for {Currency} is unavailable, returning the original amount", fromCurrencyCode);
                 return amount;
             }
 
             var converted = amount / rate;
-            _logger.LogDebug("{Prefix} Conversion {Amount} {Currency} -> {Converted} (rate: {Rate})",
-                Prefix, amount, fromCurrencyCode, converted, rate);
+            _logger.LogDebug("Conversion {Amount} {Currency} -> {Converted} (rate: {Rate})",
+                amount, fromCurrencyCode, converted, rate);
 
             return converted;
         }
@@ -195,13 +197,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (rate <= 0)
             {
-                _logger.LogWarning("{Prefix} Rate for {Currency} is unavailable, returning the original amount", Prefix, toCurrencyCode);
+                _logger.LogWarning("Rate for {Currency} is unavailable, returning the original amount", toCurrencyCode);
                 return amount;
             }
 
             var converted = amount * rate;
-            _logger.LogDebug("{Prefix} Conversion {Amount} -> {Converted} {Currency} (rate: {Rate})",
-                Prefix, amount, converted, toCurrencyCode, rate);
+            _logger.LogDebug("Conversion {Amount} -> {Converted} {Currency} (rate: {Rate})",
+                amount, converted, toCurrencyCode, rate);
 
             return converted;
         }
@@ -224,7 +226,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (gateway is null)
             {
-                _logger.LogWarning("{Prefix} Gateway {Gateway} not found", Prefix, LogSanitizer.Clean(gatewayCode));
+                _logger.LogWarning("Gateway {Gateway} not found", LogSanitizer.Clean(gatewayCode));
                 return false;
             }
 
@@ -242,8 +244,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (!isValid)
             {
-                _logger.LogWarning("{Prefix} Amount {Amount} is outside the allowed range for gateway {Gateway} (min: {Min}, max: {Max})",
-                    Prefix, amount, LogSanitizer.Clean(gatewayCode), gateway.MinAmount, gateway.MaxAmount);
+                _logger.LogWarning("Amount {Amount} is outside the allowed range for gateway {Gateway} (min: {Min}, max: {Max})",
+                    amount, LogSanitizer.Clean(gatewayCode), gateway.MinAmount, gateway.MaxAmount);
             }
 
             return isValid;
@@ -257,7 +259,7 @@ namespace BottleGame.Infrastructure.Services
 
             if (gateway is null)
             {
-                _logger.LogWarning("{Prefix} Gateway {Gateway} not found", Prefix, LogSanitizer.Clean(gatewayCode));
+                _logger.LogWarning("Gateway {Gateway} not found", LogSanitizer.Clean(gatewayCode));
                 return [];
             }
 
@@ -272,7 +274,7 @@ namespace BottleGame.Infrastructure.Services
             if (!detailTypes.Any())
             {
                 // If the gateway has no restrictions on detail types, any type is considered valid
-                _logger.LogDebug("{Prefix} Gateway {Gateway} has no restrictions on detail types", Prefix, LogSanitizer.Clean(gatewayCode));
+                _logger.LogDebug("Gateway {Gateway} has no restrictions on detail types", LogSanitizer.Clean(gatewayCode));
                 return true;
             }
 
@@ -280,8 +282,8 @@ namespace BottleGame.Infrastructure.Services
 
             if (!isValid)
             {
-                _logger.LogWarning("{Prefix} Detail type '{DetailType}' is not supported by gateway {Gateway}. Available: {Available}",
-                    Prefix, LogSanitizer.Clean(detailType), LogSanitizer.Clean(gatewayCode), string.Join(", ", detailTypes));
+                _logger.LogWarning("Detail type '{DetailType}' is not supported by gateway {Gateway}. Available: {Available}",
+                    LogSanitizer.Clean(detailType), LogSanitizer.Clean(gatewayCode), string.Join(", ", detailTypes));
             }
 
             return isValid;
@@ -290,9 +292,9 @@ namespace BottleGame.Infrastructure.Services
         /// <inheritdoc/>
         public void ClearCache()
         {
-            _cache.Remove(CurrenciesCacheKey);
-            _cache.Remove(GatewaysCacheKey);
-            _logger.LogInformation("{Prefix} Catalog cache cleared", Prefix);
+            _cache.Remove(CURRENCIES_CACHE_KEY);
+            _cache.Remove(GATEWAYS_CACHE_KEY);
+            _logger.LogInformation("Catalog cache cleared");
         }
 
         #endregion Public Methods
@@ -302,24 +304,24 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Currency code in Simulated mode (matches the player registration)
         /// </summary>
-        private const string SimulatedCurrencyCode = "rub";
+        private const string SIMULATED_CURRENCY_CODE = "rub";
 
         /// <summary>
         /// Gateway in Simulated mode (matches PaymentMethod/PayoutMethod at registration)
         /// </summary>
-        private const string SimulatedGatewayCode = "sberbank";
+        private const string SIMULATED_GATEWAY_CODE = "sberbank";
 
         /// <summary>
         /// Rate in Simulated mode: no conversion
         /// </summary>
-        private const decimal SimulatedExchangeRate = 1m;
+        private const decimal SIMULATED_EXCHANGE_RATE = 1m;
 
         /// <summary>
         /// Returns a single currency without calling the processing
         /// </summary>
         private static IReadOnlyList<CurrencyInfo> GetSimulatedCurrencies() =>
         [
-            new CurrencyInfo(SimulatedCurrencyCode, "Russian ruble (test)", isActive: true)
+            new CurrencyInfo(SIMULATED_CURRENCY_CODE, "Russian ruble (test)", isActive: true)
         ];
 
         /// <summary>
@@ -328,9 +330,9 @@ namespace BottleGame.Infrastructure.Services
         private static IReadOnlyList<PaymentGatewayInfo> GetSimulatedPaymentGateways() =>
         [
             new PaymentGatewayInfo(
-                code: SimulatedGatewayCode,
+                code: SIMULATED_GATEWAY_CODE,
                 name: "Sberbank (test)",
-                currency: SimulatedCurrencyCode,
+                currency: SIMULATED_CURRENCY_CODE,
                 supportsPayments: true,
                 supportsPayouts: true,
                 minAmount: 100m,

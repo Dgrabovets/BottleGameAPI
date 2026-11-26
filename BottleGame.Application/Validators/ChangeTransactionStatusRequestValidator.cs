@@ -15,8 +15,8 @@ namespace BottleGame.Application.Validators
         public ChangeTransactionStatusRequestValidator()
         {
             RuleFor(x => x.TransactionStatusId)
-                .Must(status => status == TransactionStatuses.Approved || status == TransactionStatuses.Rejected)
-                .WithMessage($"Allowed statuses: {TransactionStatuses.Approved} (Approved), {TransactionStatuses.Rejected} (Rejected)");
+                .Must(status => status == TransactionStatuses.APPROVED || status == TransactionStatuses.REJECTED)
+                .WithMessage($"Allowed statuses: {TransactionStatuses.APPROVED} (Approved), {TransactionStatuses.REJECTED} (Rejected)");
         }
     }
 }

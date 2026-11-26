@@ -1,5 +1,7 @@
 using BottleGame.Application.DTOs.Requests;
+using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Services;
 using BottleGame.UnitTests.Fixtures;
 using FluentAssertions;
@@ -206,6 +208,28 @@ public class BanServiceTests : IDisposable
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(409);
+    }
+
+    /// <summary>
+    /// Ban player: a pending withdrawal whose payout may already exist stays pending, other pending withdrawals are rejected
+    /// </summary>
+    [Fact]
+    public async Task BanPlayer_KeepsWithdrawalWithUnknownPayoutOutcomePending()
+    {
+        // Arrange
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        var marked = new MoneyTransaction { PlayerId = player.Id, Amount = 300, TransactionTypeId = TransactionTypes.WITHDRAWAL, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow, PayoutState = PayoutState.OutcomeUnknown };
+        var plain = new MoneyTransaction { PlayerId = player.Id, Amount = 200, TransactionTypeId = TransactionTypes.WITHDRAWAL, TransactionStatusId = TransactionStatuses.PENDING, CreatedAt = DateTime.UtcNow };
+        _context.MoneyTransactions.AddRange(marked, plain);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _service.BanPlayer(new BanPlayerRequest { PlayerId = player.Id, BanReason = "Test ban" });
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _context.MoneyTransactions.Single(t => t.Id == marked.Id).TransactionStatusId.Should().Be(TransactionStatuses.PENDING);
+        _context.MoneyTransactions.Single(t => t.Id == plain.Id).TransactionStatusId.Should().Be(TransactionStatuses.REJECTED);
     }
 
     #endregion BanPlayer Tests

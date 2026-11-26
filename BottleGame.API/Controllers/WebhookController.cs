@@ -1,28 +1,39 @@
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BottleGame.API.Controllers
 {
     /// <summary>
     /// Controller for notifications from the payment provider
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="WebhookController"/>
-    /// </remarks>
-    /// <param name="webhookService">Notification handling service</param>
     [Route("api/webhook")]
     [Tags("Webhooks")]
-    public class WebhookController(IPaymentWebhookService webhookService) : BaseApiController
+    public class WebhookController : BaseApiController
     {
         #region Fields
 
         /// <summary>
         /// Notification handling service
         /// </summary>
-        private readonly IPaymentWebhookService _webhookService = webhookService;
+        private readonly IPaymentWebhookService _webhookService;
+
+        /// <summary>
+        /// Largest accepted notification body in bytes. A YooKassa notification takes a few kilobytes
+        /// </summary>
+        private const long MAX_BODY_SIZE = 64 * 1024;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="WebhookController"/>
+        /// </summary>
+        /// <param name="webhookService">Notification handling service</param>
+        public WebhookController(IPaymentWebhookService webhookService)
+        {
+            _webhookService = webhookService;
+        }
 
         #region Action Methods
 
@@ -32,8 +43,12 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <returns>Result of handling the notification</returns>
         [HttpPost("yookassa")]
+        [RequestSizeLimit(MAX_BODY_SIZE)]
+        [EnableRateLimiting("webhook")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status413PayloadTooLarge)]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> YooKassaWebhook()
         {

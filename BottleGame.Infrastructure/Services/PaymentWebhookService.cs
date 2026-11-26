@@ -4,6 +4,7 @@ using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
+using BottleGame.Domain.Enums;
 using BottleGame.Infrastructure.Data;
 using BottleGame.Infrastructure.External.YooKassa.Models;
 using Microsoft.EntityFrameworkCore;
@@ -17,50 +18,56 @@ namespace BottleGame.Infrastructure.Services
     /// </summary>
     /// <remarks>
     /// YooKassa notifications are not signed, so only the object identifier is taken from the body.
-    /// The status, the amount and the link to the transaction are read from the YooKassa API response to a request by this identifier.
-    /// Initializes a new instance of <see cref="PaymentWebhookService"/>
+    /// The status, the amount and the link to the transaction are read from the YooKassa API response to a request by this identifier
     /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="paymentProvider">Payment provider</param>
-    /// <param name="logger">Logger</param>
-    public class PaymentWebhookService(
-        ApplicationDbContext context,
-        IPaymentProvider paymentProvider,
-        ILogger<PaymentWebhookService> logger) : IPaymentWebhookService
+    public class PaymentWebhookService : IPaymentWebhookService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Payment provider
         /// </summary>
-        private readonly IPaymentProvider _paymentProvider = paymentProvider;
+        private readonly IPaymentProvider _paymentProvider;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<PaymentWebhookService> _logger = logger;
-
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string Prefix = "[Webhook]";
+        private readonly ILogger<PaymentWebhookService> _logger;
 
         /// <summary>
         /// Share of the referral bonus from the deposit amount of the invited player
         /// </summary>
-        private const decimal ReferralBonusRate = 0.1m;
+        private const decimal REFERRAL_BONUS_RATE = 0.1m;
 
         /// <summary>
         /// JSON deserialization settings
         /// </summary>
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+        /// <summary>
+        /// How much of a body the provider has not confirmed is stored in the webhook log
+        /// </summary>
+        private const int MAX_UNPARSED_BODY_LENGTH = 200;
+
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PaymentWebhookService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="paymentProvider">Payment provider</param>
+        /// <param name="logger">Logger</param>
+        public PaymentWebhookService(ApplicationDbContext context, IPaymentProvider paymentProvider, ILogger<PaymentWebhookService> logger)
+        {
+            _context = context;
+            _paymentProvider = paymentProvider;
+            _logger = logger;
+        }
 
         #region Public Methods
 
@@ -71,28 +78,28 @@ namespace BottleGame.Infrastructure.Services
 
             try
             {
-                _logger.LogInformation("{Prefix} Notification received: {Body}", Prefix, LogSanitizer.Clean(request.Body));
-
                 var notification = TryParseNotification(request.Body);
                 if (notification?.Object is null || string.IsNullOrWhiteSpace(notification.Object.Id))
                 {
-                    return await LogAndFailAsync(webhookLog, "Failed to parse the notification");
+                    return await LogAndFailAsync(webhookLog, $"Failed to parse the notification ({request.Body.Length} characters)");
                 }
+
+                _logger.LogInformation("Notification received: {Event} {ObjectId}", LogSanitizer.Clean(notification.Event), LogSanitizer.Clean(notification.Object.Id));
 
                 webhookLog.WebhookType = notification.Event;
                 webhookLog.OrderId = notification.Object.Id;
 
                 return notification.Event switch
                 {
-                    "payment.succeeded" or "payment.canceled" => await HandleAsync(webhookLog, notification.Object.Id, isPayout: false),
-                    "payout.succeeded" or "payout.canceled" => await HandleAsync(webhookLog, notification.Object.Id, isPayout: true),
+                    "payment.succeeded" or "payment.canceled" => await HandleAsync(webhookLog, request.Body, notification.Object.Id, isPayout: false),
+                    "payout.succeeded" or "payout.canceled" => await HandleAsync(webhookLog, request.Body, notification.Object.Id, isPayout: true),
                     _ => await SaveLogAsync(webhookLog, "Ignored", Result.Success())
                 };
             }
             catch (Exception ex)
             {
                 webhookLog.ErrorMessage = ex.ToString();
-                _logger.LogError(ex, "{Prefix} Error while handling the notification", Prefix);
+                _logger.LogError(ex, "Error while handling the notification");
                 await SaveLogAsync(webhookLog, "Error", Result.InternalError());
                 return Result.InternalError();
             }
@@ -106,10 +113,11 @@ namespace BottleGame.Infrastructure.Services
         /// Verifies the object at the provider, finds the transaction and applies the outcome once
         /// </summary>
         /// <param name="webhookLog">Log record</param>
+        /// <param name="body">Raw request body, stored in full once the provider confirms the object</param>
         /// <param name="providerId">Identifier of the payment or payout at the provider</param>
         /// <param name="isPayout">true for a payout, false for a payment</param>
         /// <returns>Result of the handling</returns>
-        private async Task<Result> HandleAsync(ProcessingWebhookLog webhookLog, string providerId, bool isPayout)
+        private async Task<Result> HandleAsync(ProcessingWebhookLog webhookLog, string body, string providerId, bool isPayout)
         {
             var operation = isPayout
                               ? await _paymentProvider.GetPayoutAsync(providerId)
@@ -122,6 +130,7 @@ namespace BottleGame.Infrastructure.Services
 
             // The object was received directly from the provider, so the notification is not forged.
             webhookLog.IsSignatureValid = true;
+            webhookLog.RawRequest = body;
             webhookLog.Result = operation.Status.ToString();
 
             if (operation.TransactionId is not { } transactionId)
@@ -140,18 +149,36 @@ namespace BottleGame.Infrastructure.Services
                 return await LogAndFailAsync(webhookLog, $"Transaction not found: {transactionId}");
             }
 
-            var expectedType = isPayout ? TransactionTypes.Withdrawal : TransactionTypes.Deposit;
+            var expectedType = isPayout ? TransactionTypes.WITHDRAWAL : TransactionTypes.DEPOSIT;
             if (transaction.TransactionTypeId != expectedType)
             {
                 return await LogAndFailAsync(webhookLog, $"Type of transaction {transactionId} does not match the event");
             }
 
+            // A different provider object for the same transaction means a second payment or payout, never a repeat
+            if (transaction.ProcessingOrderId is { } knownId && knownId != operation.Id)
+            {
+                return await ManualCheckAsync(webhookLog, $"Transaction {transactionId} is linked to {knownId}, but the notification is about {operation.Id}");
+            }
+
             // The provider repeats the delivery; the outcome of the transaction is recorded once,
             // otherwise the money would be credited or returned twice.
-            if (transaction.IsProcessingSuccess is not null)
+            if (transaction.IsProcessingSuccess is { } recordedSuccess)
             {
-                _logger.LogWarning("{Prefix} Repeated notification for transaction {TransactionId} ignored", Prefix, transaction.Id);
+                // A final outcome that contradicts the recorded one (for example, a payout that succeeded after a refund) is not a repeat
+                if (operation.Status != ProviderOperationStatus.Pending && recordedSuccess != (operation.Status == ProviderOperationStatus.Succeeded))
+                {
+                    return await ManualCheckAsync(webhookLog, $"The provider reports {operation.Status} for transaction {transactionId}, but it is recorded as {(recordedSuccess ? "succeeded" : "failed")}");
+                }
+
+                _logger.LogWarning("Repeated notification for transaction {TransactionId} ignored", transaction.Id);
                 return await SaveLogAsync(webhookLog, "Duplicate", Result.Success());
+            }
+
+            // Rejected without a provider outcome means rejected by hand or by a ban, and the player already has the money back
+            if (transaction.TransactionStatusId == TransactionStatuses.REJECTED)
+            {
+                return await ManualCheckAsync(webhookLog, $"Transaction {transactionId} was rejected without a provider outcome, the {operation.Status} outcome is not applied");
             }
 
             if (operation.Amount != transaction.Amount)
@@ -166,8 +193,8 @@ namespace BottleGame.Infrastructure.Services
                 {
                     (false, ProviderOperationStatus.Succeeded) => await ProcessSuccessfulPaymentAsync(transaction, operation),
                     (false, ProviderOperationStatus.Canceled) => await ProcessFailedPaymentAsync(transaction),
-                    (true, ProviderOperationStatus.Succeeded) => await ProcessSuccessfulPayoutAsync(transaction),
-                    (true, ProviderOperationStatus.Canceled) => await ProcessFailedPayoutAsync(transaction, operation.CancellationReason),
+                    (true, ProviderOperationStatus.Succeeded) => await ProcessSuccessfulPayoutAsync(transaction, operation),
+                    (true, ProviderOperationStatus.Canceled) => await ProcessFailedPayoutAsync(transaction, operation),
                     _ => Result.Success() // the operation is not finished yet
                 };
             }
@@ -183,11 +210,11 @@ namespace BottleGame.Infrastructure.Services
 
                 if (alreadyHandled)
                 {
-                    _logger.LogWarning("{Prefix} Transaction {TransactionId} was handled by a concurrent request, the repeat is ignored", Prefix, transactionId);
+                    _logger.LogWarning("Transaction {TransactionId} was handled by a concurrent request, the repeat is ignored", transactionId);
                     return await SaveLogAsync(webhookLog, "Duplicate", Result.Success());
                 }
 
-                _logger.LogWarning("{Prefix} Concurrent update while handling transaction {TransactionId}, the provider will retry", Prefix, transactionId);
+                _logger.LogWarning("Concurrent update while handling transaction {TransactionId}, the provider will retry", transactionId);
                 return await LogAndFailAsync(webhookLog, "Concurrent update, try again");
             }
 
@@ -230,19 +257,19 @@ namespace BottleGame.Infrastructure.Services
 
             if (roundsPlayedStat is null)
             {
-                _logger.LogWarning("{Prefix} Statistics of the played rounds not found for player {PlayerId}", Prefix, transaction.PlayerId);
+                _logger.LogWarning("Statistics of the played rounds not found for player {PlayerId}", transaction.PlayerId);
                 return Result.Failure("Statistics of the played rounds of the player not found");
             }
 
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} Application balance not found", Prefix);
+                _logger.LogWarning("Application balance not found");
                 return Result.Failure("Application balance not found");
             }
 
             transaction.IsProcessingSuccess = true;
-            transaction.TransactionStatusId = TransactionStatuses.Approved;
+            transaction.TransactionStatusId = TransactionStatuses.APPROVED;
             transaction.ProcessingOrderId = payment.Id;
             transaction.Currency = payment.Currency;
 
@@ -256,7 +283,7 @@ namespace BottleGame.Infrastructure.Services
             transaction.ProcessedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Transaction {TransactionId} handled successfully", Prefix, transaction.Id);
+            _logger.LogInformation("Transaction {TransactionId} handled successfully", transaction.Id);
             return Result.Success();
         }
 
@@ -268,12 +295,12 @@ namespace BottleGame.Infrastructure.Services
         private async Task<Result> ProcessFailedPaymentAsync(MoneyTransaction transaction)
         {
             transaction.IsProcessingSuccess = false;
-            transaction.TransactionStatusId = TransactionStatuses.Rejected;
+            transaction.TransactionStatusId = TransactionStatuses.REJECTED;
             transaction.ProcessedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Transaction {TransactionId} finished with an error", Prefix, transaction.Id);
+            _logger.LogInformation("Transaction {TransactionId} finished with an error", transaction.Id);
             return Result.Success();
         }
 
@@ -281,24 +308,29 @@ namespace BottleGame.Infrastructure.Services
         /// Handles a successful payout
         /// </summary>
         /// <param name="transaction">Transaction</param>
+        /// <param name="payout">Payout at the provider</param>
         /// <returns>Result of the handling</returns>
-        private async Task<Result> ProcessSuccessfulPayoutAsync(MoneyTransaction transaction)
+        private async Task<Result> ProcessSuccessfulPayoutAsync(MoneyTransaction transaction, ProviderOperation payout)
         {
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
             if (appBalance is null)
             {
-                _logger.LogWarning("{Prefix} Application balance not found", Prefix);
+                _logger.LogWarning("Application balance not found");
                 return Result.Failure("Application balance not found");
             }
 
             transaction.IsProcessingSuccess = true;
-            transaction.TransactionStatusId = TransactionStatuses.Approved;
+            transaction.TransactionStatusId = TransactionStatuses.APPROVED;
+            // The id is missing when creating the payout timed out, the notification is then the first to tell it
+            transaction.ProcessingOrderId = payout.Id;
+            transaction.ProcessingError = null;
+            transaction.PayoutState = PayoutState.Completed;
             appBalance.Amount -= transaction.Amount;
 
             transaction.ProcessedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Payout {TransactionId} handled successfully", Prefix, transaction.Id);
+            _logger.LogInformation("Payout {TransactionId} handled successfully", transaction.Id);
             return Result.Success();
         }
 
@@ -306,19 +338,22 @@ namespace BottleGame.Infrastructure.Services
         /// Handles a canceled payout and returns the funds to the player
         /// </summary>
         /// <param name="transaction">Transaction</param>
-        /// <param name="reason">Cancellation reason</param>
+        /// <param name="payout">Payout at the provider</param>
         /// <returns>Result of the handling</returns>
-        private async Task<Result> ProcessFailedPayoutAsync(MoneyTransaction transaction, string? reason)
+        private async Task<Result> ProcessFailedPayoutAsync(MoneyTransaction transaction, ProviderOperation payout)
         {
+            var reason = payout.CancellationReason;
             transaction.IsProcessingSuccess = false;
-            transaction.TransactionStatusId = TransactionStatuses.Rejected;
+            transaction.TransactionStatusId = TransactionStatuses.REJECTED;
+            transaction.ProcessingOrderId = payout.Id;
             transaction.ProcessingError = reason;
+            transaction.PayoutState = PayoutState.Refused;
             transaction.Player.Balance.Amount += transaction.Amount;
 
             transaction.ProcessedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogWarning("{Prefix} Payout {TransactionId} canceled: {Reason}", Prefix, transaction.Id, reason);
+            _logger.LogWarning("Payout {TransactionId} canceled: {Reason}", transaction.Id, reason);
             return Result.Success();
         }
 
@@ -339,7 +374,7 @@ namespace BottleGame.Infrastructure.Services
                 return;
             }
 
-            var bonusAmount = (int)Math.Round(transaction.Amount * ReferralBonusRate, MidpointRounding.AwayFromZero);
+            var bonusAmount = (int)Math.Round(transaction.Amount * REFERRAL_BONUS_RATE, MidpointRounding.AwayFromZero);
             referrer.Balance.Amount += bonusAmount;
 
             var referrerRoundsPlayedStat = await _context.PlayersPlayedRoundsStatisticForWithdrawals
@@ -351,8 +386,8 @@ namespace BottleGame.Infrastructure.Services
             }
 
             _logger.LogInformation(
-                "{Prefix} Credited {BonusAmount} to referrer {ReferrerId} for the deposit of invited player {PlayerId}",
-                Prefix, bonusAmount, referrer.Id, transaction.PlayerId);
+                "Credited {BonusAmount} to referrer {ReferrerId} for the deposit of invited player {PlayerId}",
+                bonusAmount, referrer.Id, transaction.PlayerId);
         }
 
         /// <summary>
@@ -378,7 +413,8 @@ namespace BottleGame.Infrastructure.Services
         /// <returns>Log record</returns>
         private static ProcessingWebhookLog CreateWebhookLog(WebhookRequestInfo request) => new()
         {
-            RawRequest = request.Body,
+            // Anyone can post here, so the body is kept only as a short prefix until the provider confirms the object
+            RawRequest = request.Body.Length <= MAX_UNPARSED_BODY_LENGTH ? request.Body : request.Body[..MAX_UNPARSED_BODY_LENGTH],
             HttpMethod = request.HttpMethod,
             ContentType = request.ContentType,
             IpAddress = request.IpAddress ?? "Unknown",
@@ -406,10 +442,24 @@ namespace BottleGame.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Error while saving the webhook log", Prefix);
+                _logger.LogError(ex, "Error while saving the webhook log");
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Leaves a notification that contradicts the stored transaction for a manual check: nothing is applied, and the answer
+        /// is a success, because a repeated delivery cannot fix it
+        /// </summary>
+        /// <param name="log">Log record</param>
+        /// <param name="message">What contradicts</param>
+        /// <returns>Successful result</returns>
+        private async Task<Result> ManualCheckAsync(ProcessingWebhookLog log, string message)
+        {
+            log.ErrorMessage = message;
+            _logger.LogCritical("Manual check needed: {Message}", message);
+            return await SaveLogAsync(log, "ManualCheck", Result.Success());
         }
 
         /// <summary>
@@ -421,7 +471,7 @@ namespace BottleGame.Infrastructure.Services
         private async Task<Result> LogAndFailAsync(ProcessingWebhookLog log, string errorMessage)
         {
             log.ErrorMessage = errorMessage;
-            _logger.LogWarning("{Prefix} {ErrorMessage}", Prefix, errorMessage);
+            _logger.LogWarning("{ErrorMessage}", errorMessage);
             return await SaveLogAsync(log, "Error", Result.Failure(errorMessage));
         }
 

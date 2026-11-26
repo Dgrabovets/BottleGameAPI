@@ -13,37 +13,39 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Moderator management service
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="ModeratorService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="passwordHasher">Password hashing service</param>
-    public class ModeratorService(ApplicationDbContext context, ILogger<ModeratorService> logger, IPasswordHasher passwordHasher) : IModeratorService
+    public class ModeratorService : IModeratorService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<ModeratorService> _logger = logger;
+        private readonly ILogger<ModeratorService> _logger;
 
         /// <summary>
         /// Password hashing service
         /// </summary>
-        private readonly IPasswordHasher _passwordHasher = passwordHasher;
-
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string Prefix = "[ModeratorService]";
+        private readonly IPasswordHasher _passwordHasher;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="ModeratorService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="passwordHasher">Password hashing service</param>
+        public ModeratorService(ApplicationDbContext context, ILogger<ModeratorService> logger, IPasswordHasher passwordHasher)
+        {
+            _context = context;
+            _logger = logger;
+            _passwordHasher = passwordHasher;
+        }
 
         #region Moderator Methods
 
@@ -52,7 +54,7 @@ namespace BottleGame.Infrastructure.Services
         {
             if (await _context.AdminCreds.AnyAsync(a => a.Login == request.Login))
             {
-                _logger.LogWarning("{Prefix} Moderator already exists", Prefix);
+                _logger.LogWarning("Moderator already exists");
                 return Result.Conflict("Moderator already exists");
             }
 
@@ -64,13 +66,13 @@ namespace BottleGame.Infrastructure.Services
                 PasswordHash = hash,
                 Salt = salt,
                 CreatedAt = DateTime.UtcNow,
-                Role = AdministrationRoles.Moderator
+                Role = AdministrationRoles.MODERATOR
             };
 
             _context.AdminCreds.Add(moderator);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} New moderator registered: {Login}", Prefix, LogSanitizer.Clean(request.Login));
+            _logger.LogInformation("New moderator registered: {Login}", LogSanitizer.Clean(request.Login));
 
             return Result.Success();
         }
@@ -81,7 +83,7 @@ namespace BottleGame.Infrastructure.Services
             if (moderatorId.HasValue)
             {
                 var moderator = await _context.AdminCreds
-                    .Where(a => a.Role == AdministrationRoles.Moderator && a.Id == moderatorId.Value)
+                    .Where(a => a.Role == AdministrationRoles.MODERATOR && a.Id == moderatorId.Value)
                     .Select(a => new ModeratorDTO
                     {
                         Id = a.Id,
@@ -92,7 +94,7 @@ namespace BottleGame.Infrastructure.Services
 
                 if (moderator is null)
                 {
-                    _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", Prefix, moderatorId.Value);
+                    _logger.LogWarning("Moderator with ID {Id} not found", moderatorId.Value);
                     return Result<object>.NotFound("Moderator not found");
                 }
 
@@ -100,7 +102,7 @@ namespace BottleGame.Infrastructure.Services
             }
 
             var moderators = await _context.AdminCreds
-                .Where(a => a.Role == AdministrationRoles.Moderator)
+                .Where(a => a.Role == AdministrationRoles.MODERATOR)
                 .Select(a => new ModeratorDTO
                 {
                     Id = a.Id,
@@ -116,18 +118,18 @@ namespace BottleGame.Infrastructure.Services
         public async Task<Result> DeleteModerator(int moderatorId)
         {
             var moderator = await _context.AdminCreds
-                .FirstOrDefaultAsync(a => a.Id == moderatorId && a.Role == AdministrationRoles.Moderator);
+                .FirstOrDefaultAsync(a => a.Id == moderatorId && a.Role == AdministrationRoles.MODERATOR);
 
             if (moderator is null)
             {
-                _logger.LogWarning("{Prefix} Moderator with ID {Id} not found", Prefix, moderatorId);
+                _logger.LogWarning("Moderator with ID {Id} not found", moderatorId);
                 return Result.NotFound("Moderator not found");
             }
 
             _context.AdminCreds.Remove(moderator);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("{Prefix} Moderator with ID {Id} deleted", Prefix, moderatorId);
+            _logger.LogInformation("Moderator with ID {Id} deleted", moderatorId);
 
             return Result.Success();
         }

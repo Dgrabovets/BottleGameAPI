@@ -134,11 +134,11 @@ public class PasswordHasherTests
     [Fact]
     public void Verify_LegacyHash_StillWorksAndNeedsRehash()
     {
-        const string salt = "c29tZS1zYWx0LTEyMzQ1Ng==";
-        var legacy = _hasher.Hash("testPassword123" + salt);
+        const string SALT = "c29tZS1zYWx0LTEyMzQ1Ng==";
+        var legacy = _hasher.Hash("testPassword123" + SALT);
 
-        _hasher.Verify(legacy, "testPassword123", salt).Should().BeTrue();
-        _hasher.Verify(legacy, "wrong", salt).Should().BeFalse();
+        _hasher.Verify(legacy, "testPassword123", SALT).Should().BeTrue();
+        _hasher.Verify(legacy, "wrong", SALT).Should().BeFalse();
         _hasher.NeedsRehash(legacy).Should().BeTrue();
     }
 

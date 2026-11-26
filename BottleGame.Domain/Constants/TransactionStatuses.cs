@@ -8,26 +8,26 @@
         /// <summary>
         /// Waiting to be processed
         /// </summary>
-        public const int Pending = 1;
+        public const int PENDING = 1;
 
         /// <summary>
         /// Approved / Successful
         /// </summary>
-        public const int Approved = 2;
+        public const int APPROVED = 2;
 
         /// <summary>
         /// Rejected / Failed
         /// </summary>
-        public const int Rejected = 3;
+        public const int REJECTED = 3;
 
         /// <summary>
         /// Status names for logging
         /// </summary>
         public static string GetName(int statusId) => statusId switch
         {
-            Pending => "Pending",
-            Approved => "Approved",
-            Rejected => "Rejected",
+            PENDING => "Pending",
+            APPROVED => "Approved",
+            REJECTED => "Rejected",
             _ => "Unknown status"
         };
     }

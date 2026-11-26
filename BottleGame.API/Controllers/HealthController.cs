@@ -15,24 +15,30 @@ namespace BottleGame.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public class HealthController(IDatabaseHealthService databaseHealthService, ILogger<HealthController> logger) : ControllerBase
+    public class HealthController : ControllerBase
     {
         #region Fields
 
         /// <inheritdoc cref="IDatabaseHealthService"/>
-        private readonly IDatabaseHealthService _databaseHealthService = databaseHealthService;
+        private readonly IDatabaseHealthService _databaseHealthService;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<HealthController> _logger = logger;
-
-        /// <summary>
-        /// Prefix of the log messages
-        /// </summary>
-        private const string Prefix = "[Health Controller]";
+        private readonly ILogger<HealthController> _logger;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="HealthController"/>
+        /// </summary>
+        /// <param name="databaseHealthService">Database health service</param>
+        /// <param name="logger">Logger</param>
+        public HealthController(IDatabaseHealthService databaseHealthService, ILogger<HealthController> logger)
+        {
+            _databaseHealthService = databaseHealthService;
+            _logger = logger;
+        }
 
         #region Public Methods
 
@@ -49,7 +55,7 @@ namespace BottleGame.API.Controllers
         {
             try
             {
-                _logger.LogInformation("{Prefix} Health check initiated", Prefix);
+                _logger.LogInformation("Health check initiated");
 
                 var version = Assembly.GetExecutingAssembly().GetVersionText();
                 var checks = new Dictionary<string, object>
@@ -61,12 +67,12 @@ namespace BottleGame.API.Controllers
                     ["uptime"] = Environment.TickCount64 / 1000
                 };
 
-                _logger.LogInformation("{Prefix} Health check completed successfully", Prefix);
+                _logger.LogInformation("Health check completed successfully");
                 return Ok(checks);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Health check failed", Prefix);
+                _logger.LogError(ex, "Health check failed");
                 return StatusCode(500, new
                 {
                     status = "unhealthy",

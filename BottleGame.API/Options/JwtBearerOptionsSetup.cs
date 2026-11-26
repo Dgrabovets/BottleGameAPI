@@ -8,14 +8,23 @@ namespace BottleGame.API.Options
     /// <summary>
     /// Configures JwtBearerOptions from the validated JwtOptions (called when the application starts)
     /// </summary>
-    public class JwtBearerOptionsSetup(IOptions<JwtOptions> jwtOptions) : IConfigureNamedOptions<JwtBearerOptions>
+    public class JwtBearerOptionsSetup : IConfigureNamedOptions<JwtBearerOptions>
     {
         #region Fields
 
         /// <inheritdoc/>
-        private readonly JwtOptions _jwtOptions = jwtOptions.Value;
+        private readonly JwtOptions _jwtOptions;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="JwtBearerOptionsSetup"/>
+        /// </summary>
+        /// <param name="jwtOptions">Validated JWT settings</param>
+        public JwtBearerOptionsSetup(IOptions<JwtOptions> jwtOptions)
+        {
+            _jwtOptions = jwtOptions.Value;
+        }
 
         #region Methods
 

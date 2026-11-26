@@ -8,24 +8,30 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// <inheritdoc cref="IDatabaseHealthService"/>
     /// </summary>
-    public class DatabaseHealthService(ApplicationDbContext context, ILogger<DatabaseHealthService> logger) : IDatabaseHealthService
+    public class DatabaseHealthService : IDatabaseHealthService
     {
         #region Fields
 
         /// <inheritdoc cref="ApplicationDbContext"/>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<DatabaseHealthService> _logger = logger;
-
-        /// <summary>
-        /// Prefix of the log messages
-        /// </summary>
-        private const string Prefix = "[Database Health]";
+        private readonly ILogger<DatabaseHealthService> _logger;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="DatabaseHealthService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        public DatabaseHealthService(ApplicationDbContext context, ILogger<DatabaseHealthService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
 
         #region Methods
 
@@ -36,16 +42,16 @@ namespace BottleGame.Infrastructure.Services
         {
             try
             {
-                _logger.LogDebug("{Prefix} Checking database connection", Prefix);
+                _logger.LogDebug("Checking database connection");
 
                 if (!await _context.Database.CanConnectAsync())
                 {
-                    _logger.LogWarning("{Prefix} Database connection failed", Prefix);
+                    _logger.LogWarning("Database connection failed");
                     return new { status = "error", message = "Cannot connect to database" };
                 }
 
                 var playerCount = await _context.Players.CountAsync();
-                _logger.LogDebug("{Prefix} Database check passed. Players: {Count}", Prefix, playerCount);
+                _logger.LogDebug("Database check passed. Players: {Count}", playerCount);
 
                 return new
                 {
@@ -56,7 +62,7 @@ namespace BottleGame.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Prefix} Database health check failed", Prefix);
+                _logger.LogError(ex, "Database health check failed");
                 return new { status = "error", message = "Database query failed" };
             }
         }

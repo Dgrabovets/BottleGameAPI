@@ -15,23 +15,28 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Manages game rounds, finishing games and getting statistics
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="GameRoundController"/>
-    /// </remarks>
-    /// <param name="gameRoundService">Service for working with game rounds</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Game rounds")]
-    public class GameRoundController(IGameRoundService gameRoundService) : BaseApiController
+    public class GameRoundController : BaseApiController
     {
         #region Fields
 
         /// <summary>
         /// Service for working with game rounds
         /// </summary>
-        private readonly IGameRoundService _gameRoundService = gameRoundService;
+        private readonly IGameRoundService _gameRoundService;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="GameRoundController"/>
+        /// </summary>
+        /// <param name="gameRoundService">Service for working with game rounds</param>
+        public GameRoundController(IGameRoundService gameRoundService)
+        {
+            _gameRoundService = gameRoundService;
+        }
 
         #region Action Methods
 
@@ -45,7 +50,7 @@ namespace BottleGame.API.Controllers
         /// <response code="403">The player is banned</response>
         /// <response code="404">The player was not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.AdminOrPlayer)]
+        [Authorize(Roles = RoleNames.ADMIN_OR_PLAYER)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -61,7 +66,7 @@ namespace BottleGame.API.Controllers
             }
 
             var requestingPlayerId = User.GetUserId();
-            var isAdmin = User.IsInRole(RoleNames.Admin);
+            var isAdmin = User.IsInRole(RoleNames.ADMIN);
 
             var result = await _gameRoundService.FinishGameRound(playerId, request, requestingPlayerId, isAdmin);
             return ToActionResult(result);
@@ -75,7 +80,7 @@ namespace BottleGame.API.Controllers
         /// <response code="404">The player was not found</response>
         /// <response code="403">The player is banned</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(typeof(GetPlayerPlayedRoundsResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -94,7 +99,7 @@ namespace BottleGame.API.Controllers
         /// <response code="200">Profit</response>
         /// <response code="404">No rounds were found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = RoleNames.Admin)]
+        [Authorize(Roles = RoleNames.ADMIN)]
         [ProducesResponseType(typeof(GetProfitResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

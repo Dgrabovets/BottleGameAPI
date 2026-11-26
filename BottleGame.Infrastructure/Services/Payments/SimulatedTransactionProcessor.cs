@@ -10,33 +10,32 @@ namespace BottleGame.Infrastructure.Services.Payments
     /// <summary>
     /// Simulated mode: deposits and withdrawals complete locally without a payment provider and real money
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="SimulatedTransactionProcessor"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    public class SimulatedTransactionProcessor(
-        ApplicationDbContext context,
-        ILogger<SimulatedTransactionProcessor> logger) : ITransactionProcessor
+    public class SimulatedTransactionProcessor : ITransactionProcessor
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<SimulatedTransactionProcessor> _logger = logger;
-
-        /// <summary>
-        /// Log prefix
-        /// </summary>
-        private const string Prefix = "[SimulatedTransactionProcessor]";
+        private readonly ILogger<SimulatedTransactionProcessor> _logger;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="SimulatedTransactionProcessor"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        public SimulatedTransactionProcessor(ApplicationDbContext context, ILogger<SimulatedTransactionProcessor> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
 
         #region Processing
 
@@ -51,8 +50,8 @@ namespace BottleGame.Infrastructure.Services.Payments
         /// <inheritdoc/>
         public Task<Result> ApproveWithdrawalAsync(MoneyTransaction transaction, GameParams gameParams, AppBalance appBalance)
         {
-            CompleteWithdrawalLocally(transaction, appBalance, TransactionStatuses.Approved);
-            _logger.LogInformation("{Prefix} Withdrawal {TransactionId} approved locally without processing", Prefix, transaction.Id);
+            CompleteWithdrawalLocally(transaction, appBalance, TransactionStatuses.APPROVED);
+            _logger.LogInformation("Withdrawal {TransactionId} approved locally without processing", transaction.Id);
             return Task.FromResult(Result.Success());
         }
 
@@ -71,7 +70,7 @@ namespace BottleGame.Infrastructure.Services.Payments
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync()
                 ?? throw new InvalidOperationException("Application balance not found");
 
-            transaction.TransactionStatusId = TransactionStatuses.Approved;
+            transaction.TransactionStatusId = TransactionStatuses.APPROVED;
             transaction.IsProcessingSuccess = true;
             transaction.ProcessedAt = DateTime.UtcNow;
             transaction.ProcessingOrderId = $"test-deposit-{transaction.Id}";
@@ -84,8 +83,7 @@ namespace BottleGame.Infrastructure.Services.Payments
             await _context.SaveChangesAsync();
 
             _logger.LogInformation(
-                "{Prefix} [Simulated] Deposit {TransactionId} completed locally without processing",
-                Prefix,
+                "[Simulated] Deposit {TransactionId} completed locally without processing",
                 transaction.Id);
 
             return new

@@ -68,8 +68,8 @@ public class StatisticsServiceTests : IDisposable
         builder.AddFailedDeposit(player2.Id, 2_000m, May10);
         builder.AddTransaction(
             player2.Id,
-            TransactionTypes.Deposit,
-            TransactionStatuses.Approved,
+            TransactionTypes.DEPOSIT,
+            TransactionStatuses.APPROVED,
             3_000m,
             isProcessingSuccess: false,
             processedAt: May10);
