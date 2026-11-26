@@ -162,27 +162,6 @@ public class BanServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Banning creates an active ban and writes it to the ban history
-    /// </summary>
-    [Fact(Skip = "Requires BanHistoryEntity.Version which InMemory DB does not auto-generate")]
-    public async Task BanPlayer_Success_CreatesBan()
-    {
-        // Arrange
-        var player = TestDbContextFactory.CreateTestPlayer(_context);
-        var request = new BanPlayerRequest { PlayerId = player.Id, BanReason = "Test ban" };
-
-        // Act
-        var result = await _service.BanPlayer(request);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        var ban = _context.Bans.FirstOrDefault(b => b.PlayerId == player.Id);
-        ban.Should().NotBeNull();
-        ban!.IsActive.Should().BeTrue();
-        ban.BanReason.Should().Be("Test ban");
-    }
-
-    /// <summary>
     /// Banning an already banned player answers with 409
     /// </summary>
     [Fact]
