@@ -5,6 +5,7 @@ using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
 using BottleGame.Infrastructure.Data;
 using BottleGame.Infrastructure.Services;
+using BottleGame.Infrastructure.Services.Payments;
 using BottleGame.UnitTests.Fixtures;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -376,6 +377,51 @@ public class PaymentWebhookServiceTests : IDisposable
         transaction.ProcessingError.Should().Be("payout_network/recipient_not_found");
     }
 
+    /// <summary>
+    /// A payout whose creation timed out has no provider id; its success notification still approves it and stores the id
+    /// </summary>
+    [Fact]
+    public async Task PayoutSucceeded_AfterUnknownOutcome_ApprovesAndStoresProviderId()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
+        transaction.ProcessingError = LiveTransactionProcessor.PayoutOutcomeUnknown;
+        _context.SaveChanges();
+        ProviderReportsPayout(transaction, ProviderOperationStatus.Succeeded);
+
+        var result = await _service.HandleNotificationAsync(Notification("payout.succeeded", PayoutId));
+
+        result.IsSuccess.Should().BeTrue();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+        transaction.IsProcessingSuccess.Should().BeTrue();
+        transaction.ProcessingOrderId.Should().Be(PayoutId);
+        transaction.ProcessingError.Should().BeNull();
+        PlayerBalance(player).Should().Be(1000);
+        AppBalance().Should().Be(99700);
+    }
+
+    /// <summary>
+    /// A payout whose creation timed out has no provider id; its cancel notification rejects it and refunds the player once
+    /// </summary>
+    [Fact]
+    public async Task PayoutCanceled_AfterUnknownOutcome_RefundsPlayer()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
+        transaction.ProcessingError = LiveTransactionProcessor.PayoutOutcomeUnknown;
+        _context.SaveChanges();
+        ProviderReportsPayout(transaction, ProviderOperationStatus.Canceled, "yoo_money/rejected_by_payee");
+
+        var result = await _service.HandleNotificationAsync(Notification("payout.canceled", PayoutId));
+
+        result.IsSuccess.Should().BeTrue();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.IsProcessingSuccess.Should().BeFalse();
+        transaction.ProcessingOrderId.Should().Be(PayoutId);
+        PlayerBalance(player).Should().Be(1300);
+        AppBalance().Should().Be(100000);
+    }
+
     #endregion Payout Tests
 
     #region Other Notifications
@@ -403,6 +449,21 @@ public class PaymentWebhookServiceTests : IDisposable
 
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(400);
+    }
+
+    /// <summary>
+    /// A body that cannot be parsed is stored only as a short prefix, not in full
+    /// </summary>
+    [Fact]
+    public async Task InvalidJson_StoresOnlyAShortPrefixOfTheBody()
+    {
+        var body = new string('x', 10_000);
+
+        await _service.HandleNotificationAsync(new(body, "POST", "application/json", "127.0.0.1", "tests"));
+
+        var log = _context.ProcessingWebhookLogs.Single();
+        log.ProcessingStatus.Should().Be("Error");
+        log.RawRequest.Length.Should().BeLessThan(300);
     }
 
     /// <summary>

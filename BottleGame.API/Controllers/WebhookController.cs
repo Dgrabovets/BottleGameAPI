@@ -1,6 +1,7 @@
 using BottleGame.Application.DTOs.Requests;
 using BottleGame.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BottleGame.API.Controllers
 {
@@ -22,6 +23,11 @@ namespace BottleGame.API.Controllers
         /// </summary>
         private readonly IPaymentWebhookService _webhookService = webhookService;
 
+        /// <summary>
+        /// Largest accepted notification body in bytes. A YooKassa notification takes a few kilobytes
+        /// </summary>
+        private const long MaxBodySize = 64 * 1024;
+
         #endregion Fields
 
         #region Action Methods
@@ -32,8 +38,12 @@ namespace BottleGame.API.Controllers
         /// </summary>
         /// <returns>Result of handling the notification</returns>
         [HttpPost("yookassa")]
+        [RequestSizeLimit(MaxBodySize)]
+        [EnableRateLimiting("webhook")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status413PayloadTooLarge)]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> YooKassaWebhook()
         {

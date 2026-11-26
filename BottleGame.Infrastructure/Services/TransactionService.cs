@@ -267,6 +267,13 @@ namespace BottleGame.Infrastructure.Services
 
             if (request.TransactionStatusId == rejectedStatusId)
             {
+                // The payout may already exist at the provider, so a refund here could pay the player twice
+                if (transaction.ProcessingError == LiveTransactionProcessor.PayoutOutcomeUnknown)
+                {
+                    _logger.LogWarning("{Prefix} Transaction {TransactionId} has a payout with an unknown outcome and cannot be rejected", Prefix, transactionId);
+                    return Result.Conflict(LiveTransactionProcessor.PayoutOutcomeUnknown);
+                }
+
                 transaction.Player.Balance.Amount += transaction.Amount;
                 transaction.TransactionStatusId = request.TransactionStatusId;
             }

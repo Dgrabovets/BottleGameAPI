@@ -283,6 +283,109 @@ public class TransactionServiceLiveModeTests : IDisposable
     }
 
     /// <summary>
+    /// A timeout leaves the payout outcome unknown: the withdrawal stays pending, marked, and the player is not refunded
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_ProviderTimesOut_StaysPendingWithoutRefund()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException("timeout"));
+
+        var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        result.IsSuccess.Should().BeFalse();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.IsProcessingSuccess.Should().BeNull();
+        transaction.ProcessingError.Should().Be(LiveTransactionProcessor.PayoutOutcomeUnknown);
+        PlayerBalance(player).Should().Be(1000);
+    }
+
+    /// <summary>
+    /// Approving again after an unknown outcome sends the same transaction id, so the provider reuses the idempotence key
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_RetryAfterUnknownOutcome_ApprovesWithTheSameTransaction()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        var sent = new List<int>();
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<CreatePayoutRequest, CancellationToken>((request, _) => sent.Add(request.TransactionId))
+            .ThrowsAsync(new HttpRequestException("YooKassa responded 500"));
+
+        await _service.UpdateTransactionStatus(transaction.Id, Approve());
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<CreatePayoutRequest, CancellationToken>((request, _) => sent.Add(request.TransactionId))
+            .ReturnsAsync(new CreatePayoutResult(true, "payout-1", null));
+
+        var retry = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        retry.IsSuccess.Should().BeTrue();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+        transaction.ProcessingOrderId.Should().Be("payout-1");
+        transaction.ProcessingError.Should().BeNull();
+        sent.Should().Equal(transaction.Id, transaction.Id);
+        PlayerBalance(player).Should().Be(1000);
+    }
+
+    /// <summary>
+    /// A refused repeat does not prove that the first request made no payout, so the withdrawal stays pending without a refund
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_RetryRefusedAfterUnknownOutcome_StaysPendingWithoutRefund()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException("timeout"));
+        await _service.UpdateTransactionStatus(transaction.Id, Approve());
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePayoutResult(false, null, "idempotence key reused with other parameters"));
+
+        var retry = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        retry.IsSuccess.Should().BeFalse();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        transaction.IsProcessingSuccess.Should().BeNull();
+        transaction.ProcessingError.Should().Be(LiveTransactionProcessor.PayoutOutcomeUnknown);
+        PlayerBalance(player).Should().Be(1000);
+    }
+
+    /// <summary>
+    /// A withdrawal whose payout outcome is unknown cannot be rejected by hand, because the refund could pay twice
+    /// </summary>
+    [Fact]
+    public async Task RejectWithdrawal_AfterUnknownOutcome_IsRefusedWithoutRefund()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("connection reset"));
+        await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        var result = await _service.UpdateTransactionStatus(transaction.Id, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.Rejected });
+
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(409);
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Pending);
+        PlayerBalance(player).Should().Be(1000);
+    }
+
+    /// <summary>
     /// A withdrawal above the payout limit is refused without calling the provider
     /// </summary>
     [Fact]

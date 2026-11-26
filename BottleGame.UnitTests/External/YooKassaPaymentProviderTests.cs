@@ -181,6 +181,36 @@ public class YooKassaPaymentProviderTests
         _handler.Requests.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// A 4xx answer is a definite rejection and comes back as a failed result
+    /// </summary>
+    [Fact]
+    public async Task CreatePayout_ClientError_ReturnsFailure()
+    {
+        _handler.Respond(HttpStatusCode.BadRequest, """{"type":"error","code":"invalid_request","description":"Bad bank id"}""");
+
+        var result = await CreateProvider().CreatePayoutAsync(new CreatePayoutRequest(7, 300m, "rub", "sbp", "79001234567:1", "Withdrawal"));
+
+        result.Should().Be(new CreatePayoutResult(false, null, "Bad bank id"));
+    }
+
+    /// <summary>
+    /// A 5xx answer or a 2xx answer without an id does not say whether the payout exists, so it throws instead of failing
+    /// </summary>
+    /// <param name="status">Status code of the answer</param>
+    /// <param name="body">Body of the answer</param>
+    [Theory]
+    [InlineData(HttpStatusCode.InternalServerError, """{"type":"error","code":"internal_server_error"}""")]
+    [InlineData(HttpStatusCode.Accepted, """{"type":"processing","retry_after":1800}""")]
+    public async Task CreatePayout_OutcomeUnknown_Throws(HttpStatusCode status, string body)
+    {
+        _handler.Respond(status, body);
+
+        var act = () => CreateProvider().CreatePayoutAsync(new CreatePayoutRequest(7, 300m, "rub", "sbp", "79001234567:1", "Withdrawal"));
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
     #endregion CreatePayout Tests
 
     #region Lookup Tests

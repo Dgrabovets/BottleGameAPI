@@ -65,6 +65,7 @@ namespace BottleGame.API.Middleware
         ///     <item><description><see cref="UnauthorizedAccessException"/> → 401 Unauthorized</description></item>
         ///     <item><description><see cref="ArgumentException"/> → 400 Bad Request</description></item>
         ///     <item><description><see cref="InvalidOperationException"/> → 400 Bad Request</description></item>
+        ///     <item><description><see cref="BadHttpRequestException"/> → its own status code, for example 413 Payload Too Large</description></item>
         ///     <item><description><see cref="DbUpdateConcurrencyException"/> → 409 Conflict</description></item>
         ///     <item><description>All other exceptions → 500 Internal Server Error, with the message hidden in production</description></item>
         /// </list>
@@ -99,6 +100,14 @@ namespace BottleGame.API.Middleware
                     errorResponse.Message = exception.Message;
                     errorResponse.StatusCode = response.StatusCode;
                     _logger.LogWarning(exception, "Invalid request: {Message}", exception.Message);
+                    break;
+
+                case BadHttpRequestException badRequest:
+                    // The framework refused the request itself, for example a body over the size limit (413)
+                    response.StatusCode = badRequest.StatusCode;
+                    errorResponse.Message = badRequest.Message;
+                    errorResponse.StatusCode = response.StatusCode;
+                    _logger.LogWarning("Request refused: {StatusCode} {Message}", badRequest.StatusCode, badRequest.Message);
                     break;
 
                 case DbUpdateConcurrencyException:

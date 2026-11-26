@@ -60,6 +60,11 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+        /// <summary>
+        /// How much of a body that is not a notification is stored in the webhook log
+        /// </summary>
+        private const int MaxUnparsedBodyLength = 200;
+
         #endregion Fields
 
         #region Public Methods
@@ -71,14 +76,17 @@ namespace BottleGame.Infrastructure.Services
 
             try
             {
-                _logger.LogInformation("{Prefix} Notification received: {Body}", Prefix, LogSanitizer.Clean(request.Body));
-
                 var notification = TryParseNotification(request.Body);
                 if (notification?.Object is null || string.IsNullOrWhiteSpace(notification.Object.Id))
                 {
-                    return await LogAndFailAsync(webhookLog, "Failed to parse the notification");
+                    // Anyone can post here, so a body that is not a notification is kept only as a short prefix
+                    webhookLog.RawRequest = request.Body.Length <= MaxUnparsedBodyLength ? request.Body : request.Body[..MaxUnparsedBodyLength];
+                    return await LogAndFailAsync(webhookLog, $"Failed to parse the notification ({request.Body.Length} characters)");
                 }
 
+                _logger.LogInformation("{Prefix} Notification received: {Event} {ObjectId}", Prefix, LogSanitizer.Clean(notification.Event), LogSanitizer.Clean(notification.Object.Id));
+
+                webhookLog.RawRequest = request.Body;
                 webhookLog.WebhookType = notification.Event;
                 webhookLog.OrderId = notification.Object.Id;
 
@@ -166,8 +174,8 @@ namespace BottleGame.Infrastructure.Services
                 {
                     (false, ProviderOperationStatus.Succeeded) => await ProcessSuccessfulPaymentAsync(transaction, operation),
                     (false, ProviderOperationStatus.Canceled) => await ProcessFailedPaymentAsync(transaction),
-                    (true, ProviderOperationStatus.Succeeded) => await ProcessSuccessfulPayoutAsync(transaction),
-                    (true, ProviderOperationStatus.Canceled) => await ProcessFailedPayoutAsync(transaction, operation.CancellationReason),
+                    (true, ProviderOperationStatus.Succeeded) => await ProcessSuccessfulPayoutAsync(transaction, operation),
+                    (true, ProviderOperationStatus.Canceled) => await ProcessFailedPayoutAsync(transaction, operation),
                     _ => Result.Success() // the operation is not finished yet
                 };
             }
@@ -281,8 +289,9 @@ namespace BottleGame.Infrastructure.Services
         /// Handles a successful payout
         /// </summary>
         /// <param name="transaction">Transaction</param>
+        /// <param name="payout">Payout at the provider</param>
         /// <returns>Result of the handling</returns>
-        private async Task<Result> ProcessSuccessfulPayoutAsync(MoneyTransaction transaction)
+        private async Task<Result> ProcessSuccessfulPayoutAsync(MoneyTransaction transaction, ProviderOperation payout)
         {
             var appBalance = await _context.AppBalance.FirstOrDefaultAsync();
             if (appBalance is null)
@@ -293,6 +302,9 @@ namespace BottleGame.Infrastructure.Services
 
             transaction.IsProcessingSuccess = true;
             transaction.TransactionStatusId = TransactionStatuses.Approved;
+            // The id is missing when creating the payout timed out, the notification is then the first to tell it
+            transaction.ProcessingOrderId = payout.Id;
+            transaction.ProcessingError = null;
             appBalance.Amount -= transaction.Amount;
 
             transaction.ProcessedAt = DateTime.UtcNow;
@@ -306,12 +318,14 @@ namespace BottleGame.Infrastructure.Services
         /// Handles a canceled payout and returns the funds to the player
         /// </summary>
         /// <param name="transaction">Transaction</param>
-        /// <param name="reason">Cancellation reason</param>
+        /// <param name="payout">Payout at the provider</param>
         /// <returns>Result of the handling</returns>
-        private async Task<Result> ProcessFailedPayoutAsync(MoneyTransaction transaction, string? reason)
+        private async Task<Result> ProcessFailedPayoutAsync(MoneyTransaction transaction, ProviderOperation payout)
         {
+            var reason = payout.CancellationReason;
             transaction.IsProcessingSuccess = false;
             transaction.TransactionStatusId = TransactionStatuses.Rejected;
+            transaction.ProcessingOrderId = payout.Id;
             transaction.ProcessingError = reason;
             transaction.Player.Balance.Amount += transaction.Amount;
 
@@ -378,7 +392,6 @@ namespace BottleGame.Infrastructure.Services
         /// <returns>Log record</returns>
         private static ProcessingWebhookLog CreateWebhookLog(WebhookRequestInfo request) => new()
         {
-            RawRequest = request.Body,
             HttpMethod = request.HttpMethod,
             ContentType = request.ContentType,
             IpAddress = request.IpAddress ?? "Unknown",

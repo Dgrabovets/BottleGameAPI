@@ -42,7 +42,9 @@ namespace BottleGame.Application.Interfaces
         /// </summary>
         /// <param name="request">Request to create a payout</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Result of creating the payout</returns>
+        /// <returns>Result of creating the payout. A failed result means the payout was definitely not made</returns>
+        /// <exception cref="HttpRequestException">The outcome is unknown (5xx answer, network error); the payout may exist</exception>
+        /// <exception cref="TaskCanceledException">The request timed out; the payout may exist</exception>
         Task<CreatePayoutResult> CreatePayoutAsync(CreatePayoutRequest request, CancellationToken cancellationToken = default);
 
         /// <summary>

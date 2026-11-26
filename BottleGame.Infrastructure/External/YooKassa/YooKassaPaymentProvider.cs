@@ -176,14 +176,21 @@ namespace BottleGame.Infrastructure.External.YooKassa
             var (status, json) = await SendAsync(
                 HttpMethod.Post, "payouts", _options.PayoutAgentId, _options.PayoutSecretKey, body, $"payout-{request.TransactionId}", cancellationToken);
 
-            if (!IsSuccess(status))
+            // Only a 4xx answer says that no payout was made. After any other answer the payout may exist,
+            // so the caller must not return the money; a repeat with the same idempotence key is safe
+            if ((int)status is >= 400 and < 500)
             {
                 return new CreatePayoutResult(false, null, ReadError(json));
             }
 
+            if (!IsSuccess(status))
+            {
+                throw new HttpRequestException($"YooKassa responded {(int)status} to a payout, the outcome is unknown: {ReadError(json)}");
+            }
+
             var payout = JsonSerializer.Deserialize<YooKassaOperation>(json, JsonOptions);
             return payout is null || string.IsNullOrEmpty(payout.Id)
-                ? new CreatePayoutResult(false, null, "YooKassa returned an empty response")
+                ? throw new HttpRequestException($"YooKassa responded {(int)status} to a payout without a payout id, the outcome is unknown")
                 : new CreatePayoutResult(true, payout.Id, null);
         }
 
