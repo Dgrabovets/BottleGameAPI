@@ -143,7 +143,7 @@ The deploy workflow builds `appsettings.Production.json` from GitHub Actions sec
 - Payouts use the SBP. A player's payout wallet is stored as `<phone>:<bank_id>`, where the bank id comes from YooKassa's `GET /v3/sbp_banks` list.
 - Only RUB is supported.
 
-<img src="docs/diagrams/payment-notifications.png" alt="How a YooKassa notification is handled: read only the event and the object id, re-check the payment or payout with YooKassa, find the transaction and check its type, skip a duplicate with 200, check the amount, then apply the outcome once with a row-version check; on a row-version conflict a notification that was already applied is a duplicate, otherwise the API answers 400 and YooKassa sends it again" width="100%">
+<img src="docs/diagrams/payment-notifications.png" alt="How a YooKassa notification is handled: read only the event and the object id, re-check the payment or payout with YooKassa, find the transaction and check its type, leave a contradicting notification (another provider object, a conflicting result or an already rejected transaction) for a manual check, skip a duplicate with 200, check the amount, then apply the outcome once with a row-version check; on a row-version conflict a notification that was already applied is a duplicate, otherwise the API answers 400 and YooKassa sends it again" width="100%">
 
 ## Tests
 

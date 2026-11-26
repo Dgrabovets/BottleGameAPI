@@ -17,6 +17,7 @@
       .main { stroke: #5fe08a; stroke-width: 2; fill: none; stroke-linejoin: round; }
       .second { stroke: #2fd4c0; stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; stroke-linejoin: round; }
       .reject { stroke: #a4a69f; stroke-width: 1.4; fill: none; stroke-dasharray: 3 4; stroke-linejoin: round; }
+      .manual { stroke: #f3f2ee; stroke-width: 1.4; fill: none; stroke-dasharray: 10 4; stroke-linejoin: round; }
       .pill { fill: #000000; stroke: #232a25; stroke-width: 1; }
       .l { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; text-anchor: middle; }
       .l-main { fill: #5fe08a; }
@@ -25,6 +26,7 @@
     </style>
     <marker id="arrow-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5fe08a"/></marker>
     <marker id="arrow-second" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2fd4c0"/></marker>
+    <marker id="arrow-manual" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f3f2ee"/></marker>
     <marker id="arrow-reject" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a4a69f"/></marker>
   </defs>
 
@@ -55,6 +57,10 @@
   <path class="second" d="M320,598 H260" marker-end="url(#arrow-second)"/>
   <path class="second" d="M720,814 H800" marker-end="url(#arrow-second)"/>
   <path class="second" d="M885,850 V886" marker-end="url(#arrow-second)"/>
+
+  <!-- Left for a person -->
+  <path class="manual" d="M320,490 H290 V706 H260" marker-end="url(#arrow-manual)"/>
+  <path class="manual" d="M320,620 H290"/>
 
   <!-- Branch labels -->
   <rect class="pill" x="271" y="588" width="38" height="20" rx="10"/>
@@ -133,6 +139,12 @@
   <text class="n" x="1075" y="910">not applied</text>
   <text class="n" x="1075" y="930">400, sent again</text>
 
+  <rect class="note" x="40" y="660" width="220" height="106" rx="10"/>
+  <text class="t" x="150" y="686">200, ManualCheck</text>
+  <text class="n" x="150" y="710">another provider object,</text>
+  <text class="n" x="150" y="729">a contradicting result</text>
+  <text class="n" x="150" y="748">or already rejected</text>
+
   <!-- Legend -->
   <path class="main" d="M40,996 H76"/>
   <text class="legend" x="86" y="1000">main path</text>
@@ -140,5 +152,7 @@
   <text class="legend" x="246" y="1000">repeat or clash, applied at most once</text>
   <path class="reject" d="M520,996 H556"/>
   <text class="legend" x="566" y="1000">rejected; any answer but 200 makes YooKassa send it again</text>
-  <text class="legend" x="40" y="1030">Every delivery is stored in the webhook log as Success, Duplicate, Ignored or Error.</text>
+  <text class="legend" x="40" y="1030">Every delivery is stored in the webhook log as Success, Duplicate, Ignored, ManualCheck or Error.</text>
+  <path class="manual" d="M730,1026 H766"/>
+  <text class="legend" x="776" y="1030">nothing applied, a person must check</text>
 </svg>
