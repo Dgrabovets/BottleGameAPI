@@ -16,7 +16,7 @@
         public string? AvatarUrl { get; set; }
 
         /// <summary>
-        /// Personal win chance
+        /// Personal win chance (admin only)
         /// </summary>
         public float? WinChance { get; set; }
 

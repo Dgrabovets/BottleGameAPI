@@ -124,7 +124,9 @@ namespace BottleGame.Infrastructure.Services
 
             var playersIdsInvited = player.InvitedByMe.Select(i => i.PlayerIdInvited).ToList();
 
+            // The rounds are needed for the win rate of each invited player
             var invitedPlayers = await _context.Players
+                .Include(p => p.GameRounds)
                 .Where(p => playersIdsInvited.Contains(p.Id))
                 .AsNoTracking()
                 .ToListAsync();
@@ -283,8 +285,9 @@ namespace BottleGame.Infrastructure.Services
             if (!string.IsNullOrWhiteSpace(request.Name))
                 player.Name = request.Name;
 
-            if (request.WinChance != default)
-                player.PlayerOptions.WinChance = request.WinChance!.Value;
+            // Win chance (admin only), otherwise a player could raise their own chance
+            if (isAdmin && request.WinChance is not null)
+                player.PlayerOptions.WinChance = request.WinChance.Value;
 
             // Validation and change of the currency, payment method and detail type (through the processing API)
             if (!string.IsNullOrWhiteSpace(request.Currency) && !string.IsNullOrWhiteSpace(request.PaymentMethod))
