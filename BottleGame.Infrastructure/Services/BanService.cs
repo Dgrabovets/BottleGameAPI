@@ -14,24 +14,19 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Service for working with player bans
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="BanService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    public class BanService(ApplicationDbContext context, ILogger<BanService> logger) : IBanService
+    public class BanService : IBanService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<BanService> _logger = logger;
+        private readonly ILogger<BanService> _logger;
 
         /// <summary>
         /// Log prefix
@@ -44,6 +39,17 @@ namespace BottleGame.Infrastructure.Services
         private const int MaxRetries = 3;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="BanService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        public BanService(ApplicationDbContext context, ILogger<BanService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
 
         #region Public Methods
 

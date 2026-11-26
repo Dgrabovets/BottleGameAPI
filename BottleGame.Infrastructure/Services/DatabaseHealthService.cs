@@ -8,17 +8,17 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// <inheritdoc cref="IDatabaseHealthService"/>
     /// </summary>
-    public class DatabaseHealthService(ApplicationDbContext context, ILogger<DatabaseHealthService> logger) : IDatabaseHealthService
+    public class DatabaseHealthService : IDatabaseHealthService
     {
         #region Fields
 
         /// <inheritdoc cref="ApplicationDbContext"/>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<DatabaseHealthService> _logger = logger;
+        private readonly ILogger<DatabaseHealthService> _logger;
 
         /// <summary>
         /// Prefix of the log messages
@@ -26,6 +26,17 @@ namespace BottleGame.Infrastructure.Services
         private const string Prefix = "[Database Health]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="DatabaseHealthService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        public DatabaseHealthService(ApplicationDbContext context, ILogger<DatabaseHealthService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
 
         #region Methods
 

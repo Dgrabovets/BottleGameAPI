@@ -6,14 +6,27 @@ namespace BottleGame.IntegrationTests;
 /// <summary>
 /// Cache that always returns the same game parameters
 /// </summary>
-/// <param name="gameParams">Game params</param>
-public sealed class FixedCache(GameParams gameParams) : ICacheService
+public sealed class FixedCache : ICacheService
 {
+    /// <summary>
+    /// Game parameters returned by the cache
+    /// </summary>
+    private readonly GameParams _gameParams;
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="FixedCache"/>
+    /// </summary>
+    /// <param name="gameParams">Game params</param>
+    public FixedCache(GameParams gameParams)
+    {
+        _gameParams = gameParams;
+    }
+
     /// <summary>
     /// Returns the fixed game parameters
     /// </summary>
     /// <returns>The result of the operation</returns>
-    public Task<GameParams?> GetGameParamsAsync() => Task.FromResult<GameParams?>(gameParams);
+    public Task<GameParams?> GetGameParamsAsync() => Task.FromResult<GameParams?>(_gameParams);
 
     /// <summary>
     /// Returns an empty list of transaction types

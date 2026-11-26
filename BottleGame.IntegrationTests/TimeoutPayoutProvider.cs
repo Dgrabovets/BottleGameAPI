@@ -6,9 +6,22 @@ namespace BottleGame.IntegrationTests;
 /// <summary>
 /// Payment provider whose payout request runs a prepared action while it is in flight and then times out, so a test can act during the request
 /// </summary>
-/// <param name="duringRequest">Action run while the payout request is in flight</param>
-public sealed class TimeoutPayoutProvider(Func<Task> duringRequest) : IPaymentProvider
+public sealed class TimeoutPayoutProvider : IPaymentProvider
 {
+    /// <summary>
+    /// Action run while the payout request is in flight
+    /// </summary>
+    private readonly Func<Task> _duringRequest;
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="TimeoutPayoutProvider"/>
+    /// </summary>
+    /// <param name="duringRequest">Action run while the payout request is in flight</param>
+    public TimeoutPayoutProvider(Func<Task> duringRequest)
+    {
+        _duringRequest = duringRequest;
+    }
+
     /// <summary>
     /// Runs the prepared action, then fails as a timeout does, so the outcome of the payout stays unknown
     /// </summary>
@@ -17,7 +30,7 @@ public sealed class TimeoutPayoutProvider(Func<Task> duringRequest) : IPaymentPr
     /// <returns>Never returns, always throws</returns>
     public async Task<CreatePayoutResult> CreatePayoutAsync(CreatePayoutRequest request, CancellationToken cancellationToken = default)
     {
-        await duringRequest();
+        await _duringRequest();
         throw new TaskCanceledException("The payout request timed out");
     }
 

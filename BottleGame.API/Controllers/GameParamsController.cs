@@ -15,33 +15,27 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Manages the game settings, payment methods and currencies
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="GameParamsController"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="cacheService">Cache service</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Game parameters")]
-    public class GameParamsController(ApplicationDbContext context, ILogger<GameParamsController> logger, ICacheService cacheService) : Controller
+    public class GameParamsController : Controller
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<GameParamsController> _logger = logger;
+        private readonly ILogger<GameParamsController> _logger;
 
         /// <summary>
         /// Cache service
         /// </summary>
-        private readonly ICacheService _cacheService = cacheService;
+        private readonly ICacheService _cacheService;
 
         /// <summary>
         /// Log prefix
@@ -49,6 +43,19 @@ namespace BottleGame.API.Controllers
         private const string Prefix = "[GameParams Controller]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="GameParamsController"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="cacheService">Cache service</param>
+        public GameParamsController(ApplicationDbContext context, ILogger<GameParamsController> logger, ICacheService cacheService)
+        {
+            _context = context;
+            _logger = logger;
+            _cacheService = cacheService;
+        }
 
         #region ActionMethods
 

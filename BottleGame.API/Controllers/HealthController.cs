@@ -15,17 +15,17 @@ namespace BottleGame.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    public class HealthController(IDatabaseHealthService databaseHealthService, ILogger<HealthController> logger) : ControllerBase
+    public class HealthController : ControllerBase
     {
         #region Fields
 
         /// <inheritdoc cref="IDatabaseHealthService"/>
-        private readonly IDatabaseHealthService _databaseHealthService = databaseHealthService;
+        private readonly IDatabaseHealthService _databaseHealthService;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<HealthController> _logger = logger;
+        private readonly ILogger<HealthController> _logger;
 
         /// <summary>
         /// Prefix of the log messages
@@ -33,6 +33,17 @@ namespace BottleGame.API.Controllers
         private const string Prefix = "[Health Controller]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="HealthController"/>
+        /// </summary>
+        /// <param name="databaseHealthService">Database health service</param>
+        /// <param name="logger">Logger</param>
+        public HealthController(IDatabaseHealthService databaseHealthService, ILogger<HealthController> logger)
+        {
+            _databaseHealthService = databaseHealthService;
+            _logger = logger;
+        }
 
         #region Public Methods
 

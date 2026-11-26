@@ -15,38 +15,44 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Manages the application balance, statistics and moderators
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="AdministrationController"/>
-    /// </remarks>
-    /// <param name="appBalanceService">Application balance service</param>
-    /// <param name="statisticsService">Statistics service</param>
-    /// <param name="moderatorService">Moderator management service</param>
     [ApiController]
     [Route("api/admin")]
     [Tags("Administration")]
-    public class AdministrationController(
-        IAppBalanceService appBalanceService,
-        IStatisticsService statisticsService,
-        IModeratorService moderatorService) : BaseApiController
+    public class AdministrationController : BaseApiController
     {
         #region Fields
 
         /// <summary>
         /// Application balance service
         /// </summary>
-        private readonly IAppBalanceService _appBalanceService = appBalanceService;
+        private readonly IAppBalanceService _appBalanceService;
 
         /// <summary>
         /// Statistics service
         /// </summary>
-        private readonly IStatisticsService _statisticsService = statisticsService;
+        private readonly IStatisticsService _statisticsService;
 
         /// <summary>
         /// Moderator management service
         /// </summary>
-        private readonly IModeratorService _moderatorService = moderatorService;
+        private readonly IModeratorService _moderatorService;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="AdministrationController"/>
+        /// </summary>
+        /// <param name="appBalanceService">Application balance service</param>
+        /// <param name="statisticsService">Statistics service</param>
+        /// <param name="moderatorService">Moderator management service</param>
+        public AdministrationController(IAppBalanceService appBalanceService,
+                                        IStatisticsService statisticsService,
+                                        IModeratorService moderatorService)
+        {
+            _appBalanceService = appBalanceService;
+            _statisticsService = statisticsService;
+            _moderatorService = moderatorService;
+        }
 
         #region App Balance Methods
 

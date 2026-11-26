@@ -13,33 +13,24 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Service for working with players
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="PlayerService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="currencyService">Service of currencies and payment gateways</param>
-    public class PlayerService(
-        ApplicationDbContext context,
-        ILogger<PlayerService> logger,
-        ICurrencyService currencyService) : IPlayerService
+    public class PlayerService : IPlayerService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<PlayerService> _logger = logger;
+        private readonly ILogger<PlayerService> _logger;
 
         /// <summary>
         /// Service of currencies and payment gateways
         /// </summary>
-        private readonly ICurrencyService _currencyService = currencyService;
+        private readonly ICurrencyService _currencyService;
 
         /// <summary>
         /// Log prefix
@@ -47,6 +38,19 @@ namespace BottleGame.Infrastructure.Services
         private const string Prefix = "[PlayerService]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PlayerService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="currencyService">Service of currencies and payment gateways</param>
+        public PlayerService(ApplicationDbContext context, ILogger<PlayerService> logger, ICurrencyService currencyService)
+        {
+            _context = context;
+            _logger = logger;
+            _currencyService = currencyService;
+        }
 
         #region Ban Methods
 

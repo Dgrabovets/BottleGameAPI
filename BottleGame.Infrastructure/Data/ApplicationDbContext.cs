@@ -7,11 +7,7 @@ namespace BottleGame.Infrastructure.Data
     /// <summary>
     /// Application database context
     /// </summary>
-    /// <remarks>
-    /// Initializes the database context
-    /// </remarks>
-    /// <param name="options">Context options</param>
-    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
+    public class ApplicationDbContext : DbContext
     {
         #region DbSets
 
@@ -96,6 +92,14 @@ namespace BottleGame.Infrastructure.Data
         public DbSet<ProcessingWebhookLog> ProcessingWebhookLogs { get; set; } = null!;
 
         #endregion DbSets
+
+        /// <summary>
+        /// Initializes the database context
+        /// </summary>
+        /// <param name="options">Context options</param>
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+        }
 
         #region Configuration
 

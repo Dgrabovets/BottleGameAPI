@@ -16,27 +16,22 @@ namespace BottleGame.API.Controllers
     /// currencies, payment gateways, exchange rates.
     /// For the local enums (CurrencyType, PaymentMethodType) use GameParamsController
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="CurrencyController"/>
-    /// </remarks>
-    /// <param name="currencyService">Currency service</param>
-    /// <param name="logger">Logger</param>
     [ApiController]
     [Route("api/currencies")]
     [Tags("Currencies and gateways")]
-    public class CurrencyController(ICurrencyService currencyService, ILogger<CurrencyController> logger) : ControllerBase
+    public class CurrencyController : ControllerBase
     {
         #region Fields
 
         /// <summary>
         /// Currency service
         /// </summary>
-        private readonly ICurrencyService _currencyService = currencyService;
+        private readonly ICurrencyService _currencyService;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<CurrencyController> _logger = logger;
+        private readonly ILogger<CurrencyController> _logger;
 
         /// <summary>
         /// Log prefix
@@ -44,6 +39,17 @@ namespace BottleGame.API.Controllers
         private const string Prefix = "[Currency]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="CurrencyController"/>
+        /// </summary>
+        /// <param name="currencyService">Currency service</param>
+        /// <param name="logger">Logger</param>
+        public CurrencyController(ICurrencyService currencyService, ILogger<CurrencyController> logger)
+        {
+            _currencyService = currencyService;
+            _logger = logger;
+        }
 
         #region Endpoints
 

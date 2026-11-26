@@ -13,30 +13,24 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Moderator management service
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="ModeratorService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="passwordHasher">Password hashing service</param>
-    public class ModeratorService(ApplicationDbContext context, ILogger<ModeratorService> logger, IPasswordHasher passwordHasher) : IModeratorService
+    public class ModeratorService : IModeratorService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<ModeratorService> _logger = logger;
+        private readonly ILogger<ModeratorService> _logger;
 
         /// <summary>
         /// Password hashing service
         /// </summary>
-        private readonly IPasswordHasher _passwordHasher = passwordHasher;
+        private readonly IPasswordHasher _passwordHasher;
 
         /// <summary>
         /// Log prefix
@@ -44,6 +38,19 @@ namespace BottleGame.Infrastructure.Services
         private const string Prefix = "[ModeratorService]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="ModeratorService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="passwordHasher">Password hashing service</param>
+        public ModeratorService(ApplicationDbContext context, ILogger<ModeratorService> logger, IPasswordHasher passwordHasher)
+        {
+            _context = context;
+            _logger = logger;
+            _passwordHasher = passwordHasher;
+        }
 
         #region Moderator Methods
 

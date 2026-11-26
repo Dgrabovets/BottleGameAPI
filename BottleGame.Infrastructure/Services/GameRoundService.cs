@@ -12,30 +12,24 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Service for working with game rounds
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="GameRoundService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="cacheService">Cache service</param>
-    public class GameRoundService(ApplicationDbContext context, ILogger<GameRoundService> logger, ICacheService cacheService) : IGameRoundService
+    public class GameRoundService : IGameRoundService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<GameRoundService> _logger = logger;
+        private readonly ILogger<GameRoundService> _logger;
 
         /// <summary>
         /// Cache service
         /// </summary>
-        private readonly ICacheService _cacheService = cacheService;
+        private readonly ICacheService _cacheService;
 
         /// <summary>
         /// Log prefix
@@ -43,6 +37,19 @@ namespace BottleGame.Infrastructure.Services
         private const string Prefix = "[GameRoundService]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="GameRoundService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="cacheService">Cache service</param>
+        public GameRoundService(ApplicationDbContext context, ILogger<GameRoundService> logger, ICacheService cacheService)
+        {
+            _context = context;
+            _logger = logger;
+            _cacheService = cacheService;
+        }
 
         #region Public Methods
 

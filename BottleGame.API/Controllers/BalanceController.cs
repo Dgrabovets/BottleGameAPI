@@ -15,23 +15,28 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Manages player balances, deposits, withdrawals and transaction statuses
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="BalanceController"/>
-    /// </remarks>
-    /// <param name="transactionService">Service for working with transactions</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Balance and transactions")]
-    public class BalanceController(ITransactionService transactionService) : BaseApiController
+    public class BalanceController : BaseApiController
     {
         #region Fields
 
         /// <summary>
         /// Service for working with transactions and balances
         /// </summary>
-        private readonly ITransactionService _transactionService = transactionService;
+        private readonly ITransactionService _transactionService;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="BalanceController"/>
+        /// </summary>
+        /// <param name="transactionService">Service for working with transactions</param>
+        public BalanceController(ITransactionService transactionService)
+        {
+            _transactionService = transactionService;
+        }
 
         #region Balance Methods
 

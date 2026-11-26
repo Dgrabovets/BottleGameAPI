@@ -15,33 +15,24 @@ namespace BottleGame.Infrastructure.External.YooKassa
     /// <summary>
     /// Payment provider based on the YooKassa API v3
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="YooKassaPaymentProvider"/>
-    /// </remarks>
-    /// <param name="httpClient">HTTP client with the API base address</param>
-    /// <param name="options">Provider settings</param>
-    /// <param name="logger">Logger</param>
-    public class YooKassaPaymentProvider(
-        HttpClient httpClient,
-        IOptions<ProcessingOptions> options,
-        ILogger<YooKassaPaymentProvider> logger) : IPaymentProvider
+    public class YooKassaPaymentProvider : IPaymentProvider
     {
         #region Fields
 
         /// <summary>
         /// HTTP client
         /// </summary>
-        private readonly HttpClient _httpClient = httpClient;
+        private readonly HttpClient _httpClient;
 
         /// <summary>
         /// Provider settings
         /// </summary>
-        private readonly ProcessingOptions _options = options.Value;
+        private readonly ProcessingOptions _options;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<YooKassaPaymentProvider> _logger = logger;
+        private readonly ILogger<YooKassaPaymentProvider> _logger;
 
         /// <summary>
         /// Log prefix
@@ -79,6 +70,19 @@ namespace BottleGame.Infrastructure.External.YooKassa
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="YooKassaPaymentProvider"/>
+        /// </summary>
+        /// <param name="httpClient">HTTP client with the API base address</param>
+        /// <param name="options">Provider settings</param>
+        /// <param name="logger">Logger</param>
+        public YooKassaPaymentProvider(HttpClient httpClient, IOptions<ProcessingOptions> options, ILogger<YooKassaPaymentProvider> logger)
+        {
+            _httpClient = httpClient;
+            _options = options.Value;
+            _logger = logger;
+        }
 
         #region Catalog
 

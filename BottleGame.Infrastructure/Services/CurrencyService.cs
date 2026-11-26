@@ -12,40 +12,29 @@ namespace BottleGame.Infrastructure.Services
     /// Service for working with currencies and exchange rates.
     /// Uses caching to optimize requests to the payment provider
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="CurrencyService"/>
-    /// </remarks>
-    /// <param name="paymentProvider">Payment provider</param>
-    /// <param name="cache">Cache</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="options">Processing settings</param>
-    public class CurrencyService(
-        IPaymentProvider paymentProvider,
-        IMemoryCache cache,
-        ILogger<CurrencyService> logger,
-        IOptions<ProcessingOptions> options) : ICurrencyService
+    public class CurrencyService : ICurrencyService
     {
         #region Fields
 
         /// <summary>
         /// Payment provider for getting the catalogs
         /// </summary>
-        private readonly IPaymentProvider _paymentProvider = paymentProvider;
+        private readonly IPaymentProvider _paymentProvider;
 
         /// <summary>
         /// Cache for storing the catalogs
         /// </summary>
-        private readonly IMemoryCache _cache = cache;
+        private readonly IMemoryCache _cache;
 
         /// <summary>
         /// Logger for recording events
         /// </summary>
-        private readonly ILogger<CurrencyService> _logger = logger;
+        private readonly ILogger<CurrencyService> _logger;
 
         /// <summary>
         /// Whether the service works with the real processing
         /// </summary>
-        private readonly bool _isLive = options.Value.Mode == ProcessingMode.Live;
+        private readonly bool _isLive;
 
         /// <summary>
         /// Cache key for the list of currencies
@@ -78,6 +67,24 @@ namespace BottleGame.Infrastructure.Services
         private const string Prefix = "[CurrencyService]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="CurrencyService"/>
+        /// </summary>
+        /// <param name="paymentProvider">Payment provider</param>
+        /// <param name="cache">Cache</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="options">Processing settings</param>
+        public CurrencyService(IPaymentProvider paymentProvider,
+                               IMemoryCache cache,
+                               ILogger<CurrencyService> logger,
+                               IOptions<ProcessingOptions> options)
+        {
+            _paymentProvider = paymentProvider;
+            _cache = cache;
+            _logger = logger;
+            _isLive = options.Value.Mode == ProcessingMode.Live;
+        }
 
         #region Public Methods
 

@@ -12,28 +12,35 @@ namespace BottleGame.API.Middleware
     /// a unified JSON response with the error information.
     /// It also logs all errors in one place
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="GlobalExceptionMiddleware"/>
-    /// </remarks>
-    /// <param name="next">Delegate of the next middleware in the pipeline</param>
-    /// <param name="logger">Logger used to record errors</param>
-    /// <param name="environment">Application environment (in Production the exception details are not sent to the client)</param>
-    public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger, IWebHostEnvironment environment)
+    public class GlobalExceptionMiddleware
     {
         /// <summary>
         /// Delegate that calls the next middleware in the pipeline
         /// </summary>
-        private readonly RequestDelegate _next = next;
+        private readonly RequestDelegate _next;
 
         /// <summary>
         /// Logger used to record error information
         /// </summary>
-        private readonly ILogger<GlobalExceptionMiddleware> _logger = logger;
+        private readonly ILogger<GlobalExceptionMiddleware> _logger;
 
         /// <summary>
         /// Hosting environment, used to decide how much error detail to return
         /// </summary>
-        private readonly IWebHostEnvironment _environment = environment;
+        private readonly IWebHostEnvironment _environment;
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="GlobalExceptionMiddleware"/>
+        /// </summary>
+        /// <param name="next">Delegate of the next middleware in the pipeline</param>
+        /// <param name="logger">Logger used to record errors</param>
+        /// <param name="environment">Application environment (in Production the exception details are not sent to the client)</param>
+        public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger, IWebHostEnvironment environment)
+        {
+            _next = next;
+            _logger = logger;
+            _environment = environment;
+        }
 
         /// <summary>
         /// Handles an HTTP request and catches exceptions

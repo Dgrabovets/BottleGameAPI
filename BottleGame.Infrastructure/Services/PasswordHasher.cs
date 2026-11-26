@@ -14,7 +14,7 @@ namespace BottleGame.Infrastructure.Services
     /// The password is first mixed with the server secret, so a stolen database alone is not enough to test guesses.
     /// Hashes made by the first version (one HMAC-SHA256 round, no prefix) still verify and are replaced on the next sign-in
     /// </remarks>
-    public class PasswordHasher(IConfiguration config) : IPasswordHasher
+    public class PasswordHasher : IPasswordHasher
     {
         #region Fields
 
@@ -42,9 +42,18 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Secret key mixed into every password hash
         /// </summary>
-        private readonly byte[] _secretKey = Encoding.UTF8.GetBytes(config["Security:PasswordHashSecretKey"]!);
+        private readonly byte[] _secretKey;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PasswordHasher"/>
+        /// </summary>
+        /// <param name="config">Application configuration</param>
+        public PasswordHasher(IConfiguration config)
+        {
+            _secretKey = Encoding.UTF8.GetBytes(config["Security:PasswordHashSecretKey"]!);
+        }
 
         #region Methods
 

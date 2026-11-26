@@ -21,41 +21,32 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Authorizes administrators and players through Telegram
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="AuthorizationController"/>
-    /// </remarks>
-    /// <param name="tokenService">Service for working with JWT tokens</param>
-    /// <param name="context">Database context</param>
-    /// <param name="passwordHasher">Password hashing service</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="telegramAuthService">Service for authorization through Telegram</param>
-    /// <param name="passwordUpgradeService">Service that upgrades old password hashes</param>
     [ApiController]
     [Route("api/auth")]
     [Tags("Authorization")]
-    public class AuthorizationController(ITokenService tokenService, ApplicationDbContext context, IPasswordHasher passwordHasher, ILogger<AuthorizationController> logger, ITelegramAuthService telegramAuthService, IPasswordUpgradeService passwordUpgradeService) : Controller
+    public class AuthorizationController : Controller
     {
         #region Fields
 
         /// <inheritdoc cref="ITokenService"/>
-        private readonly ITokenService _tokenService = tokenService;
+        private readonly ITokenService _tokenService;
 
         /// <inheritdoc cref="ApplicationDbContext"/>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <inheritdoc cref="IPasswordHasher"/>
-        private readonly IPasswordHasher _passwordHasher = passwordHasher;
+        private readonly IPasswordHasher _passwordHasher;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<AuthorizationController> _logger = logger;
+        private readonly ILogger<AuthorizationController> _logger;
 
         /// <inheritdoc cref="ITelegramAuthService"/>
-        private readonly ITelegramAuthService _telegramAuthService = telegramAuthService;
+        private readonly ITelegramAuthService _telegramAuthService;
 
         /// <inheritdoc cref="IPasswordUpgradeService"/>
-        private readonly IPasswordUpgradeService _passwordUpgradeService = passwordUpgradeService;
+        private readonly IPasswordUpgradeService _passwordUpgradeService;
 
         /// <summary>
         /// Prefix of the log messages
@@ -63,6 +54,30 @@ namespace BottleGame.API.Controllers
         const string Prefix = "[Authorization Controller]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="AuthorizationController"/>
+        /// </summary>
+        /// <param name="tokenService">Service for working with JWT tokens</param>
+        /// <param name="context">Database context</param>
+        /// <param name="passwordHasher">Password hashing service</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="telegramAuthService">Service for authorization through Telegram</param>
+        /// <param name="passwordUpgradeService">Service that upgrades old password hashes</param>
+        public AuthorizationController(ITokenService tokenService,
+                                       ApplicationDbContext context,
+                                       IPasswordHasher passwordHasher,
+                                       ILogger<AuthorizationController> logger,
+                                       ITelegramAuthService telegramAuthService,
+                                       IPasswordUpgradeService passwordUpgradeService)
+        {
+            _tokenService = tokenService;
+            _context = context;
+            _passwordHasher = passwordHasher;
+            _logger = logger;
+            _telegramAuthService = telegramAuthService;
+            _passwordUpgradeService = passwordUpgradeService;
+        }
 
         #region ActionMethods
 

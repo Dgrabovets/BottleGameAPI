@@ -8,20 +8,16 @@ namespace BottleGame.API.Controllers
     /// <summary>
     /// Controller for notifications from the payment provider
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="WebhookController"/>
-    /// </remarks>
-    /// <param name="webhookService">Notification handling service</param>
     [Route("api/webhook")]
     [Tags("Webhooks")]
-    public class WebhookController(IPaymentWebhookService webhookService) : BaseApiController
+    public class WebhookController : BaseApiController
     {
         #region Fields
 
         /// <summary>
         /// Notification handling service
         /// </summary>
-        private readonly IPaymentWebhookService _webhookService = webhookService;
+        private readonly IPaymentWebhookService _webhookService;
 
         /// <summary>
         /// Largest accepted notification body in bytes. A YooKassa notification takes a few kilobytes
@@ -29,6 +25,15 @@ namespace BottleGame.API.Controllers
         private const long MaxBodySize = 64 * 1024;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="WebhookController"/>
+        /// </summary>
+        /// <param name="webhookService">Notification handling service</param>
+        public WebhookController(IPaymentWebhookService webhookService)
+        {
+            _webhookService = webhookService;
+        }
 
         #region Action Methods
 

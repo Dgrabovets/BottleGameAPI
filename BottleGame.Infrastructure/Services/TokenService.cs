@@ -10,17 +10,25 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// <inheritdoc cref="ITokenService"/>
     /// </summary>
-    /// <param name="configuration">Configuration</param>
-    public class TokenService(IConfiguration configuration) : ITokenService
+    public class TokenService : ITokenService
     {
         #region Fields
 
         /// <summary>
         /// Configuration
         /// </summary>
-        private readonly IConfiguration _configuration = configuration;
+        private readonly IConfiguration _configuration;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="TokenService"/>
+        /// </summary>
+        /// <param name="configuration">Configuration</param>
+        public TokenService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
 
         #region Methods
 

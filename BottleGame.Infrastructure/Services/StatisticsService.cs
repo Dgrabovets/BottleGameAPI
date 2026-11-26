@@ -13,24 +13,19 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Application statistics service
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="StatisticsService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    public class StatisticsService(ApplicationDbContext context, ILogger<StatisticsService> logger) : IStatisticsService
+    public class StatisticsService : IStatisticsService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<StatisticsService> _logger = logger;
+        private readonly ILogger<StatisticsService> _logger;
 
         /// <summary>
         /// Log prefix
@@ -38,6 +33,17 @@ namespace BottleGame.Infrastructure.Services
         private const string Prefix = "[StatisticsService]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="StatisticsService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        public StatisticsService(ApplicationDbContext context, ILogger<StatisticsService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
 
         #region Statistics Methods
 

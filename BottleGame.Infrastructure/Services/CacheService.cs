@@ -11,13 +11,7 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Reference data caching service
     /// </summary>
-    /// <param name="cache">In-memory cache</param>
-    /// <param name="scopeFactory">Scope factory for creating DbContext</param>
-    /// <param name="logger">Logger</param>
-    public class CacheService(
-        IMemoryCache cache,
-        IServiceScopeFactory scopeFactory,
-        ILogger<CacheService> logger) : ICacheService
+    public class CacheService : ICacheService
     {
         #region Constants
 
@@ -53,17 +47,30 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// In-memory cache
         /// </summary>
-        private readonly IMemoryCache _cache = cache;
+        private readonly IMemoryCache _cache;
         /// <summary>
         /// Scope factory for creating a DbContext
         /// </summary>
-        private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
+        private readonly IServiceScopeFactory _scopeFactory;
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<CacheService> _logger = logger;
+        private readonly ILogger<CacheService> _logger;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="CacheService"/>
+        /// </summary>
+        /// <param name="cache">In-memory cache</param>
+        /// <param name="scopeFactory">Scope factory for creating DbContext</param>
+        /// <param name="logger">Logger</param>
+        public CacheService(IMemoryCache cache, IServiceScopeFactory scopeFactory, ILogger<CacheService> logger)
+        {
+            _cache = cache;
+            _scopeFactory = scopeFactory;
+            _logger = logger;
+        }
 
         #region Public Methods
 

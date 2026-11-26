@@ -12,16 +12,7 @@ namespace BottleGame.Infrastructure.Services.Payments
     /// <summary>
     /// Live mode: payments and payouts go through the payment provider, the outcome arrives by notification
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="LiveTransactionProcessor"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="paymentProvider">Payment provider</param>
-    public class LiveTransactionProcessor(
-        ApplicationDbContext context,
-        ILogger<LiveTransactionProcessor> logger,
-        IPaymentProvider paymentProvider) : ITransactionProcessor
+    public class LiveTransactionProcessor : ITransactionProcessor
     {
         #region Fields
 
@@ -35,17 +26,17 @@ namespace BottleGame.Infrastructure.Services.Payments
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<LiveTransactionProcessor> _logger = logger;
+        private readonly ILogger<LiveTransactionProcessor> _logger;
 
         /// <summary>
         /// Payment provider
         /// </summary>
-        private readonly IPaymentProvider _paymentProvider = paymentProvider;
+        private readonly IPaymentProvider _paymentProvider;
 
         /// <summary>
         /// Log prefix
@@ -63,6 +54,19 @@ namespace BottleGame.Infrastructure.Services.Payments
         private const string DefaultCurrency = "rub";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="LiveTransactionProcessor"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="paymentProvider">Payment provider</param>
+        public LiveTransactionProcessor(ApplicationDbContext context, ILogger<LiveTransactionProcessor> logger, IPaymentProvider paymentProvider)
+        {
+            _context = context;
+            _logger = logger;
+            _paymentProvider = paymentProvider;
+        }
 
         #region Processing
 

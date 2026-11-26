@@ -5,8 +5,7 @@ namespace BottleGame.API.Options
     /// <summary>
     /// Validates the bot token: a token that anyone can know would let anyone sign initData and sign in as any player
     /// </summary>
-    /// <param name="environment">Hosting environment, the docker-compose placeholder is allowed only in Development</param>
-    public class TelegramOptionsValidator(IHostEnvironment environment) : IValidateOptions<TelegramOptions>
+    public class TelegramOptionsValidator : IValidateOptions<TelegramOptions>
     {
         #region Fields
 
@@ -18,9 +17,18 @@ namespace BottleGame.API.Options
         /// <summary>
         /// Hosting environment
         /// </summary>
-        private readonly IHostEnvironment _environment = environment;
+        private readonly IHostEnvironment _environment;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="TelegramOptionsValidator"/>
+        /// </summary>
+        /// <param name="environment">Hosting environment, the docker-compose placeholder is allowed only in Development</param>
+        public TelegramOptionsValidator(IHostEnvironment environment)
+        {
+            _environment = environment;
+        }
 
         #region Methods
 

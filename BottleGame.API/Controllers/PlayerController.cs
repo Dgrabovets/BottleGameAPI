@@ -15,35 +15,42 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Manages player data, bans, statistics and profiles
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="PlayerController"/>
-    /// </remarks>
-    /// <param name="playerService">Service for working with players</param>
-    /// <param name="playerStatisticsService">Player statistics service</param>
-    /// <param name="banService">Service for working with bans</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Player management")]
-    public class PlayerController(IPlayerService playerService, IPlayerStatisticsService playerStatisticsService, IBanService banService) : BaseApiController
+    public class PlayerController : BaseApiController
     {
         #region Fields
 
         /// <summary>
         /// Service for working with players
         /// </summary>
-        private readonly IPlayerService _playerService = playerService;
+        private readonly IPlayerService _playerService;
 
         /// <summary>
         /// Player statistics service
         /// </summary>
-        private readonly IPlayerStatisticsService _playerStatisticsService = playerStatisticsService;
+        private readonly IPlayerStatisticsService _playerStatisticsService;
 
         /// <summary>
         /// Service for working with player bans
         /// </summary>
-        private readonly IBanService _banService = banService;
+        private readonly IBanService _banService;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PlayerController"/>
+        /// </summary>
+        /// <param name="playerService">Service for working with players</param>
+        /// <param name="playerStatisticsService">Player statistics service</param>
+        /// <param name="banService">Service for working with bans</param>
+        public PlayerController(IPlayerService playerService, IPlayerStatisticsService playerStatisticsService, IBanService banService)
+        {
+            _playerService = playerService;
+            _playerStatisticsService = playerStatisticsService;
+            _banService = banService;
+        }
 
         #region Ban Methods
 

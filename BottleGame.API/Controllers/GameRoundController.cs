@@ -15,23 +15,28 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Manages game rounds, finishing games and getting statistics
     /// </remarks>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="GameRoundController"/>
-    /// </remarks>
-    /// <param name="gameRoundService">Service for working with game rounds</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Game rounds")]
-    public class GameRoundController(IGameRoundService gameRoundService) : BaseApiController
+    public class GameRoundController : BaseApiController
     {
         #region Fields
 
         /// <summary>
         /// Service for working with game rounds
         /// </summary>
-        private readonly IGameRoundService _gameRoundService = gameRoundService;
+        private readonly IGameRoundService _gameRoundService;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="GameRoundController"/>
+        /// </summary>
+        /// <param name="gameRoundService">Service for working with game rounds</param>
+        public GameRoundController(IGameRoundService gameRoundService)
+        {
+            _gameRoundService = gameRoundService;
+        }
 
         #region Action Methods
 

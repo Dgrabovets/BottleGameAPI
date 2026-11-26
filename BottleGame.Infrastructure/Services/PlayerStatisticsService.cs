@@ -11,33 +11,24 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Player statistics service
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="PlayerStatisticsService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="cacheService">Cache service</param>
-    public class PlayerStatisticsService(
-        ApplicationDbContext context,
-        ILogger<PlayerStatisticsService> logger,
-        ICacheService cacheService) : IPlayerStatisticsService
+    public class PlayerStatisticsService : IPlayerStatisticsService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<PlayerStatisticsService> _logger = logger;
+        private readonly ILogger<PlayerStatisticsService> _logger;
 
         /// <summary>
         /// Cache service
         /// </summary>
-        private readonly ICacheService _cacheService = cacheService;
+        private readonly ICacheService _cacheService;
 
         /// <summary>
         /// Log prefix
@@ -45,6 +36,19 @@ namespace BottleGame.Infrastructure.Services
         private const string Prefix = "[PlayerStatisticsService]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PlayerStatisticsService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="cacheService">Cache service</param>
+        public PlayerStatisticsService(ApplicationDbContext context, ILogger<PlayerStatisticsService> logger, ICacheService cacheService)
+        {
+            _context = context;
+            _logger = logger;
+            _cacheService = cacheService;
+        }
 
         #region Statistics Methods
 

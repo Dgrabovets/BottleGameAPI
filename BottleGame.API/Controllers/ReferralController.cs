@@ -15,30 +15,27 @@ namespace BottleGame.API.Controllers
     /// <remarks>
     /// Manages referral links and invitations
     /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="configuration">Application configuration</param>
     [ApiController]
     [Route("api/[controller]")]
     [Tags("Referral system")]
-    public class ReferralController(ApplicationDbContext context, ILogger<ReferralController> logger, IConfiguration configuration) : Controller
+    public class ReferralController : Controller
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<ReferralController> _logger = logger;
+        private readonly ILogger<ReferralController> _logger;
 
         /// <summary>
         /// Name of the application used to build referral links
         /// </summary>
-        private readonly string _appName = configuration["AppName"]!;
+        private readonly string _appName;
 
         /// <summary>
         /// Prefix of the log messages
@@ -46,6 +43,19 @@ namespace BottleGame.API.Controllers
         const string Prefix = "[Referral Controller]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="ReferralController"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="configuration">Application configuration</param>
+        public ReferralController(ApplicationDbContext context, ILogger<ReferralController> logger, IConfiguration configuration)
+        {
+            _context = context;
+            _logger = logger;
+            _appName = configuration["AppName"]!;
+        }
 
         #region ActionMethods
 

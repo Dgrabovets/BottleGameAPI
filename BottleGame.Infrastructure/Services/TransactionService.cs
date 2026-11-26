@@ -14,40 +14,29 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// Service for working with transactions
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="TransactionService"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    /// <param name="cacheService">Cache service</param>
-    /// <param name="processor">Handler of deposits and withdrawals for the current processing mode</param>
-    public class TransactionService(
-        ApplicationDbContext context,
-        ILogger<TransactionService> logger,
-        ICacheService cacheService,
-        ITransactionProcessor processor) : ITransactionService
+    public class TransactionService : ITransactionService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<TransactionService> _logger = logger;
+        private readonly ILogger<TransactionService> _logger;
 
         /// <summary>
         /// Cache service
         /// </summary>
-        private readonly ICacheService _cacheService = cacheService;
+        private readonly ICacheService _cacheService;
 
         /// <summary>
         /// Handler of deposits and withdrawals for the current processing mode
         /// </summary>
-        private readonly ITransactionProcessor _processor = processor;
+        private readonly ITransactionProcessor _processor;
 
         /// <summary>
         /// Log prefix
@@ -55,6 +44,24 @@ namespace BottleGame.Infrastructure.Services
         private const string Prefix = "[TransactionService]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="TransactionService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="cacheService">Cache service</param>
+        /// <param name="processor">Handler of deposits and withdrawals for the current processing mode</param>
+        public TransactionService(ApplicationDbContext context,
+                                  ILogger<TransactionService> logger,
+                                  ICacheService cacheService,
+                                  ITransactionProcessor processor)
+        {
+            _context = context;
+            _logger = logger;
+            _cacheService = cacheService;
+            _processor = processor;
+        }
 
         #region Balance Methods
 

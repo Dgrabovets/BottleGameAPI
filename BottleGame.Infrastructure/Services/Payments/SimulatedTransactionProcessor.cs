@@ -10,26 +10,19 @@ namespace BottleGame.Infrastructure.Services.Payments
     /// <summary>
     /// Simulated mode: deposits and withdrawals complete locally without a payment provider and real money
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of <see cref="SimulatedTransactionProcessor"/>
-    /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="logger">Logger</param>
-    public class SimulatedTransactionProcessor(
-        ApplicationDbContext context,
-        ILogger<SimulatedTransactionProcessor> logger) : ITransactionProcessor
+    public class SimulatedTransactionProcessor : ITransactionProcessor
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<SimulatedTransactionProcessor> _logger = logger;
+        private readonly ILogger<SimulatedTransactionProcessor> _logger;
 
         /// <summary>
         /// Log prefix
@@ -37,6 +30,17 @@ namespace BottleGame.Infrastructure.Services.Payments
         private const string Prefix = "[SimulatedTransactionProcessor]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="SimulatedTransactionProcessor"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="logger">Logger</param>
+        public SimulatedTransactionProcessor(ApplicationDbContext context, ILogger<SimulatedTransactionProcessor> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
 
         #region Processing
 

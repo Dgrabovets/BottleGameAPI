@@ -8,20 +8,20 @@ namespace BottleGame.Infrastructure.Services
     /// <summary>
     /// <inheritdoc cref="IPasswordUpgradeService"/>
     /// </summary>
-    public class PasswordUpgradeService(ApplicationDbContext context, IPasswordHasher passwordHasher, ILogger<PasswordUpgradeService> logger) : IPasswordUpgradeService
+    public class PasswordUpgradeService : IPasswordUpgradeService
     {
         #region Fields
 
         /// <inheritdoc cref="ApplicationDbContext"/>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <inheritdoc cref="IPasswordHasher"/>
-        private readonly IPasswordHasher _passwordHasher = passwordHasher;
+        private readonly IPasswordHasher _passwordHasher;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<PasswordUpgradeService> _logger = logger;
+        private readonly ILogger<PasswordUpgradeService> _logger;
 
         /// <summary>
         /// Prefix of the log messages
@@ -29,6 +29,19 @@ namespace BottleGame.Infrastructure.Services
         private const string Prefix = "[Password Upgrade]";
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PasswordUpgradeService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="passwordHasher">Password hashing service</param>
+        /// <param name="logger">Logger</param>
+        public PasswordUpgradeService(ApplicationDbContext context, IPasswordHasher passwordHasher, ILogger<PasswordUpgradeService> logger)
+        {
+            _context = context;
+            _passwordHasher = passwordHasher;
+            _logger = logger;
+        }
 
         #region Methods
 

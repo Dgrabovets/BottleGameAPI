@@ -17,33 +17,26 @@ namespace BottleGame.Infrastructure.Services
     /// </summary>
     /// <remarks>
     /// YooKassa notifications are not signed, so only the object identifier is taken from the body.
-    /// The status, the amount and the link to the transaction are read from the YooKassa API response to a request by this identifier.
-    /// Initializes a new instance of <see cref="PaymentWebhookService"/>
+    /// The status, the amount and the link to the transaction are read from the YooKassa API response to a request by this identifier
     /// </remarks>
-    /// <param name="context">Database context</param>
-    /// <param name="paymentProvider">Payment provider</param>
-    /// <param name="logger">Logger</param>
-    public class PaymentWebhookService(
-        ApplicationDbContext context,
-        IPaymentProvider paymentProvider,
-        ILogger<PaymentWebhookService> logger) : IPaymentWebhookService
+    public class PaymentWebhookService : IPaymentWebhookService
     {
         #region Fields
 
         /// <summary>
         /// Database context
         /// </summary>
-        private readonly ApplicationDbContext _context = context;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Payment provider
         /// </summary>
-        private readonly IPaymentProvider _paymentProvider = paymentProvider;
+        private readonly IPaymentProvider _paymentProvider;
 
         /// <summary>
         /// Logger
         /// </summary>
-        private readonly ILogger<PaymentWebhookService> _logger = logger;
+        private readonly ILogger<PaymentWebhookService> _logger;
 
         /// <summary>
         /// Log prefix
@@ -66,6 +59,19 @@ namespace BottleGame.Infrastructure.Services
         private const int MaxUnparsedBodyLength = 200;
 
         #endregion Fields
+
+        /// <summary>
+        /// Initializes a new instance of <see cref="PaymentWebhookService"/>
+        /// </summary>
+        /// <param name="context">Database context</param>
+        /// <param name="paymentProvider">Payment provider</param>
+        /// <param name="logger">Logger</param>
+        public PaymentWebhookService(ApplicationDbContext context, IPaymentProvider paymentProvider, ILogger<PaymentWebhookService> logger)
+        {
+            _context = context;
+            _paymentProvider = paymentProvider;
+            _logger = logger;
+        }
 
         #region Public Methods
 
