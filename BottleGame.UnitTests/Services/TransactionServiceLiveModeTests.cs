@@ -279,6 +279,7 @@ public class TransactionServiceLiveModeTests : IDisposable
         result.IsSuccess.Should().BeFalse();
         result.StatusCode.Should().Be(500);
         transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.ProcessingError.Should().Be("no funds");
         PlayerBalance(player).Should().Be(1300);
     }
 
@@ -335,6 +336,64 @@ public class TransactionServiceLiveModeTests : IDisposable
         transaction.ProcessingError.Should().BeNull();
         sent.Should().Equal(transaction.Id, transaction.Id);
         PlayerBalance(player).Should().Be(1000);
+    }
+
+    /// <summary>
+    /// The mark is saved before the provider is called, so a crash, a failed final save or a concurrent reject cannot hide a real payout
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_SavesMarkBeforeCallingProvider()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        string? savedAtCall = "not called";
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .Callback(() => savedAtCall = _context.MoneyTransactions.AsNoTracking().Single(t => t.Id == transaction.Id).ProcessingError)
+            .ReturnsAsync(new CreatePayoutResult(true, "payout-1", null));
+
+        var result = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        result.IsSuccess.Should().BeTrue();
+        savedAtCall.Should().Be(LiveTransactionProcessor.PayoutOutcomeUnknown);
+        transaction.ProcessingError.Should().BeNull();
+    }
+
+    /// <summary>
+    /// A repeat skips the rounds and payout limit checks, which only guard the first request: a deposit in between must not strand the withdrawal
+    /// </summary>
+    [Fact]
+    public async Task ApproveWithdrawal_Repeat_SkipsRoundsAndLimitChecks()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        SetPlayedRounds(player, 10);
+        var transaction = AddWithdrawal(player, 300);
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException("timeout"));
+        await _service.UpdateTransactionStatus(transaction.Id, Approve());
+        SetPlayedRounds(player, 0);
+        _context.AppBalance.Single().LowerThreshold = 100;
+        _context.SaveChanges();
+        _providerMock
+            .Setup(x => x.CreatePayoutAsync(It.IsAny<CreatePayoutRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CreatePayoutResult(true, "payout-1", null));
+
+        var retry = await _service.UpdateTransactionStatus(transaction.Id, Approve());
+
+        retry.IsSuccess.Should().BeTrue();
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Approved);
+    }
+
+    /// <summary>
+    /// The marker is stored in the database, so its text must never change: rows marked earlier would lose their protection
+    /// </summary>
+    [Fact]
+    public void PayoutOutcomeUnknown_ValueIsStable()
+    {
+        LiveTransactionProcessor.PayoutOutcomeUnknown.Should().Be(
+            "Payout outcome unknown: wait for the YooKassa notification or approve again to repeat the request with the same idempotence key");
     }
 
     /// <summary>

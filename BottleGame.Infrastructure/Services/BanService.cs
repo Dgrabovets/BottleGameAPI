@@ -5,6 +5,7 @@ using BottleGame.Application.Interfaces;
 using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
 using BottleGame.Infrastructure.Data;
+using BottleGame.Infrastructure.Services.Payments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -149,11 +150,12 @@ namespace BottleGame.Infrastructure.Services
 
                     _context.BansHistory.Add(banHistory);
 
-                    // Reject all pending withdrawals
+                    // Reject all pending withdrawals, except those whose payout may already exist: the payout notification settles them
                     var transactions = await _context.MoneyTransactions
                         .Where(mt => mt.PlayerId == request.PlayerId &&
                                     mt.TransactionTypeId == TransactionTypes.Withdrawal &&
-                                    mt.TransactionStatusId == TransactionStatuses.Pending)
+                                    mt.TransactionStatusId == TransactionStatuses.Pending &&
+                                    mt.ProcessingError != LiveTransactionProcessor.PayoutOutcomeUnknown)
                         .ToListAsync();
 
                     foreach (var t in transactions)

@@ -422,6 +422,70 @@ public class PaymentWebhookServiceTests : IDisposable
         AppBalance().Should().Be(100000);
     }
 
+    /// <summary>
+    /// A payout outcome for a withdrawal rejected by hand or by a ban is not applied, it is left for a manual check
+    /// </summary>
+    /// <param name="status">Status the provider reports</param>
+    /// <param name="event">The event name</param>
+    [Theory]
+    [InlineData(ProviderOperationStatus.Succeeded, "payout.succeeded")]
+    [InlineData(ProviderOperationStatus.Canceled, "payout.canceled")]
+    public async Task PayoutOutcome_ForRejectedWithdrawal_IsLeftForManualCheck(ProviderOperationStatus status, string @event)
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
+        transaction.TransactionStatusId = TransactionStatuses.Rejected;
+        _context.SaveChanges();
+        ProviderReportsPayout(transaction, status);
+
+        await _service.HandleNotificationAsync(Notification(@event, PayoutId));
+
+        transaction.TransactionStatusId.Should().Be(TransactionStatuses.Rejected);
+        transaction.IsProcessingSuccess.Should().BeNull();
+        PlayerBalance(player).Should().Be(1000);
+        AppBalance().Should().Be(100000);
+        _context.ProcessingWebhookLogs.Single().ProcessingStatus.Should().Be("ManualCheck");
+    }
+
+    /// <summary>
+    /// A notification about another payout than the one stored for the transaction is not a duplicate, it is left for a manual check
+    /// </summary>
+    [Fact]
+    public async Task PayoutNotification_ForAnotherProviderId_IsLeftForManualCheck()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
+        transaction.TransactionStatusId = TransactionStatuses.Approved;
+        transaction.IsProcessingSuccess = true;
+        transaction.ProcessingOrderId = "payout-other";
+        _context.SaveChanges();
+        ProviderReportsPayout(transaction, ProviderOperationStatus.Succeeded);
+
+        await _service.HandleNotificationAsync(Notification("payout.succeeded", PayoutId));
+
+        AppBalance().Should().Be(100000);
+        _context.ProcessingWebhookLogs.Single().ProcessingStatus.Should().Be("ManualCheck");
+    }
+
+    /// <summary>
+    /// A payout that succeeded at the provider after the withdrawal was refunded is not called a duplicate, it is left for a manual check
+    /// </summary>
+    [Fact]
+    public async Task PayoutSucceeded_AfterRefund_IsLeftForManualCheck()
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        var transaction = AddTransaction(player, TransactionTypes.Withdrawal, 300);
+        transaction.TransactionStatusId = TransactionStatuses.Rejected;
+        transaction.IsProcessingSuccess = false;
+        _context.SaveChanges();
+        ProviderReportsPayout(transaction, ProviderOperationStatus.Succeeded);
+
+        await _service.HandleNotificationAsync(Notification("payout.succeeded", PayoutId));
+
+        AppBalance().Should().Be(100000);
+        _context.ProcessingWebhookLogs.Single().ProcessingStatus.Should().Be("ManualCheck");
+    }
+
     #endregion Payout Tests
 
     #region Other Notifications
@@ -464,6 +528,37 @@ public class PaymentWebhookServiceTests : IDisposable
         var log = _context.ProcessingWebhookLogs.Single();
         log.ProcessingStatus.Should().Be("Error");
         log.RawRequest.Length.Should().BeLessThan(300);
+    }
+
+    /// <summary>
+    /// A parsable notification the provider does not confirm is stored only as a short prefix; a confirmed one in full
+    /// </summary>
+    /// <param name="confirmed">Whether the provider knows the payment</param>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Notification_IsStoredInFullOnlyAfterProviderConfirmsIt(bool confirmed)
+    {
+        var player = TestDbContextFactory.CreateTestPlayer(_context);
+        var transaction = AddTransaction(player, TransactionTypes.Deposit, 500);
+        if (confirmed)
+        {
+            ProviderReportsPayment(transaction, ProviderOperationStatus.Succeeded);
+        }
+
+        var body = "{\"type\":\"notification\",\"event\":\"payment.succeeded\",\"object\":{\"id\":\"" + PaymentId + "\",\"description\":\"" + new string('d', 500) + "\"}}";
+
+        await _service.HandleNotificationAsync(new(body, "POST", "application/json", "127.0.0.1", "tests"));
+
+        var stored = _context.ProcessingWebhookLogs.Single().RawRequest;
+        if (confirmed)
+        {
+            stored.Should().Be(body);
+        }
+        else
+        {
+            stored.Length.Should().BeLessThan(300);
+        }
     }
 
     /// <summary>

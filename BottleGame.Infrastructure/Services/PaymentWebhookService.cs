@@ -61,7 +61,7 @@ namespace BottleGame.Infrastructure.Services
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
         /// <summary>
-        /// How much of a body that is not a notification is stored in the webhook log
+        /// How much of a body the provider has not confirmed is stored in the webhook log
         /// </summary>
         private const int MaxUnparsedBodyLength = 200;
 
@@ -79,21 +79,18 @@ namespace BottleGame.Infrastructure.Services
                 var notification = TryParseNotification(request.Body);
                 if (notification?.Object is null || string.IsNullOrWhiteSpace(notification.Object.Id))
                 {
-                    // Anyone can post here, so a body that is not a notification is kept only as a short prefix
-                    webhookLog.RawRequest = request.Body.Length <= MaxUnparsedBodyLength ? request.Body : request.Body[..MaxUnparsedBodyLength];
                     return await LogAndFailAsync(webhookLog, $"Failed to parse the notification ({request.Body.Length} characters)");
                 }
 
                 _logger.LogInformation("{Prefix} Notification received: {Event} {ObjectId}", Prefix, LogSanitizer.Clean(notification.Event), LogSanitizer.Clean(notification.Object.Id));
 
-                webhookLog.RawRequest = request.Body;
                 webhookLog.WebhookType = notification.Event;
                 webhookLog.OrderId = notification.Object.Id;
 
                 return notification.Event switch
                 {
-                    "payment.succeeded" or "payment.canceled" => await HandleAsync(webhookLog, notification.Object.Id, isPayout: false),
-                    "payout.succeeded" or "payout.canceled" => await HandleAsync(webhookLog, notification.Object.Id, isPayout: true),
+                    "payment.succeeded" or "payment.canceled" => await HandleAsync(webhookLog, request.Body, notification.Object.Id, isPayout: false),
+                    "payout.succeeded" or "payout.canceled" => await HandleAsync(webhookLog, request.Body, notification.Object.Id, isPayout: true),
                     _ => await SaveLogAsync(webhookLog, "Ignored", Result.Success())
                 };
             }
@@ -114,10 +111,11 @@ namespace BottleGame.Infrastructure.Services
         /// Verifies the object at the provider, finds the transaction and applies the outcome once
         /// </summary>
         /// <param name="webhookLog">Log record</param>
+        /// <param name="body">Raw request body, stored in full once the provider confirms the object</param>
         /// <param name="providerId">Identifier of the payment or payout at the provider</param>
         /// <param name="isPayout">true for a payout, false for a payment</param>
         /// <returns>Result of the handling</returns>
-        private async Task<Result> HandleAsync(ProcessingWebhookLog webhookLog, string providerId, bool isPayout)
+        private async Task<Result> HandleAsync(ProcessingWebhookLog webhookLog, string body, string providerId, bool isPayout)
         {
             var operation = isPayout
                               ? await _paymentProvider.GetPayoutAsync(providerId)
@@ -130,6 +128,7 @@ namespace BottleGame.Infrastructure.Services
 
             // The object was received directly from the provider, so the notification is not forged.
             webhookLog.IsSignatureValid = true;
+            webhookLog.RawRequest = body;
             webhookLog.Result = operation.Status.ToString();
 
             if (operation.TransactionId is not { } transactionId)
@@ -154,12 +153,30 @@ namespace BottleGame.Infrastructure.Services
                 return await LogAndFailAsync(webhookLog, $"Type of transaction {transactionId} does not match the event");
             }
 
+            // A different provider object for the same transaction means a second payment or payout, never a repeat
+            if (transaction.ProcessingOrderId is { } knownId && knownId != operation.Id)
+            {
+                return await ManualCheckAsync(webhookLog, $"Transaction {transactionId} is linked to {knownId}, but the notification is about {operation.Id}");
+            }
+
             // The provider repeats the delivery; the outcome of the transaction is recorded once,
             // otherwise the money would be credited or returned twice.
-            if (transaction.IsProcessingSuccess is not null)
+            if (transaction.IsProcessingSuccess is { } recordedSuccess)
             {
+                // A final outcome that contradicts the recorded one (for example, a payout that succeeded after a refund) is not a repeat
+                if (operation.Status != ProviderOperationStatus.Pending && recordedSuccess != (operation.Status == ProviderOperationStatus.Succeeded))
+                {
+                    return await ManualCheckAsync(webhookLog, $"The provider reports {operation.Status} for transaction {transactionId}, but it is recorded as {(recordedSuccess ? "succeeded" : "failed")}");
+                }
+
                 _logger.LogWarning("{Prefix} Repeated notification for transaction {TransactionId} ignored", Prefix, transaction.Id);
                 return await SaveLogAsync(webhookLog, "Duplicate", Result.Success());
+            }
+
+            // Rejected without a provider outcome means rejected by hand or by a ban, and the player already has the money back
+            if (transaction.TransactionStatusId == TransactionStatuses.Rejected)
+            {
+                return await ManualCheckAsync(webhookLog, $"Transaction {transactionId} was rejected without a provider outcome, the {operation.Status} outcome is not applied");
             }
 
             if (operation.Amount != transaction.Amount)
@@ -392,6 +409,8 @@ namespace BottleGame.Infrastructure.Services
         /// <returns>Log record</returns>
         private static ProcessingWebhookLog CreateWebhookLog(WebhookRequestInfo request) => new()
         {
+            // Anyone can post here, so the body is kept only as a short prefix until the provider confirms the object
+            RawRequest = request.Body.Length <= MaxUnparsedBodyLength ? request.Body : request.Body[..MaxUnparsedBodyLength],
             HttpMethod = request.HttpMethod,
             ContentType = request.ContentType,
             IpAddress = request.IpAddress ?? "Unknown",
@@ -423,6 +442,20 @@ namespace BottleGame.Infrastructure.Services
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Leaves a notification that contradicts the stored transaction for a manual check: nothing is applied, and the answer
+        /// is a success, because a repeated delivery cannot fix it
+        /// </summary>
+        /// <param name="log">Log record</param>
+        /// <param name="message">What contradicts</param>
+        /// <returns>Successful result</returns>
+        private async Task<Result> ManualCheckAsync(ProcessingWebhookLog log, string message)
+        {
+            log.ErrorMessage = message;
+            _logger.LogCritical("{Prefix} Manual check needed: {Message}", Prefix, message);
+            return await SaveLogAsync(log, "ManualCheck", Result.Success());
         }
 
         /// <summary>

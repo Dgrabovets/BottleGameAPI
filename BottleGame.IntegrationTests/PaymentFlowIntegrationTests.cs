@@ -4,6 +4,7 @@ using BottleGame.Domain.Constants;
 using BottleGame.Domain.Entities;
 using BottleGame.Infrastructure.Data;
 using BottleGame.Infrastructure.Services;
+using BottleGame.Infrastructure.Services.Payments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -271,5 +272,44 @@ public class PaymentFlowIntegrationTests(PostgresFixture database) : IClassFixtu
             .SqlQuery<DateTime>($"""SELECT ("CreatedAt" AT TIME ZONE 'UTC') AS "Value" FROM "MoneyTransactions" WHERE "Id" = {transactionId}""")
             .SingleAsync();
         Assert.InRange(storedUtc, before.AddSeconds(-2), after.AddSeconds(2));
+    }
+
+    /// <summary>
+    /// A reject that arrives while the payout request is in flight sees the saved mark and is refused, so the player is not refunded for a payout that may be real
+    /// </summary>
+    [PostgresFact]
+    public async Task RejectDuringPayoutRequest_IsRefusedWithoutRefund()
+    {
+        var playerId = await database.AddPlayerAsync(balance: 1000);
+        var transactionId = await database.AddPendingTransactionAsync(playerId, TransactionTypes.Withdrawal, 300);
+        BottleGame.Application.Common.Result? rejectResult = null;
+
+        async Task<TransactionService> CreateLiveServiceAsync(ApplicationDbContext context, IPaymentProvider provider) =>
+            new(context,
+                NullLogger<TransactionService>.Instance,
+                new FixedCache(await context.GameParams.AsNoTracking().FirstAsync()),
+                new LiveTransactionProcessor(context, NullLogger<LiveTransactionProcessor>.Instance, provider));
+
+        var provider = new TimeoutPayoutProvider(async () =>
+        {
+            await using var rejectContext = database.CreateContext();
+            var rejectService = await CreateLiveServiceAsync(rejectContext, new TimeoutPayoutProvider(() => Task.CompletedTask));
+            rejectResult = await rejectService.UpdateTransactionStatus(transactionId, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.Rejected });
+        });
+
+        await using (var context = database.CreateContext())
+        {
+            var service = await CreateLiveServiceAsync(context, provider);
+            await service.UpdateTransactionStatus(transactionId, new ChangeTransactionStatusRequest { TransactionStatusId = TransactionStatuses.Approved });
+        }
+
+        Assert.NotNull(rejectResult);
+        Assert.Equal(409, rejectResult.StatusCode);
+
+        await using var verify = database.CreateContext();
+        var transaction = await verify.MoneyTransactions.AsNoTracking().SingleAsync(t => t.Id == transactionId);
+        Assert.Equal(TransactionStatuses.Pending, transaction.TransactionStatusId);
+        Assert.Equal(LiveTransactionProcessor.PayoutOutcomeUnknown, transaction.ProcessingError);
+        Assert.Equal(1000, (await verify.PlayersBalances.AsNoTracking().SingleAsync(b => b.PlayerId == playerId)).Amount);
     }
 }
