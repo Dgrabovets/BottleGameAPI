@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Web;
 
 namespace BottleGame.API.Controllers
 {
@@ -95,6 +94,12 @@ namespace BottleGame.API.Controllers
                 // Look up the administrator in the database
                 var admin = await _context.AdminCreds
                     .FirstOrDefaultAsync(a => a.Login == authRequest.Login);
+
+                // An unknown login costs one hash too, so the response time does not tell which logins exist
+                if (admin is null)
+                {
+                    _passwordHasher.HashWithSalt(authRequest.Password);
+                }
 
                 // Check the administrator's password
                 if (admin is null || !_passwordHasher.Verify(admin.PasswordHash, authRequest.Password, admin.Salt))
@@ -213,6 +218,13 @@ namespace BottleGame.API.Controllers
                     return BadRequest("Invalid Telegram initialization data");
                 }
 
+                // Check that the Telegram data is authentic, on the string exactly as Telegram signed it
+                if (!_telegramAuthService.ValidateInitData(initData))
+                {
+                    _logger.LogWarning("{Prefix} Unverified Telegram data", Prefix);
+                    return Unauthorized("Invalid Telegram authorization data");
+                }
+
                 ParsedTelegramUser playerData;
                 try
                 {
@@ -221,25 +233,8 @@ namespace BottleGame.API.Controllers
                 catch (Exception ex) when (ex is FormatException or OverflowException or ArgumentException or JsonException
                                               or KeyNotFoundException or NullReferenceException or IndexOutOfRangeException)
                 {
-                    // The data is not signed yet at this point, so any garbage can arrive here
+                    // Signed data can still miss a field the sign-in needs
                     _logger.LogWarning("{Prefix} Malformed Telegram initData", Prefix);
-                    return Unauthorized("Invalid Telegram authorization data");
-                }
-
-                bool isReferalLinkIsNotExisting = await _context.ReferralLinks.FirstOrDefaultAsync(p => p.PlayerId == playerData.InvitingPlayerId) is null;
-
-                if (isReferalLinkIsNotExisting)
-                {
-                    var query = HttpUtility.ParseQueryString(initData);
-
-                    query.Remove("start_param");
-                    initData = query.ToString()!;
-                }
-
-                // Check that the Telegram data is authentic
-                if (!_telegramAuthService.ValidateInitData(initData))
-                {
-                    _logger.LogWarning("{Prefix} Unverified Telegram data", Prefix);
                     return Unauthorized("Invalid Telegram authorization data");
                 }
 
@@ -249,12 +244,22 @@ namespace BottleGame.API.Controllers
                 if (player?.Ban is not null && player?.Ban.IsActive is true)
                 {
                     _logger.LogWarning("{Prefix} The player is banned", Prefix);
-                    return Forbid("The player is banned");
+                    return StatusCode(403, "The player is banned");
                 }
 
                 if (player is null)
                 {
                     var gameParams = await _context.GameParams.FirstOrDefaultAsync();
+
+                    // The inviter counts only if they exist, have a referral link and are not banned, otherwise the invitation is ignored
+                    var inviter = playerData.InvitingPlayerId is { } inviterId
+                                    ? await _context.Players.FirstOrDefaultAsync(p => p.Id == inviterId && p.ReferralLink != null && (p.Ban == null || !p.Ban.IsActive))
+                                    : null;
+
+                    if (playerData.InvitingPlayerId is not null && inviter is null)
+                    {
+                        _logger.LogWarning("{Prefix} The invitation from player {PlayerId} is ignored: no such player with a referral link", Prefix, playerData.InvitingPlayerId);
+                    }
 
                     // Create a new player
                     player = new Player
@@ -265,13 +270,9 @@ namespace BottleGame.API.Controllers
                         RegisteredInAppAt = DateTime.UtcNow
                     };
 
-                    _context.Players.Add(player);
-                    await _context.SaveChangesAsync();
-
                     var roundsStatisticsForWithdraw = new PlayerPlayedRoundsStatisticForWithdrawal
                     {
                         Player = player,
-                        PlayerId = player.Id,
                         DepositTransactionId = null,
                         MoneyTransaction = null,
                         PlayedRoundsCount = 0
@@ -280,14 +281,12 @@ namespace BottleGame.API.Controllers
                     var balance = new Balance
                     {
                         Player = player,
-                        PlayerId = player.Id,
-                        Amount = 0
+                        Amount = inviter is null ? 0 : 100
                     };
 
                     var options = new PlayerOptions
                     {
                         Player = player,
-                        PlayerId = player.Id,
                         WinChance = gameParams!.BaseWinChance,
                         Currency = "rub",
                         Wallet = string.Empty,
@@ -295,40 +294,22 @@ namespace BottleGame.API.Controllers
                         PaymentMethod = "sberbank"
                     };
 
+                    _context.Players.Add(player);
+                    _context.PlayersBalances.Add(balance);
                     _context.PlayersOptions.Add(options);
                     _context.PlayersPlayedRoundsStatisticForWithdrawals.Add(roundsStatisticsForWithdraw);
 
-                    if (playerData.InvitingPlayerId is not null)
+                    if (inviter is not null)
                     {
-                        var wasPlayerInvitedBefore = await _context.InvitedPlayers.AnyAsync(ip => ip.PlayerIdInvited == player.Id);
-
-                        if (!wasPlayerInvitedBefore)
+                        _context.InvitedPlayers.Add(new InvitedPlayer
                         {
-                            var playerInvitedBy = await _context.Players.Include(p => p.Ban).FirstOrDefaultAsync(p => p.Id == playerData.InvitingPlayerId);
-
-                            if (playerInvitedBy is null)
-                            {
-                                _logger.LogWarning("{Prefix} The inviting player with id {PlayerId} was not found", Prefix, playerData.InvitingPlayerId);
-                                return NotFound($"The inviting player with id {playerData.InvitingPlayerId} was not found");
-                            }
-
-                            if (playerInvitedBy.Id != player.Id && (playerInvitedBy.Ban is null || !playerInvitedBy.Ban.IsActive))
-                            {
-                                var invitedPlayer = new InvitedPlayer
-                                {
-                                    Inviter = playerInvitedBy,
-                                    Invitee = player,
-                                    InvitedAt = DateTime.UtcNow
-                                };
-
-                                balance.Amount = 100;
-
-                                _context.InvitedPlayers.Add(invitedPlayer);
-                            }
-                        }
+                            Inviter = inviter,
+                            Invitee = player,
+                            InvitedAt = DateTime.UtcNow
+                        });
                     }
 
-                    _context.PlayersBalances.Add(balance);
+                    // One save for the whole account, so a failure leaves nothing half-created
                     await _context.SaveChangesAsync();
                 }
 

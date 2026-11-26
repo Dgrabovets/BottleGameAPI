@@ -120,4 +120,16 @@ public class TelegramAuthServiceTests
 
         CreateService(maxAgeMinutes: 0).ValidateInitData(data).Should().BeTrue();
     }
+
+    /// <summary>
+    /// Without a bot token nothing is accepted, even data signed with the empty key that anyone can compute
+    /// </summary>
+    [Fact]
+    public void ValidateInitData_EmptyBotToken_ReturnsFalse()
+    {
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["TelegramBotToken"] = string.Empty }).Build();
+        var service = new TelegramAuthService(config, NullLogger<TelegramAuthService>.Instance);
+
+        service.ValidateInitData(SignedInitData(DateTimeOffset.UtcNow, string.Empty)).Should().BeFalse();
+    }
 }

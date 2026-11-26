@@ -5,6 +5,9 @@ name: Build and Deploy API
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     uses: ./.github/workflows/ci.yml
@@ -83,6 +86,11 @@ jobs:
           KEY_LEN=$(jq -r '.JWT.Key | length' publish/appsettings.Production.json)
           if [ "$KEY_LEN" -lt 32 ]; then
             echo "::error::JWT_KEY secret is empty or too short (min 32 chars). Set it in Settings → Secrets → Actions."
+            exit 1
+          fi
+          TELEGRAM_TOKEN_OK=$(jq -r '.TelegramBotToken | if length == 0 or (ascii_downcase | startswith("env_")) or (ascii_downcase | startswith("local-development")) then "no" else "yes" end' publish/appsettings.Production.json)
+          if [ "$TELEGRAM_TOKEN_OK" != "yes" ]; then
+            echo "::error::TelegramBotToken is empty or a placeholder. Set the TELEGRAMBOTTOKEN secret in Settings → Secrets → Actions."
             exit 1
           fi
           PWD_LEN=$(jq -r '.Security.PasswordHashSecretKey | length' publish/appsettings.Production.json)

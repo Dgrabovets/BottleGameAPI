@@ -84,7 +84,7 @@ namespace BottleGame.API.Controllers
                 if (User.IsInRole(RoleNames.Player) && player.Ban is not null && player.Ban.IsActive)
                 {
                     _logger.LogWarning("{Prefix} The player is banned", Prefix);
-                    return Forbid("The player is banned");
+                    return StatusCode(403, "The player is banned");
                 }
 
                 var referralLink = player.ReferralLink;

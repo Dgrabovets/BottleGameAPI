@@ -37,7 +37,7 @@ namespace BottleGame.API.Controllers
             return result.StatusCode switch
             {
                 401 => Unauthorized(result.Error),
-                403 => Forbid(result.Error ?? "Access denied"),
+                403 => StatusCode(403, result.Error ?? "Access denied"),
                 404 => NotFound(result.Error),
                 409 => Conflict(result.Error),
                 500 => StatusCode(500, result.Error),

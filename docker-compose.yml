@@ -24,8 +24,11 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      # Published on the loopback interface only, so the demo is not reachable from the network
+      - "127.0.0.1:8080:8080"
     environment:
+      # Development allows the placeholder bot token below; outside Development the API refuses to start with it
+      ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__PostgresConnection: Host=db;Port=5432;Username=bottle;Password=bottle;Database=bottlegame
       # Development-only placeholders. Never reuse them anywhere real.
       JWT__Key: local-development-key-at-least-32-characters-long

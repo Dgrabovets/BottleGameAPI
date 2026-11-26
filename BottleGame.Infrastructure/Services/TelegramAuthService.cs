@@ -20,7 +20,7 @@ namespace BottleGame.Infrastructure.Services
         /// <summary>
         /// Token of the Telegram bot used to verify initData
         /// </summary>
-        private readonly string _botToken = config["TelegramBotToken"]!;
+        private readonly string? _botToken = config["TelegramBotToken"];
 
         /// <summary>
         /// How long initData stays valid after Telegram signed it, in minutes. Zero turns the check off
@@ -41,6 +41,12 @@ namespace BottleGame.Infrastructure.Services
         /// </summary>
         public bool ValidateInitData(string initData)
         {
+            // With an empty key anyone can compute the signature. Startup refuses such a token, this is the second line
+            if (string.IsNullOrEmpty(_botToken))
+            {
+                return false;
+            }
+
             try
             {
                 NameValueCollection data = HttpUtility.ParseQueryString(initData);

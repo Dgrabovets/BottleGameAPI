@@ -32,6 +32,8 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Transaction", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Infrastructure", LogEventLevel.Warning)
+    // The request and routing logs carry the path, and the Telegram sign-in route has initData in it
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .WriteTo.Console()
     .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
@@ -58,6 +60,12 @@ builder.Services.AddOptions<JwtOptions>()
     .Bind(builder.Configuration.GetSection("JWT"))
     .ValidateDataAnnotations()
     .ValidateOnStart();
+
+builder.Services.AddOptions<TelegramOptions>()
+    .Configure(options => options.BotToken = builder.Configuration["TelegramBotToken"] ?? string.Empty)
+    .ValidateOnStart();
+
+builder.Services.AddSingleton<IValidateOptions<TelegramOptions>, TelegramOptionsValidator>();
 
 var jwtKey = builder.Configuration["JWT:Key"] ?? string.Empty;
 var jwtIssuer = builder.Configuration["JWT:Issuer"] ?? "BottleAppAPI";
@@ -192,6 +200,17 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 250,
                 Window = TimeSpan.FromSeconds(30),
                 SegmentsPerWindow = 3,
+            }));
+
+    // webhook (YooKassa notifications): 120 requests per minute per IP
+    options.AddPolicy("webhook", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetClientIpAddress(context),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
             }));
 });
 
