@@ -29,7 +29,7 @@ The companion admin dashboard lives in [BottleGameAdministrationPanel](https://g
 - **Referral programme.** Inviters earn a bonus on the deposits of the players they invited, unless they are banned.
 - **Moderation.** Bans with history, player search and editing. A moderator can read players and transactions, approve or reject withdrawals and ban or unban players. Statistics, game settings, the application balance and the staff list are for administrators only.
 - **Administration and statistics.** Profit, general statistics and timelines for the dashboard.
-- **Operations.** Request rate limiting per IP, structured logging with Serilog, a global exception handler, an interactive API reference (Scalar).
+- **Operations.** Request rate limiting per IP, structured logging with Serilog (framework request logs only from Warning up, so the `initData` in the player sign-in path is not written), a global exception handler, an interactive API reference (Scalar).
 
 ## Architecture
 
@@ -65,7 +65,7 @@ Every endpoint is described in the interactive API reference (see [Getting start
 | Referrals | `/api/Referral` | Player or admin | Referral link of a player |
 | Administration | `/api/admin` | Admin | Application balance and threshold, statistics, timelines, moderators |
 | Currencies | `/api/currencies` | Anonymous reference data, admin to clear the cache | Currencies, payment gateways, exchange rates, amount validation |
-| Webhook | `/api/webhook/yookassa` | Anonymous, every notification is re-checked with YooKassa | Payment and payout notifications |
+| Webhook | `/api/webhook/yookassa` | Anonymous, every notification is re-checked with YooKassa; own rate limit and a 64 KB body limit | Payment and payout notifications |
 | Health | `/api/Health` | Anonymous | Database and service health check |
 
 Expected failures answer with the error text and a matching status (400, 401, 403, 404 or 409). Unhandled exceptions answer with JSON that has `statusCode`, `message` and `timestamp`, and in production the message does not include the exception text. A conflict between two simultaneous requests answers `409` and can be retried.
@@ -78,7 +78,7 @@ Requirements: Docker, or the .NET 11 SDK and PostgreSQL.
 docker compose up --build
 ```
 
-The API listens on `http://localhost:8080` and the interactive API reference (Scalar) is at `http://localhost:8080/scalar`. The compose file creates the database from `database/schema.sql`, loads reference data from `database/seed.sql` and demo content from `database/demo.sql`: eight players with rounds, deposits, withdrawals and a referral.
+The API listens on `http://localhost:8080` and the interactive API reference (Scalar) is at `http://localhost:8080/scalar`. The compose file creates the database from `database/schema.sql`, loads reference data from `database/seed.sql` and demo content from `database/demo.sql`: eight players with rounds, deposits, withdrawals and a referral. The API runs in Development, the only environment where the compose placeholder secrets are accepted, and the port is published on `127.0.0.1` only.
 
 Staff sign-in for the demo: `demo-admin@example.com` / `demo-admin-password`. To see it in the dashboard, run [BottleGameAdministrationPanel](https://github.com/Dgrabovets/BottleGameAdministrationPanel) next to it (`npm run dev` in its `frontend` folder). Player endpoints need a Telegram mini-app session, so try the admin endpoints in the API reference (sign in with `POST /api/auth/admin-login`, then paste the token into the Bearer authentication box) or through the dashboard.
 
@@ -96,7 +96,7 @@ Secrets are never stored in the repository. `appsettings.json` contains `ENV_` p
 |---|---|
 | `ConnectionStrings__PostgresConnection` | PostgreSQL connection string |
 | `JWT__Key` | JWT signing key, at least 32 characters |
-| `TelegramBotToken` | Bot token used to verify Telegram `initData` |
+| `TelegramBotToken` | Bot token used to verify Telegram `initData`. Required: the API does not start when it is empty or an `ENV_` placeholder, or, outside Development, the compose placeholder |
 | `Security__PasswordHashSecretKey` | Secret mixed into admin password hashes |
 | `Telegram__InitDataMaxAgeMinutes` | How long a signed Telegram `initData` stays valid, 1440 (a day) by default; `0` turns the check off |
 | `Processing__Mode` | `Simulated` (default) completes deposits and withdrawals locally without real payments; `Live` uses YooKassa |
@@ -113,6 +113,7 @@ The deploy workflow builds `appsettings.Production.json` from GitHub Actions sec
 
 - Set the notification URL in the YooKassa dashboard (Integration, HTTP notifications) to `https://<your-api>/api/webhook/yookassa` and enable `payment.succeeded`, `payment.canceled`, `payout.succeeded` and `payout.canceled`.
 - YooKassa does not sign notifications. The API reads only the object id from the body and fetches the payment or payout from YooKassa with its own credentials, so a forged notification cannot move money. It also checks that the transaction type and the amount match.
+- Only a 4xx answer to the first payout request returns the money to the player. After a timeout, a network error or a 5xx answer the payout may exist, so the withdrawal stays pending and cannot be rejected by hand: the `payout.succeeded` or `payout.canceled` notification settles it, or approving it again repeats the request with the same idempotence key `payout-<transaction id>`. A refused repeat leaves it pending too, because the first request may still have made the payout.
 - Payouts use the SBP. A player's payout wallet is stored as `<phone>:<bank_id>`, where the bank id comes from YooKassa's `GET /v3/sbp_banks` list.
 - Only RUB is supported.
 
@@ -147,7 +148,7 @@ Transactions and balances (a player's and the application's) carry a row version
 
 ## Project status
 
-The transaction flow has two modes, selected with `Processing__Mode`. `Simulated` (the default) completes deposits and withdrawals locally and is what the demo runs on. `Live` creates YooKassa payments and SBP payouts and applies withdrawal rules (minimum played rounds, payout limit). `Live` is covered by unit tests with a mocked provider and an HTTP-level fake, but it has not been run against a real YooKassa account, because the project is not connected to one.
+The transaction flow has two modes, selected with `Processing__Mode`. `Simulated` (the default) completes deposits and withdrawals locally and is what the demo runs on. `Live` creates YooKassa payments and SBP payouts and applies withdrawal rules (minimum played rounds, payout limit). `Live` is covered by unit tests with a mocked provider and an HTTP-level fake, but it has not been run against a real YooKassa account, because the project is not connected to one. Do not switch it on before the known limitations below are fixed.
 
 Known gaps: receipts for the Russian fiscal law (54-FZ) are not sent, and payouts to bank cards need YooKassa's payout widget and are not implemented.
 
@@ -156,6 +157,7 @@ Known gaps: receipts for the Russian fiscal law (54-FZ) are not sent, and payout
 This project was frozen before it was finished, and these points are left as they were on purpose. They matter before any real use:
 
 - **The client reports the game result.** `finish-game-round` takes the bet and the win flag from the mini-app, and the server only applies them. A player who calls the endpoint directly can credit any amount to their own balance. A real deployment needs the outcome to be drawn on the server, from the player's win chance, with the bet taken from a round the server has started.
+- **What this means for withdrawals.** A win skips the balance check (only a loss needs enough balance), so a player with an empty balance can still report wins of up to 1 000 000 per round. Every reported round, real or not, also counts toward the minimum number of rounds needed for a withdrawal. The payout limit (10% of the lower threshold of the application balance) applies to each transaction only, not to a player or a day, so a forged balance can be withdrawn in many small payouts. In `Simulated` mode this balance is virtual. In `Live` mode it is paid out as real money, so `Live` mode must not be used until the game result is drawn on the server.
 
 #### How the game result could be fixed
 
