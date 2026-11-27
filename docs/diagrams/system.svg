@@ -3,28 +3,28 @@
   <defs>
     <style>
       .bg { fill: #000000; }
-      .node { fill: #03100a; stroke: #232a25; stroke-width: 1.5; }
-      .ext { fill: #000000; stroke: #a4a69f; stroke-width: 1.2; }
-      .region { fill: none; stroke: #232a25; stroke-width: 1.5; stroke-dasharray: 4 6; }
-      .bar { fill: #5fe08a; }
-      .t { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 15px; fill: #f3f2ee; text-anchor: middle; }
-      .s { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-weight: 400; font-size: 12.5px; fill: #a4a69f; text-anchor: middle; }
-      .handle { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 12px; letter-spacing: 4px; fill: #a4a69f; }
-      .title { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 26px; fill: #f3f2ee; }
-      .caption { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; letter-spacing: 3px; fill: #a4a69f; }
-      .main { stroke: #5fe08a; stroke-width: 2; fill: none; stroke-linejoin: round; }
-      .second { stroke: #2fd4c0; stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; stroke-linejoin: round; }
-      .ref { stroke: #a4a69f; stroke-width: 1.4; fill: none; stroke-linejoin: round; }
-      .pill { fill: #000000; stroke: #232a25; stroke-width: 1; }
+      .node { fill: #000000; stroke: #5a0006; stroke-width: 1.5; }
+      .ext { fill: #000000; stroke: #8b949e; stroke-width: 1.2; }
+      .region { fill: none; stroke: #5a0006; stroke-width: 1.5; stroke-dasharray: 4 6; }
+      .bar { fill: #b0101a; }
+      .t { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 15px; fill: #ffffff; text-anchor: middle; }
+      .s { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-weight: 400; font-size: 12.5px; fill: #d1d7e0; text-anchor: middle; }
+      .handle { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 12px; letter-spacing: 4px; fill: #b0101a; }
+      .title { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 26px; fill: #ffffff; }
+      .caption { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; letter-spacing: 3px; fill: #d1d7e0; }
+      .main { stroke: #b0101a; stroke-width: 2.6; fill: none; stroke-linejoin: round; }
+      .second { stroke: #e5322d; stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; stroke-linejoin: round; }
+      .ref { stroke: #8b949e; stroke-width: 1.4; fill: none; stroke-linejoin: round; }
+      .pill { fill: #000000; stroke: #5a0006; stroke-width: 1; }
       .l { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; text-anchor: middle; }
-      .l-main { fill: #5fe08a; }
-      .l-second { fill: #2fd4c0; }
-      .l-ref { fill: #a4a69f; }
-      .legend { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-size: 13px; fill: #a4a69f; }
+      .l-main { fill: #ffffff; }
+      .l-second { fill: #ffffff; }
+      .l-ref { fill: #d1d7e0; }
+      .legend { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-size: 13px; fill: #d1d7e0; }
     </style>
-    <marker id="arrow-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5fe08a"/></marker>
-    <marker id="arrow-second" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2fd4c0"/></marker>
-    <marker id="arrow-ref" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a4a69f"/></marker>
+    <marker id="arrow-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b0101a"/></marker>
+    <marker id="arrow-second" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e5322d"/></marker>
+    <marker id="arrow-ref" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker>
   </defs>
 
   <rect class="bg" width="1320" height="840" rx="16"/>

@@ -1,14 +1,17 @@
-<img src="docs/header.svg" alt="Bottle Game API" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/header.svg">
+  <img src="docs/header-light.svg" alt="Bottle Game API" width="100%">
+</picture>
 
 # Bottle Game API
 
 [![CI](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/ci.yml)
 [![Dependency audit](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/security.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/security.yml)
 [![CodeQL](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/codeql.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/codeql.yml)
-![.NET 11](https://img.shields.io/badge/.NET-11-512BD4?logo=dotnet&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
-[![License: MIT](https://img.shields.io/badge/license-MIT-5fe08a)](LICENSE)
+![.NET 11](https://img.shields.io/badge/.NET-11-b0101a?logo=dotnet&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-b0101a?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-ready-b0101a?logo=docker&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/license-MIT-b0101a)](LICENSE)
 
 Backend for a Telegram mini-app game: player accounts, game rounds, balances, deposits and withdrawals, a referral programme and an admin API. Built with ASP.NET Core and PostgreSQL.
 
@@ -38,7 +41,7 @@ The companion admin dashboard lives in [BottleGameAdministrationPanel](https://g
   <img src="docs/diagrams/system-light.png" alt="System overview: the Telegram mini-app and the admin panel call the API, and YooKassa sends payment notifications to it; the solution is split into API, Application, Domain and Infrastructure, and the API also uses Infrastructure for the database context and dependency injection; Infrastructure talks to PostgreSQL and the YooKassa API" width="100%">
 </picture>
 
-The diagrams are SVG files in `docs/diagrams` (`system.svg`, `payment-notifications.svg`, `quality-pipeline.svg`), and the PNG pictures are rendered from them.
+The diagrams are SVG files in `docs/diagrams` (`system.svg`, `payment-notifications.svg`, `quality-pipeline.svg`), and the PNG pictures are rendered from them; the light pictures are the same drawings in light colors.
 
 | Project | Responsibility |
 |---|---|
@@ -143,7 +146,10 @@ The deploy workflow builds `appsettings.Production.json` from GitHub Actions sec
 - Payouts use the SBP. A player's payout wallet is stored as `<phone>:<bank_id>`, where the bank id comes from YooKassa's `GET /v3/sbp_banks` list.
 - Only RUB is supported.
 
-<img src="docs/diagrams/payment-notifications.png" alt="How a YooKassa notification is handled: read only the event and the object id, re-check the payment or payout with YooKassa, find the transaction and check its type, leave a contradicting notification (another provider object, a conflicting result or an already rejected transaction) for a manual check, skip a duplicate with 200, check the amount, then apply the outcome once with a row-version check; on a row-version conflict a notification that was already applied is a duplicate, otherwise the API answers 400 and YooKassa sends it again" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/payment-notifications.png">
+  <img src="docs/diagrams/payment-notifications-light.png" alt="How a YooKassa notification is handled: read only the event and the object id, re-check the payment or payout with YooKassa, find the transaction and check its type, leave a contradicting notification (another provider object, a conflicting result or an already rejected transaction) for a manual check, skip a duplicate with 200, check the amount, then apply the outcome once with a row-version check; on a row-version conflict a notification that was already applied is a duplicate, otherwise the API answers 400 and YooKassa sends it again" width="100%">
+</picture>
 
 ## Tests
 
@@ -163,7 +169,10 @@ Transactions and balances (a player's and the application's) carry a row version
 
 ## CI and deployment
 
-<img src="docs/diagrams/quality-pipeline.png" alt="Quality pipeline: Dependabot and developers open pull requests; four required checks (build-and-test, NuGet vulnerabilities, New dependencies in the pull request, Analyze C#) run on them, the audit and CodeQL also run every Monday; the Protect main ruleset allows a merge only after all four pass; deploy.yml is started by hand" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/quality-pipeline.png">
+  <img src="docs/diagrams/quality-pipeline-light.png" alt="Quality pipeline: Dependabot and developers open pull requests; four required checks (build-and-test, NuGet vulnerabilities, New dependencies in the pull request, Analyze C#) run on them, the audit and CodeQL also run every Monday; the Protect main ruleset allows a merge only after all four pass; deploy.yml is started by hand" width="100%">
+</picture>
 
 - `ci.yml` builds and tests every pull request and every push to `main`, including the integration tests against a PostgreSQL service container.
 - `security.yml` (Dependency audit) lists vulnerable NuGet packages, direct and transitive, on every pull request, every push to `main` and every Monday, and reviews the dependencies a pull request adds.
