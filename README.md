@@ -8,10 +8,10 @@
 [![CI](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/ci.yml)
 [![Dependency audit](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/security.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/security.yml)
 [![CodeQL](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/codeql.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAPI/actions/workflows/codeql.yml)
-![.NET 11](https://img.shields.io/badge/.NET-11-b0101a?logo=dotnet&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-b0101a?logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-ready-b0101a?logo=docker&logoColor=white)
-[![License: MIT](https://img.shields.io/badge/license-MIT-b0101a)](LICENSE)
+![.NET 11](https://img.shields.io/badge/.NET-11-4a5260?logo=dotnet&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4a5260?logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-ready-4a5260?logo=docker&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/license-MIT-4a5260)](LICENSE)
 
 Backend for a Telegram mini-app game: player accounts, game rounds, balances, deposits and withdrawals, a referral programme and an admin API. Built with ASP.NET Core and PostgreSQL.
 
