@@ -3,28 +3,29 @@
   <defs>
     <style>
       .bg { fill: #000000; }
-      .node { fill: #000000; stroke: #5a0006; stroke-width: 1.5; }
+      .node { fill: #1b1e24; stroke: #646d7c; stroke-width: 1.5; }
       .ext { fill: #000000; stroke: #8b949e; stroke-width: 1.2; }
       .off { fill: #000000; stroke: #8b949e; stroke-width: 1.2; stroke-dasharray: 5 4; }
-      .region { fill: none; stroke: #5a0006; stroke-width: 1.5; stroke-dasharray: 4 6; }
-      .bar { fill: #b0101a; }
+      .region { fill: none; stroke: #646d7c; stroke-width: 1.5; stroke-dasharray: 4 6; }
+      .bar { fill: #e8ecf2; }
       .t { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 15px; fill: #ffffff; text-anchor: middle; }
       .s { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-weight: 400; font-size: 12.5px; fill: #d1d7e0; text-anchor: middle; }
       .when { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; fill: #ffffff; text-anchor: middle; }
-      .handle { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 12px; letter-spacing: 4px; fill: #b0101a; }
+      .handle { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 12px; letter-spacing: 4px; fill: #e8ecf2; }
       .title { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 700; font-size: 26px; fill: #ffffff; }
       .caption { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; letter-spacing: 3px; fill: #d1d7e0; }
-      .main { stroke: #b0101a; stroke-width: 2.6; fill: none; stroke-linejoin: round; }
-      .second { stroke: #e5322d; stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; stroke-linejoin: round; }
+      .main { stroke: #e8ecf2; stroke-width: 2.6; fill: none; stroke-linejoin: round; }
+      .second { stroke: #aab3c0; stroke-width: 1.6; fill: none; stroke-dasharray: 6 5; stroke-linejoin: round; }
       .manual { stroke: #8b949e; stroke-width: 1.4; fill: none; stroke-dasharray: 3 4; stroke-linejoin: round; }
-      .pill { fill: #000000; stroke: #5a0006; stroke-width: 1; }
+      .pill { fill: #000000; stroke: #646d7c; stroke-width: 1; }
       .l { font-family: 'JetBrains Mono', Consolas, monospace; font-weight: 500; font-size: 11px; text-anchor: middle; }
       .l-main { fill: #ffffff; }
       .l-ref { fill: #d1d7e0; }
       .legend { font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif; font-size: 13px; fill: #d1d7e0; }
+      .ext { stroke-dasharray: 4 3; }
     </style>
-    <marker id="arrow-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b0101a"/></marker>
-    <marker id="arrow-second" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e5322d"/></marker>
+    <marker id="arrow-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e8ecf2"/></marker>
+    <marker id="arrow-second" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#aab3c0"/></marker>
     <marker id="arrow-manual" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker>
   </defs>
 
